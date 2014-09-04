@@ -10,23 +10,23 @@ all:	calc
 
 # MAIN PROGRAM
 
-CALCOBJS= main.o lexer.o parser.o assigntwotype.o
-CLEAN=calc calc.exe $(CALCOBJS) lexer.c parser.c parser.h assigntwotype.c assigntwotype.h
+CALCOBJS= main.o lexer.o parser.o babelsbergP.o
+CLEAN=calc calc.exe $(CALCOBJS) lexer.c parser.c parser.h babelsbergP.c babelsbergP.h
 
 calc: $(CALCOBJS)
 	$(LINK.rml) $(CALCOBJS) $(LDLIBS) -o calc
 
-main.o:	 main.c assigntwotype.h
+main.o:	 main.c babelsbergP.h
 
 # LEXER
 
-lexer.o:  lexer.c parser.h assigntwotype.h
+lexer.o:  lexer.c parser.h babelsbergP.h
 lexer.c:  lexer.l
 	flex -t -l lexer.l >lexer.c
 
 # PARSER
 
-parser.o:  parser.c assigntwotype.h
+parser.o:  parser.c babelsbergP.h
 parser.c parser.h:  parser.y
 	bison -d parser.y
 	mv parser.tab.c parser.c
@@ -35,9 +35,9 @@ parser.c parser.h:  parser.y
 
 # ABSTRACT SYNTAX and EVALUATION
 
-assigntwotype.o:  assigntwotype.c
-assigntwotype.c assigntwotype.h:	assigntwotype.rml
-	$(COMPILE.rml) assigntwotype.rml
+babelsbergP.o:  babelsbergP.c
+babelsbergP.c babelsbergP.h:	babelsbergP.rml
+	$(COMPILE.rml) babelsbergP.rml
 
 # AUX
 

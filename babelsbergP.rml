@@ -1,8 +1,8 @@
 (* file assignment.rml *)
 
-module assigntwotype:
+module babelsbergP:
 
-(* Abstract syntax for the Assigntwotype language *)
+(* Abstract syntax for the BabelsbergP language *)
 
   datatype Program = PROGRAM of Statement
 

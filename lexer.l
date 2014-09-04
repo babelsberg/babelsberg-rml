@@ -2,7 +2,7 @@
 #define YYSTYPE void*
 #include "parser.h"
 #include "rml.h"
-#include "assigntwotype.h"
+#include "babelsbergP.h"
 
 int lex_icon(void);
 int lex_ident(void);

@@ -1,10 +1,10 @@
 /* file main.c */
-/* Main program for the small assigntwotype evaluator */
+/* Main program for the small babelsbergP evaluator */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "rml.h"
-#include "assigntwotype.h"
+#include "babelsbergP.h"
 
 typedef void * rml_t;
 rml_t absyntree;
@@ -22,7 +22,7 @@ main()
   /* Initialize the RML modules */
 
   printf("[Init]\n");
-  assigntwotype_5finit();
+  babelsbergP_5finit();
 
   /* Parse the input into an abstract syntax tree (in RML form)
      using yacc and lex */
@@ -38,7 +38,7 @@ main()
 
   printf("[Eval]\n");
   rml_state_ARGS[0]= absyntree;
-  if (!rml_prim_once(RML_LABPTR(assigntwotype__evalprogram)) )
+  if (!rml_prim_once(RML_LABPTR(babelsbergP__evalprogram)) )
   {
     fprintf(stderr,"Evaluation failed!\n");
     exit(2);

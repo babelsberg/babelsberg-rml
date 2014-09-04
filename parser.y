@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include "rml.h"
-#include "assigntwotype.h"
+#include "babelsbergP.h"
 
 #define YYSTYPE void*
 extern void* absyntree;
@@ -45,86 +45,86 @@ extern void* absyntree;
 
 %%
 
-/* Yacc BNF grammar of the expression language Assigntwotypes */
+/* Yacc BNF grammar of the expression language BabelsbergPs */
 
 program         : statement
-                        { absyntree = assigntwotype__PROGRAM($1);}
+                        { absyntree = babelsbergP__PROGRAM($1);}
 
 statement       : statement T_SEMIC statement
-                        { $$ = assigntwotype__SEQ($1, $3); }
+                        { $$ = babelsbergP__SEQ($1, $3); }
                 | T_SKIP
-                        { $$ = assigntwotype__SKIP; }
+                        { $$ = babelsbergP__SKIP; }
                 | variable T_ASSIGN expression
-                        { $$ = assigntwotype__ASSIGN($1, $3); }
+                        { $$ = babelsbergP__ASSIGN($1, $3); }
                 | T_ALWAYS constraint
-                        { $$ = assigntwotype__ALWAYS($2); }
+                        { $$ = babelsbergP__ALWAYS($2); }
                 | T_ONCE constraint
-                        { $$ = assigntwotype__ONCE($2); }
+                        { $$ = babelsbergP__ONCE($2); }
                 | T_IF expression T_THEN statement T_ELSE statement
-                        { $$ = assigntwotype__IF($2, $4, $6); }
+                        { $$ = babelsbergP__IF($2, $4, $6); }
                 | T_WHILE expression T_DO statement
-                        { $$ = assigntwotype__WHILE($2, $4); }
+                        { $$ = babelsbergP__WHILE($2, $4); }
 
 constraint      : rho expression
-                        { $$ = assigntwotype__CONSTRAINT($1, $2); }
+                        { $$ = babelsbergP__CONSTRAINT($1, $2); }
                 | constraint T_AND constraint
-                        { $$ = assigntwotype__COMPOUNDCONSTRAINT($1, $3); }
+                        { $$ = babelsbergP__COMPOUNDCONSTRAINT($1, $3); }
 
 rho             : T_WEAK
-                        { $$ = assigntwotype__WEAK; }
+                        { $$ = babelsbergP__WEAK; }
                 | T_REQUIRED
-                        { $$ = assigntwotype__REQUIRED; }
+                        { $$ = babelsbergP__REQUIRED; }
 
 expression      : cexpression combination expression
-                        { $$ = assigntwotype__COMBINE($1, $2, $3); }
+                        { $$ = babelsbergP__COMBINE($1, $2, $3); }
                 | cexpression
 cexpression     : wexpression comparison expression
-                        { $$ = assigntwotype__COMPARE($1, $2, $3); }
+                        { $$ = babelsbergP__COMPARE($1, $2, $3); }
                 | wexpression
 wexpression     : sexpression soperation expression
-                        { $$ = assigntwotype__OP($1, $2, $3); }
+                        { $$ = babelsbergP__OP($1, $2, $3); }
                 | sexpression
 sexpression     : eexpression woperation expression
-                        { $$ = assigntwotype__OP($1, $2, $3); }
+                        { $$ = babelsbergP__OP($1, $2, $3); }
                 | eexpression
 eexpression     : value
-                        { $$ = assigntwotype__VALUE($1); }
+                        { $$ = babelsbergP__VALUE($1); }
                 | variable
-                        { $$ = assigntwotype__VARIABLE($1); }
+                        { $$ = babelsbergP__VARIABLE($1); }
 
 soperation      : T_ADD
-                        { $$ = assigntwotype__ADD;}
+                        { $$ = babelsbergP__ADD;}
                 | T_SUB
-                        { $$ = assigntwotype__SUB;}
+                        { $$ = babelsbergP__SUB;}
 woperation      : T_MUL
-                        { $$ = assigntwotype__MUL;}
+                        { $$ = babelsbergP__MUL;}
                 | T_DIV
-                        { $$ = assigntwotype__DIV;}
+                        { $$ = babelsbergP__DIV;}
 
 comparison      : T_LESSTHAN
-                        { $$ = assigntwotype__LESSTHAN;}
+                        { $$ = babelsbergP__LESSTHAN;}
                 | T_LEQUAL
-                        { $$ = assigntwotype__LEQUAL;}
+                        { $$ = babelsbergP__LEQUAL;}
                 | T_EQUAL
-                        { $$ = assigntwotype__EQUAL;}
+                        { $$ = babelsbergP__EQUAL;}
                 | T_GEQUAL
-                        { $$ = assigntwotype__GEQUAL;}
+                        { $$ = babelsbergP__GEQUAL;}
                 | T_GREATERTHAN
-                        { $$ = assigntwotype__GEQUAL;}
+                        { $$ = babelsbergP__GEQUAL;}
 
 combination     : T_AND
-                        { $$ = assigntwotype__AND;}
+                        { $$ = babelsbergP__AND;}
 
 constant        : T_REALCONST
-                        { $$ = assigntwotype__REAL($1);}
+                        { $$ = babelsbergP__REAL($1);}
                 | T_TRUE
-                        { $$ = assigntwotype__TRUE; }
+                        { $$ = babelsbergP__TRUE; }
                 | T_FALSE
-                        { $$ = assigntwotype__FALSE; }
+                        { $$ = babelsbergP__FALSE; }
                 | T_NIL
-                        { $$ = assigntwotype__NIL; }
+                        { $$ = babelsbergP__NIL; }
 
 variable        : T_IDENT
-                        { $$ = assigntwotype__VARIABLE($1); }
+                        { $$ = babelsbergP__VARIABLE($1); }
 
 value           : constant
