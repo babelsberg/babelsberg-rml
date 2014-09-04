@@ -7,7 +7,7 @@ module assigntwotype:
   datatype Program = PROGRAM of Statement
 
   datatype Statement = SEQ of Statement * Statement
-                     | SKIP
+		     | SKIP
 		     | ASSIGN of Variable * Exp
 		     | ALWAYS of Constraint
 		     | ONCE of Constraint
@@ -15,12 +15,12 @@ module assigntwotype:
 		     | WHILE of Exp * Statement
 
   datatype Constraint = CONSTRAINT of Rho * Exp
-                      | COMPOUNDCONSTRAINT of Constraint * Constraint
+		      | COMPOUNDCONSTRAINT of Constraint * Constraint
 
   datatype Rho = WEAK | REQUIRED
 
   datatype Exp = VALUE of Value
-               | VARIABLE of Variable
+	       | VARIABLE of Variable
 	       | OP of Exp * Op * Exp
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
@@ -77,16 +77,31 @@ end
 relation eval: (Env, Exp) => Value =
   axiom eval(_, VALUE(c)) => c
 
-  rule lookupEnv(Env, x) => v
+  rule print "E-Var\n" &
+       lookupEnv(Env, x) => v
        ----------------------
        eval(Env, VARIABLE(x)) => v
 
-  rule eval(Env, e1) => v1 &
+  rule print "E-Op\n" &
+       eval(Env, e1) => v1 &
        eval(Env, e2) => v2 &
        apply_binop(op,v1,v2) => v
        ------------------------------
        eval(Env, OP(e1, op, e2)) => v
-       
+
+  rule print "E-Compare\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       apply_bincomp(op,v1,v2) => v
+       ------------------------------
+       eval(Env, COMPARE(e1, op, e2)) => v
+
+  rule print "E-Combine\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       apply_bincomb(op,v1,v2) => v
+       ------------------------------
+       eval(Env, COMBINE(e1, op, e2)) => v
 end
 
 relation stay: Env => Constraint =
@@ -96,57 +111,123 @@ relation stay: Env => Constraint =
        stay(rest) => C0
        --------------------------------
        stay((x, v) :: rest) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
-       
+
 end
 
 relation models: Constraint => Env =
   axiom models(_) => []
 end
-(* (* Call solver in C *)
-relation models: Constraint => Env
-*)
+(* Call solver in C *)
+relation solve: Constraint => Env
 
 relation lookupEnv: (Env, Variable) => Value  =
   rule  id = id2
-        ------------------------------
-        lookupEnv((id2,value) :: _, id) => value
+	------------------------------
+	lookupEnv((id2,value) :: _, id) => value
 
   rule  not id=id2  &  lookupEnv(rest, id) => value
-        -------------------------------------
-        lookupEnv((id2,_) :: rest, id)  => value
+	-------------------------------------
+	lookupEnv((id2,_) :: rest, id)  => value
 end
 
 relation apply_binop: (Op,Value,Value) => Value =
 
  rule   x +. y => z
-        -------------------------                             (* x+y *)
-        apply_binop(ADD,REAL(x),REAL(y)) => (REAL(z))
+	-------------------------                             (* x+y *)
+	apply_binop(ADD,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x -. y => z
-        -------------------------                             (* x-y *)
-        apply_binop(SUB,REAL(x),REAL(y)) => (REAL(z))
+	-------------------------                             (* x-y *)
+	apply_binop(SUB,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x *. y => z
-        -------------------------                             (* x*y *)
-        apply_binop(MUL,REAL(x),REAL(y)) => (REAL(z))
+	-------------------------                             (* x*y *)
+	apply_binop(MUL,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x /. y => z
-        ------------------------                              (* x/y *)
-        apply_binop(DIV,REAL(x),REAL(y)) => (REAL(z))
+	------------------------                              (* x/y *)
+	apply_binop(DIV,REAL(x),REAL(y)) => (REAL(z))
+end
 
-end (* apply_real_binop *)
+relation apply_bincomp: (Comp,Value,Value) => Value =
+(* reals *)
+  rule  x <. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(LESSTHAN,REAL(x),REAL(y)) => TRUE
+
+  rule  x <. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(LESSTHAN,REAL(x),REAL(y)) => FALSE
+
+  rule  x <=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(LEQUAL,REAL(x),REAL(y)) => TRUE
+
+  rule  x <=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(LEQUAL,REAL(x),REAL(y)) => FALSE
+
+  rule  x ==. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(EQUAL,REAL(x),REAL(y)) => TRUE
+
+  rule  x ==. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(EQUAL,REAL(x),REAL(y)) => FALSE
+
+  rule  x >=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(GEQUAL,REAL(x),REAL(y)) => TRUE
+
+  rule  x >=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(GEQUAL,REAL(x),REAL(y)) => FALSE
+
+  rule  x >. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(GREATERTHAN,REAL(x),REAL(y)) => TRUE
+
+  rule  x >. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(GREATERTHAN,REAL(x),REAL(y)) => FALSE
+
+(* specials *)
+  axiom apply_bincomp(EQUAL,TRUE,TRUE) => TRUE
+  axiom apply_bincomp(EQUAL,FALSE,FALSE) => TRUE
+  axiom apply_bincomp(EQUAL,NIL,NIL) => TRUE
+
+(* generic *)
+  axiom apply_bincomp(EQUAL,_,_) => FALSE
+end
+
+relation apply_bincomb: (Comb,Value,Value) => Value =
+  axiom apply_bincomb(AND,TRUE,TRUE) => TRUE
+  axiom apply_bincomb(AND,TRUE,FALSE) => FALSE
+  axiom apply_bincomb(AND,FALSE,TRUE) => FALSE
+  axiom apply_bincomb(AND,FALSE,FALSE) => FALSE
+end
 
 (*
 relation printvalue:(Value) => () =
   rule  int_string(x) => x' &
-        print x'
-        ---------------------
-        printvalue(INTval(x))
+	print x'
+	---------------------
+	printvalue(INTval(x))
 
   rule  real_string(x) => x' &
-        print x'
-        ----------------------
-        printvalue(REALval(x))
+	print x'
+	----------------------
+	printvalue(REALval(x))
 end (* printvalue *)
 
 relation evals: (Env,Exp list) => Env  =
@@ -154,9 +235,9 @@ relation evals: (Env,Exp list) => Env  =
   axiom evals(e, []) => e
 
   rule  eval(env, exp) => (env2, _) &
-        evals(env2, expl) => env3
-        ----------------------------
-        evals(env, exp::expl) => env3
+	evals(env2, expl) => env3
+	----------------------------
+	evals(env, exp::expl) => env3
 
 end
 
@@ -171,39 +252,39 @@ relation eval:  (Env,Exp) => (Env,Value)  =
   axiom eval(env,REAL(rval) ) => (env,REALval(rval))  (* real constant *)
 
   rule  lookupextend(env,id) => (env2,value)
-        -----------------------------------            (* variable id *)
-        eval(env,IDENT(id)) => (env2,value)
+	-----------------------------------            (* variable id *)
+	eval(env,IDENT(id)) => (env2,value)
 
-  rule  eval(env,e1)    => (env1,v1) & 
-        eval(env,e2)    => (env2,v2) &
-        type_lub(v1,v2) => INT2(x,y) &
-        apply_int_binop(binop,x,y) => z
-        --------------------------------             (* int binop int *)
-        eval(env, BINARY(e1,binop,e2)) => (env2,INTval(z))
+  rule  eval(env,e1)    => (env1,v1) &
+	eval(env,e2)    => (env2,v2) &
+	type_lub(v1,v2) => INT2(x,y) &
+	apply_int_binop(binop,x,y) => z
+	--------------------------------             (* int binop int *)
+	eval(env, BINARY(e1,binop,e2)) => (env2,INTval(z))
 
- rule   eval(env,e1)    => (env1,v1) & 
-        eval(env,e2)    => (env2,v2) &
-        type_lub(v1,v2) => REAL2(x,y) &
-        apply_real_binop(binop,x,y) => z
-        --------------------------------   (* int/real binop int/real *)
-        eval(env, BINARY(e1,binop,e2)) => (env2,REALval(z))
+ rule   eval(env,e1)    => (env1,v1) &
+	eval(env,e2)    => (env2,v2) &
+	type_lub(v1,v2) => REAL2(x,y) &
+	apply_real_binop(binop,x,y) => z
+	--------------------------------   (* int/real binop int/real *)
+	eval(env, BINARY(e1,binop,e2)) => (env2,REALval(z))
 
   rule  eval(env,e) => (env1,INTval(x))  &
-        apply_int_unop(unop,x) => y
-        -----------------------------------             (* int unop exp *)
-        eval(env, UNARY(unop,e) ) => (env1,INTval(y))
+	apply_int_unop(unop,x) => y
+	-----------------------------------             (* int unop exp *)
+	eval(env, UNARY(unop,e) ) => (env1,INTval(y))
 
   rule  eval(env,e) => (env1,REALval(x))  &
-        apply_real_unop(unop,x) => y
-        ------------------------------------            (* real unop exp *)
-        eval(env, UNARY(unop,e) ) => (env1,REALval(y))
+	apply_real_unop(unop,x) => y
+	------------------------------------            (* real unop exp *)
+	eval(env, UNARY(unop,e) ) => (env1,REALval(y))
 
   (* eval of an assignment node returns the updated environment and
    * the assigned value *)
   rule  eval(env,exp) => (env1,value)  &
-        update(env1,id,value) => env2 
-        ----------------------------------------        (* id := exp *)
-        eval(env, ASSIGN(id,exp)) => (env2,value)
+	update(env1,id,value) => env2
+	----------------------------------------        (* id := exp *)
+	eval(env, ASSIGN(id,exp)) => (env2,value)
 
 (* Note: there will be no type error if a real value is assigned to an
  * existing integer-typed variable, since the variable will change
@@ -215,12 +296,12 @@ relation type_lub: (Value,Value) => Ty2  =
  axiom  type_lub(INTval(x), INTval(y))   =>  INT2(x,y)
 
  rule   int_real(x) => x2
-        ----------------
-        type_lub(INTval(x), REALval(y))  =>  REAL2(x2,y)
+	----------------
+	type_lub(INTval(x), REALval(y))  =>  REAL2(x2,y)
 
  rule   int_real(y) => y2
-        -----------------
-        type_lub(REALval(x),INTval(y))   =>  REAL2(x,y2)
+	-----------------
+	type_lub(REALval(x),INTval(y))   =>  REAL2(x,y2)
 
  axiom  type_lub(REALval(x),REALval(y))  =>  REAL2(x,y)
 end
@@ -228,27 +309,27 @@ end
 relation apply_int_binop: (BinOp,int,int) => int =
 
  rule   x + y => z
-        ------------------------                              (* x+y *)
-        apply_int_binop(ADD,x,y) => z
+	------------------------                              (* x+y *)
+	apply_int_binop(ADD,x,y) => z
 
  rule   x - y => z
-        ------------------------                              (* x-y *)
-        apply_int_binop(SUB,x,y) => z
+	------------------------                              (* x-y *)
+	apply_int_binop(SUB,x,y) => z
 
  rule   x * y => z
-        ------------------------                              (* x*y *)
-        apply_int_binop(MUL,x,y) => z
+	------------------------                              (* x*y *)
+	apply_int_binop(MUL,x,y) => z
 
  rule   x / y => z
-        ------------------------                              (* x/y *)
-        apply_int_binop(DIV,x,y) => z
+	------------------------                              (* x/y *)
+	apply_int_binop(DIV,x,y) => z
 end
 
 relation apply_int_unop: (UnOp,int) => int =
 
  rule   -x => y
-        ------------------------                              (* -x *)
-        apply_int_unop(NEG,x) => y
+	------------------------                              (* -x *)
+	apply_int_unop(NEG,x) => y
 
 end (* apply_int_unop *)
 
@@ -256,8 +337,8 @@ end (* apply_int_unop *)
 relation apply_real_unop: (UnOp,real) => real =
 
  rule   -. x => y
-        ------------------------                              (* -x *)
-        apply_real_unop(NEG,x) => y
+	------------------------                              (* -x *)
+	apply_real_unop(NEG,x) => y
 
 end (* apply_real_unop *)
 
@@ -268,28 +349,28 @@ relation lookup: (Env,Ident) => Value  =
 (* Identifier id is found in the first pair of the list, and value
  * is returned. *)
   rule  id = id2
-        ------------------------------
-        lookup((id2,value) :: _, id) => value
+	------------------------------
+	lookup((id2,value) :: _, id) => value
 
 (* id is not found in the first pair of the list, and lookup will
  * recursively search the rest of the list. If found, value is returned.
  *)
   rule  not id=id2  &  lookup(rest, id) => value
-        -------------------------------------
-        lookup((id2,_) :: rest, id)  => value
+	-------------------------------------
+	lookup((id2,_) :: rest, id)  => value
 end (* lookup *)
 
 relation lookupextend: (Env,Ident) => (Env,Value)  =
 (* Return value of id in env. If id not present, add id and return 0 *)
 
   rule  not lookup(env,id) => v &
-        let value = INTval(0)
-        -----------------------------
-        lookupextend(env, id) => ((id, value)::env,value)
+	let value = INTval(0)
+	-----------------------------
+	lookupextend(env, id) => ((id, value)::env,value)
 
   rule  lookup(env,id) => value
-        --------------------------------
-        lookupextend(env, id)  => (env,value)
+	--------------------------------
+	lookupextend(env, id)  => (env,value)
 end (* lookupextend *)
 
 relation update: (Env,Ident,Value) => Env  =
