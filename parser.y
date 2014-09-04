@@ -52,7 +52,7 @@ program         : statement
                         { absyntree = assigntwotype__PROGRAM($1);}
 
 statement       : statement T_SEMIC statement
-                        { $$ = assigntwotype__STATEMENT($1, $3); }
+                        { $$ = assigntwotype__SEQ($1, $3); }
                 | T_SKIP
                         { $$ = assigntwotype__SKIP; }
                 | variable T_ASSIGN expression

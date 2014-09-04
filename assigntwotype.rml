@@ -6,7 +6,7 @@ module assigntwotype:
 
   datatype Program = PROGRAM of Statement
 
-  datatype Statement = STATEMENT of Statement list * Statement
+  datatype Statement = SEQ of Statement * Statement
                      | SKIP
 		     | ASSIGN of Variable * Exp
 		     | ALWAYS of Constraint
@@ -56,12 +56,23 @@ relation evalprogram: Program => () =
 end
 
 relation step: (Env, Cstore, Statement) => (Env, Cstore) =
-  rule print "starting to step\n" &
+  rule print "S-Asgn\n" &
        eval(Env,e) => v &
        stay(Env) => Cs &
        models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
+
+  rule print "S-SeqSkip\n" &
+       step(Env, Cstore, s) => (Env', Cstore')
+       --------------------------------------------------
+       step(Env, Cstore, SEQ(SKIP, s)) => (Env', Cstore')
+
+  rule print "S-SeqStep\n" &
+       step(Env, Cstore, s1) => (Env', Cstore') &
+       step(Env', Cstore', s2) => (Env'', Cstore'')
+       --------------------------------------------------
+       step(Env, Cstore, SEQ(s1, s2)) => (Env'', Cstore'')
 end
 
 relation eval: (Env, Exp) => Value =
@@ -70,6 +81,12 @@ end
 
 relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(CONSTANT(TRUE)))
+
+  rule print "StayOne\n" &
+       stay(rest) => C0
+       --------------------------------
+       stay((x, v) :: rest) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
+       
 end
 
 relation models: Constraint => Env =
@@ -78,6 +95,36 @@ end
 (* (* Call solver in C *)
 relation models: Constraint => Env
 *)
+
+relation lookupEnv: (Env, Variable) => Value  =
+  rule  id = id2
+        ------------------------------
+        lookupEnv((id2,value) :: _, id) => value
+
+  rule  not id=id2  &  lookupEnv(rest, id) => value
+        -------------------------------------
+        lookupEnv((id2,_) :: rest, id)  => value
+end
+
+relation apply_binop: (Op,Value,Value) => Value =
+
+ rule   x +. y => z
+        -------------------------                             (* x+y *)
+        apply_binop(ADD,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+
+ rule   x -. y => z
+        -------------------------                             (* x-y *)
+        apply_binop(SUB,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+
+ rule   x *. y => z
+        -------------------------                             (* x*y *)
+        apply_binop(MUL,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+
+ rule   x /. y => z
+        ------------------------                              (* x/y *)
+        apply_binop(DIV,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+
+end (* apply_real_binop *)
 
 (*
 relation printvalue:(Value) => () =
@@ -186,26 +233,6 @@ relation apply_int_binop: (BinOp,int,int) => int =
         ------------------------                              (* x/y *)
         apply_int_binop(DIV,x,y) => z
 end
-
-relation apply_real_binop: (BinOp,real,real) => real =
-
- rule   x +. y => z
-        -------------------------                             (* x+y *)
-        apply_real_binop(ADD,x,y) => z
-
- rule   x -. y => z
-        -------------------------                             (* x-y *)
-        apply_real_binop(SUB,x,y) => z
-
- rule   x *. y => z
-        -------------------------                             (* x*y *)
-        apply_real_binop(MUL,x,y) => z
-
- rule   x /. y => z
-        ------------------------                              (* x/y *)
-        apply_real_binop(DIV,x,y) => z
-
-end (* apply_real_binop *)
 
 relation apply_int_unop: (UnOp,int) => int =
 
