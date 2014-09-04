@@ -27,7 +27,7 @@ rcon         {rcon1}|{rcon2}
 
 {whitespace} ;
 {ident}      return lex_ident(); /* T_IDENT */
-{icon}       return lex_rcon();  /* T_REALCONST */
+{icon}       return lex_rcon();  /* convert ints to T_REALCONST */
 {rcon}       return lex_rcon();  /* T_REALCONST */
 ":="         return T_ASSIGN;
 "+"          return T_ADD;

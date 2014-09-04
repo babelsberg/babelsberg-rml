@@ -76,6 +76,17 @@ end
 
 relation eval: (Env, Exp) => Value =
   axiom eval(_, VALUE(c)) => c
+
+  rule lookupEnv(Env, x) => v
+       ----------------------
+       eval(Env, VARIABLE(x)) => v
+
+  rule eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       apply_binop(op,v1,v2) => v
+       ------------------------------
+       eval(Env, OP(e1, op, e2)) => v
+       
 end
 
 relation stay: Env => Constraint =
