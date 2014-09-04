@@ -25,7 +25,7 @@ module assigntwotype:
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
 
-  datatype Constant = INT of int |  REAL of real | TRUE | FALSE | NIL
+  datatype Constant = REAL of real | TRUE | FALSE | NIL
 
   datatype Variable = string
 
@@ -34,7 +34,7 @@ module assigntwotype:
   datatype Comb = AND
 
 (* Values stored in environments *)
-  datatype Value   = CONSTANT of Constant
+  type Value   = Constant
 
 (* Bindings and environments *)
   type VarBnd      = (Variable * Value)
@@ -42,15 +42,14 @@ module assigntwotype:
   type Cstore      = Constraint
 
 (* Ty2 is an auxiliary datatype used to handle types during evaluation *)
-  datatype Ty2     =  INT2 of int * int
-                   |  REAL2 of real * real
+  datatype Ty2     =  REAL2 of real * real
 
   relation evalprogram: Program => ()
 end
 
 relation evalprogram: Program => () =
   rule print "starting to evaluate\n" &
-       step([], CONSTRAINT(REQUIRED, VALUE(CONSTANT(TRUE))), statement) => (Env, Cstore)
+       step([], CONSTRAINT(REQUIRED, VALUE(TRUE)), statement) => (Env, Cstore)
        -------------------------------------
        evalprogram(PROGRAM(statement))
 end
@@ -80,7 +79,7 @@ relation eval: (Env, Exp) => Value =
 end
 
 relation stay: Env => Constraint =
-  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(CONSTANT(TRUE)))
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
 
   rule print "StayOne\n" &
        stay(rest) => C0
@@ -110,19 +109,19 @@ relation apply_binop: (Op,Value,Value) => Value =
 
  rule   x +. y => z
         -------------------------                             (* x+y *)
-        apply_binop(ADD,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+        apply_binop(ADD,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x -. y => z
         -------------------------                             (* x-y *)
-        apply_binop(SUB,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+        apply_binop(SUB,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x *. y => z
         -------------------------                             (* x*y *)
-        apply_binop(MUL,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+        apply_binop(MUL,REAL(x),REAL(y)) => (REAL(z))
 
  rule   x /. y => z
         ------------------------                              (* x/y *)
-        apply_binop(DIV,CONSTANT(REAL(x)),CONSTANT(REAL(y))) => CONSTANT(REAL(z))
+        apply_binop(DIV,REAL(x),REAL(y)) => (REAL(z))
 
 end (* apply_real_binop *)
 

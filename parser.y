@@ -11,7 +11,6 @@ extern void* absyntree;
 %token T_SEMIC
 %token T_ASSIGN
 %token T_IDENT
-%token T_INTCONST
 %token T_REALCONST
 %token T_LPAREN T_RPAREN
 %token T_ADD
@@ -88,8 +87,8 @@ wexpression     : sexpression soperation expression
 sexpression     : eexpression woperation expression
                         { $$ = assigntwotype__OP($1, $2, $3); }
                 | eexpression
-eexpression     : constant
-                        { $$ = assigntwotype__CONSTANT($1); }
+eexpression     : value
+                        { $$ = assigntwotype__VALUE($1); }
                 | variable
                         { $$ = assigntwotype__VARIABLE($1); }
 
@@ -116,9 +115,7 @@ comparison      : T_LESSTHAN
 combination     : T_AND
                         { $$ = assigntwotype__AND;}
 
-constant        : T_INTCONST
-                        { $$ = assigntwotype__INT($1);}
-                | T_REALCONST
+constant        : T_REALCONST
                         { $$ = assigntwotype__REAL($1);}
                 | T_TRUE
                         { $$ = assigntwotype__TRUE; }
@@ -129,3 +126,5 @@ constant        : T_INTCONST
 
 variable        : T_IDENT
                         { $$ = assigntwotype__VARIABLE($1); }
+
+value           : constant
