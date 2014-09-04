@@ -19,13 +19,13 @@ module assigntwotype:
 
   datatype Rho = WEAK | REQUIRED
 
-  datatype Exp = CONSTANT of Constant
+  datatype Exp = VALUE of Value
                | VARIABLE of Variable
 	       | OP of Exp * Op * Exp
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
 
-  datatype Constant = INT of int |  REAL of real
+  datatype Constant = INT of int |  REAL of real | TRUE | FALSE | NIL
 
   datatype Variable = string
 
@@ -34,21 +34,51 @@ module assigntwotype:
   datatype Comb = AND
 
 (* Values stored in environments *)
-  datatype Value   =  INTval of int
-                   |  REALval of real
+  datatype Value   = CONSTANT of Constant
 
 (* Bindings and environments *)
-  type VarBnd      =  (Variable * Value)
-  type Env         =  VarBnd list
+  type VarBnd      = (Variable * Value)
+  type Env         = VarBnd list
+  type Cstore      = Constraint
 
 (* Ty2 is an auxiliary datatype used to handle types during evaluation *)
   datatype Ty2     =  INT2 of int * int
                    |  REAL2 of real * real
 
-(*
-  relation evalprogram: Statement => ()
-*)
+  relation evalprogram: Program => ()
 end
+
+relation evalprogram: Program => () =
+  rule print "starting to evaluate\n" &
+       step([], CONSTRAINT(REQUIRED, VALUE(CONSTANT(TRUE))), statement) => (Env, Cstore)
+       -------------------------------------
+       evalprogram(PROGRAM(statement))
+end
+
+relation step: (Env, Cstore, Statement) => (Env, Cstore) =
+  rule print "starting to step\n" &
+       eval(Env,e) => v &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
+       ----------------------------------------------
+       step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
+end
+
+relation eval: (Env, Exp) => Value =
+  axiom eval(_, VALUE(c)) => c
+end
+
+relation stay: Env => Constraint =
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(CONSTANT(TRUE)))
+end
+
+relation models: Constraint => Env =
+  axiom models(_) => []
+end
+(* (* Call solver in C *)
+relation models: Constraint => Env
+*)
+
 (*
 relation printvalue:(Value) => () =
   rule  int_string(x) => x' &
@@ -61,21 +91,6 @@ relation printvalue:(Value) => () =
         ----------------------
         printvalue(REALval(x))
 end (* printvalue *)
-
-relation evalprogram: Statement => () =
-
-  rule  print "evp1\n" &
-        list_reverse assignments => assignments' &
-        print "evp2\n" &
-        evals([], assignments') => env2 &
-        print "evp3\n" &
-        eval(env2, exp) => (_, value) &
-        print "evp4\n" &
-        printvalue(value)
-        -------------------------------------
-        evalprogram(STATEMENT(assignments, exp))
-
-end
 
 relation evals: (Env,Exp list) => Env  =
 

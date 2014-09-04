@@ -120,6 +120,12 @@ constant        : T_INTCONST
                         { $$ = assigntwotype__INT($1);}
                 | T_REALCONST
                         { $$ = assigntwotype__REAL($1);}
+                | T_TRUE
+                        { $$ = assigntwotype__TRUE; }
+                | T_FALSE
+                        { $$ = assigntwotype__FALSE; }
+                | T_NIL
+                        { $$ = assigntwotype__NIL; }
 
 variable        : T_IDENT
                         { $$ = assigntwotype__VARIABLE($1); }
