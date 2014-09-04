@@ -1,0 +1,250 @@
+(* file assignment.rml *)
+
+module assigntwotype:
+
+(* Abstract syntax for the Assigntwotype language *)
+
+  datatype Program = PROGRAM of Statement
+
+  datatype Statement = STATEMENT of Statement list * Statement
+                     | SKIP
+		     | ASSIGN of Variable * Exp
+		     | ALWAYS of Constraint
+		     | ONCE of Constraint
+		     | IF of Exp * Statement * Statement
+		     | WHILE of Exp * Statement
+
+  datatype Constraint = CONSTRAINT of Rho * Exp
+                      | COMPOUNDCONSTRAINT of Constraint * Constraint
+
+  datatype Rho = WEAK | REQUIRED
+
+  datatype Exp = CONSTANT of Constant
+               | VARIABLE of Variable
+	       | OP of Exp * Op * Exp
+	       | COMPARE of Exp * Comp * Exp
+	       | COMBINE of Exp * Comb * Exp
+
+  datatype Constant = INT of int |  REAL of real
+
+  datatype Variable = string
+
+  datatype Op =  ADD | SUB | MUL | DIV
+  datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
+  datatype Comb = AND
+
+(* Values stored in environments *)
+  datatype Value   =  INTval of int
+                   |  REALval of real
+
+(* Bindings and environments *)
+  type VarBnd      =  (Variable * Value)
+  type Env         =  VarBnd list
+
+(* Ty2 is an auxiliary datatype used to handle types during evaluation *)
+  datatype Ty2     =  INT2 of int * int
+                   |  REAL2 of real * real
+
+(*
+  relation evalprogram: Statement => ()
+*)
+end
+(*
+relation printvalue:(Value) => () =
+  rule  int_string(x) => x' &
+        print x'
+        ---------------------
+        printvalue(INTval(x))
+
+  rule  real_string(x) => x' &
+        print x'
+        ----------------------
+        printvalue(REALval(x))
+end (* printvalue *)
+
+relation evalprogram: Statement => () =
+
+  rule  print "evp1\n" &
+        list_reverse assignments => assignments' &
+        print "evp2\n" &
+        evals([], assignments') => env2 &
+        print "evp3\n" &
+        eval(env2, exp) => (_, value) &
+        print "evp4\n" &
+        printvalue(value)
+        -------------------------------------
+        evalprogram(STATEMENT(assignments, exp))
+
+end
+
+relation evals: (Env,Exp list) => Env  =
+
+  axiom evals(e, []) => e
+
+  rule  eval(env, exp) => (env2, _) &
+        evals(env2, expl) => env3
+        ----------------------------
+        evals(env, exp::expl) => env3
+
+end
+
+relation eval:  (Env,Exp) => (Env,Value)  =
+(* Evaluation of expression exp in current environment env, returning
+ * a possibly updated environment, and a value which can be either an
+ * integer- or real-typed constant value, tagged with constructors
+ * INTval or REALval, respectively *)
+
+  axiom eval(env, INT(ival) ) => (env, INTval(ival))   (* int constant *)
+
+  axiom eval(env,REAL(rval) ) => (env,REALval(rval))  (* real constant *)
+
+  rule  lookupextend(env,id) => (env2,value)
+        -----------------------------------            (* variable id *)
+        eval(env,IDENT(id)) => (env2,value)
+
+  rule  eval(env,e1)    => (env1,v1) & 
+        eval(env,e2)    => (env2,v2) &
+        type_lub(v1,v2) => INT2(x,y) &
+        apply_int_binop(binop,x,y) => z
+        --------------------------------             (* int binop int *)
+        eval(env, BINARY(e1,binop,e2)) => (env2,INTval(z))
+
+ rule   eval(env,e1)    => (env1,v1) & 
+        eval(env,e2)    => (env2,v2) &
+        type_lub(v1,v2) => REAL2(x,y) &
+        apply_real_binop(binop,x,y) => z
+        --------------------------------   (* int/real binop int/real *)
+        eval(env, BINARY(e1,binop,e2)) => (env2,REALval(z))
+
+  rule  eval(env,e) => (env1,INTval(x))  &
+        apply_int_unop(unop,x) => y
+        -----------------------------------             (* int unop exp *)
+        eval(env, UNARY(unop,e) ) => (env1,INTval(y))
+
+  rule  eval(env,e) => (env1,REALval(x))  &
+        apply_real_unop(unop,x) => y
+        ------------------------------------            (* real unop exp *)
+        eval(env, UNARY(unop,e) ) => (env1,REALval(y))
+
+  (* eval of an assignment node returns the updated environment and
+   * the assigned value *)
+  rule  eval(env,exp) => (env1,value)  &
+        update(env1,id,value) => env2 
+        ----------------------------------------        (* id := exp *)
+        eval(env, ASSIGN(id,exp)) => (env2,value)
+
+(* Note: there will be no type error if a real value is assigned to an
+ * existing integer-typed variable, since the variable will change
+ * type when it is updated *)
+
+end (* eval *)
+
+relation type_lub: (Value,Value) => Ty2  =
+ axiom  type_lub(INTval(x), INTval(y))   =>  INT2(x,y)
+
+ rule   int_real(x) => x2
+        ----------------
+        type_lub(INTval(x), REALval(y))  =>  REAL2(x2,y)
+
+ rule   int_real(y) => y2
+        -----------------
+        type_lub(REALval(x),INTval(y))   =>  REAL2(x,y2)
+
+ axiom  type_lub(REALval(x),REALval(y))  =>  REAL2(x,y)
+end
+
+relation apply_int_binop: (BinOp,int,int) => int =
+
+ rule   x + y => z
+        ------------------------                              (* x+y *)
+        apply_int_binop(ADD,x,y) => z
+
+ rule   x - y => z
+        ------------------------                              (* x-y *)
+        apply_int_binop(SUB,x,y) => z
+
+ rule   x * y => z
+        ------------------------                              (* x*y *)
+        apply_int_binop(MUL,x,y) => z
+
+ rule   x / y => z
+        ------------------------                              (* x/y *)
+        apply_int_binop(DIV,x,y) => z
+end
+
+relation apply_real_binop: (BinOp,real,real) => real =
+
+ rule   x +. y => z
+        -------------------------                             (* x+y *)
+        apply_real_binop(ADD,x,y) => z
+
+ rule   x -. y => z
+        -------------------------                             (* x-y *)
+        apply_real_binop(SUB,x,y) => z
+
+ rule   x *. y => z
+        -------------------------                             (* x*y *)
+        apply_real_binop(MUL,x,y) => z
+
+ rule   x /. y => z
+        ------------------------                              (* x/y *)
+        apply_real_binop(DIV,x,y) => z
+
+end (* apply_real_binop *)
+
+relation apply_int_unop: (UnOp,int) => int =
+
+ rule   -x => y
+        ------------------------                              (* -x *)
+        apply_int_unop(NEG,x) => y
+
+end (* apply_int_unop *)
+
+
+relation apply_real_unop: (UnOp,real) => real =
+
+ rule   -. x => y
+        ------------------------                              (* -x *)
+        apply_real_unop(NEG,x) => y
+
+end (* apply_real_unop *)
+
+relation lookup: (Env,Ident) => Value  =
+(* lookup returns the value associated with an identifier.
+ * If no association is present, lookup will fail. *)
+
+(* Identifier id is found in the first pair of the list, and value
+ * is returned. *)
+  rule  id = id2
+        ------------------------------
+        lookup((id2,value) :: _, id) => value
+
+(* id is not found in the first pair of the list, and lookup will
+ * recursively search the rest of the list. If found, value is returned.
+ *)
+  rule  not id=id2  &  lookup(rest, id) => value
+        -------------------------------------
+        lookup((id2,_) :: rest, id)  => value
+end (* lookup *)
+
+relation lookupextend: (Env,Ident) => (Env,Value)  =
+(* Return value of id in env. If id not present, add id and return 0 *)
+
+  rule  not lookup(env,id) => v &
+        let value = INTval(0)
+        -----------------------------
+        lookupextend(env, id) => ((id, value)::env,value)
+
+  rule  lookup(env,id) => value
+        --------------------------------
+        lookupextend(env, id)  => (env,value)
+end (* lookupextend *)
+
+relation update: (Env,Ident,Value) => Env  =
+(* Store binding of id to value at front of environment env *)
+
+  axiom update(env,id,value) => ((id,value) :: env)
+
+end (* update *)
+
+*)
