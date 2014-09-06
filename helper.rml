@@ -1,0 +1,106 @@
+module Util:
+  with "babelsbergP.rml"
+
+  relation lookupEnv: (babelsbergP.Env, babelsbergP.Variable) => babelsbergP.Value
+  relation apply_binop: (babelsbergP.Op,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
+  relation apply_bincomp: (babelsbergP.Comp,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
+  relation apply_bincomb: (babelsbergP.Comb,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
+end
+
+relation lookupEnv: (babelsbergP.Env, babelsbergP.Variable) => babelsbergP.Value  =
+  rule  id = id2
+	------------------------------
+	lookupEnv((id2,value) :: _, id) => value
+
+  rule  not id=id2  &  lookupEnv(rest, id) => value
+	-------------------------------------
+	lookupEnv((id2,_) :: rest, id)  => value
+end
+
+relation apply_binop: (babelsbergP.Op,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value =
+
+ rule   x +. y => z
+	-------------------------                             (* x+y *)
+	apply_binop(babelsbergP.ADD,babelsbergP.REAL(x),babelsbergP.REAL(y)) => (babelsbergP.REAL(z))
+
+ rule   x -. y => z
+	-------------------------                             (* x-y *)
+	apply_binop(babelsbergP.SUB,babelsbergP.REAL(x),babelsbergP.REAL(y)) => (babelsbergP.REAL(z))
+
+ rule   x *. y => z
+	-------------------------                             (* x*y *)
+	apply_binop(babelsbergP.MUL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => (babelsbergP.REAL(z))
+
+ rule   x /. y => z
+	------------------------                              (* x/y *)
+	apply_binop(babelsbergP.DIV,babelsbergP.REAL(x),babelsbergP.REAL(y)) => (babelsbergP.REAL(z))
+end
+
+relation apply_bincomp: (babelsbergP.Comp,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value =
+(* reals *)
+  rule  x <. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsbergP.LESSTHAN,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.TRUE
+
+  rule  x <. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsbergP.LESSTHAN,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.FALSE
+
+  rule  x <=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsbergP.LEQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.TRUE
+
+  rule  x <=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsbergP.LEQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.FALSE
+
+  rule  x ==. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsbergP.EQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.TRUE
+
+  rule  x ==. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsbergP.EQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.FALSE
+
+  rule  x >=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsbergP.GEQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.TRUE
+
+  rule  x >=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsbergP.GEQUAL,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.FALSE
+
+  rule  x >. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsbergP.GREATERTHAN,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.TRUE
+
+  rule  x >. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsbergP.GREATERTHAN,babelsbergP.REAL(x),babelsbergP.REAL(y)) => babelsbergP.FALSE
+
+(* specials *)
+  axiom apply_bincomp(babelsbergP.EQUAL,babelsbergP.TRUE,babelsbergP.TRUE) => babelsbergP.TRUE
+  axiom apply_bincomp(babelsbergP.EQUAL,babelsbergP.FALSE,babelsbergP.FALSE) => babelsbergP.TRUE
+  axiom apply_bincomp(babelsbergP.EQUAL,babelsbergP.NIL,babelsbergP.NIL) => babelsbergP.TRUE
+
+(* generic *)
+  axiom apply_bincomp(babelsbergP.EQUAL,_,_) => babelsbergP.FALSE
+end
+
+relation apply_bincomb: (babelsbergP.Comb,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value =
+  axiom apply_bincomb(babelsbergP.AND,babelsbergP.TRUE,babelsbergP.TRUE) => babelsbergP.TRUE
+  axiom apply_bincomb(babelsbergP.AND,babelsbergP.TRUE,babelsbergP.FALSE) => babelsbergP.FALSE
+  axiom apply_bincomb(babelsbergP.AND,babelsbergP.FALSE,babelsbergP.TRUE) => babelsbergP.FALSE
+  axiom apply_bincomb(babelsbergP.AND,babelsbergP.FALSE,babelsbergP.FALSE) => babelsbergP.FALSE
+end
+

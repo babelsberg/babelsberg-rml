@@ -1,7 +1,6 @@
 (* file assignment.rml *)
 
 module babelsbergP:
-
 (* Abstract syntax for the BabelsbergP language *)
 
   datatype Program = PROGRAM of Statement
@@ -27,7 +26,7 @@ module babelsbergP:
 
   datatype Constant = REAL of real | TRUE | FALSE | NIL
 
-  datatype Variable = string
+  type Variable = string
 
   datatype Op =  ADD | SUB | MUL | DIV
   datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
@@ -78,28 +77,28 @@ relation eval: (Env, Exp) => Value =
   axiom eval(_, VALUE(c)) => c
 
   rule print "E-Var\n" &
-       lookupEnv(Env, x) => v
+       Util.lookupEnv(Env, x) => v
        ----------------------
        eval(Env, VARIABLE(x)) => v
 
   rule print "E-Op\n" &
        eval(Env, e1) => v1 &
        eval(Env, e2) => v2 &
-       apply_binop(op,v1,v2) => v
+       Util.apply_binop(op,v1,v2) => v
        ------------------------------
        eval(Env, OP(e1, op, e2)) => v
 
   rule print "E-Compare\n" &
        eval(Env, e1) => v1 &
        eval(Env, e2) => v2 &
-       apply_bincomp(op,v1,v2) => v
+       Util.apply_bincomp(op,v1,v2) => v
        ------------------------------
        eval(Env, COMPARE(e1, op, e2)) => v
 
   rule print "E-Combine\n" &
        eval(Env, e1) => v1 &
        eval(Env, e2) => v2 &
-       apply_bincomb(op,v1,v2) => v
+       Util.apply_bincomb(op,v1,v2) => v
        ------------------------------
        eval(Env, COMBINE(e1, op, e2)) => v
 end
@@ -114,107 +113,16 @@ relation stay: Env => Constraint =
 
 end
 
+with "solver.rml"
+with "printer.rml"
+with "helper.rml"
+
 relation models: Constraint => Env =
-  axiom models(_) => []
-end
-(* Call solver in C *)
-relation solve: Constraint => Env
-
-relation lookupEnv: (Env, Variable) => Value  =
-  rule  id = id2
-	------------------------------
-	lookupEnv((id2,value) :: _, id) => value
-
-  rule  not id=id2  &  lookupEnv(rest, id) => value
-	-------------------------------------
-	lookupEnv((id2,_) :: rest, id)  => value
-end
-
-relation apply_binop: (Op,Value,Value) => Value =
-
- rule   x +. y => z
-	-------------------------                             (* x+y *)
-	apply_binop(ADD,REAL(x),REAL(y)) => (REAL(z))
-
- rule   x -. y => z
-	-------------------------                             (* x-y *)
-	apply_binop(SUB,REAL(x),REAL(y)) => (REAL(z))
-
- rule   x *. y => z
-	-------------------------                             (* x*y *)
-	apply_binop(MUL,REAL(x),REAL(y)) => (REAL(z))
-
- rule   x /. y => z
-	------------------------                              (* x/y *)
-	apply_binop(DIV,REAL(x),REAL(y)) => (REAL(z))
-end
-
-relation apply_bincomp: (Comp,Value,Value) => Value =
-(* reals *)
-  rule  x <. y => z &
-	bool_eq(z, true) => true
-	-------------------------
-	apply_bincomp(LESSTHAN,REAL(x),REAL(y)) => TRUE
-
-  rule  x <. y => z &
-	bool_eq(z, false) => true
-	-------------------------
-	apply_bincomp(LESSTHAN,REAL(x),REAL(y)) => FALSE
-
-  rule  x <=. y => z &
-	bool_eq(z, true) => true
-	-------------------------
-	apply_bincomp(LEQUAL,REAL(x),REAL(y)) => TRUE
-
-  rule  x <=. y => z &
-	bool_eq(z, false) => true
-	-------------------------
-	apply_bincomp(LEQUAL,REAL(x),REAL(y)) => FALSE
-
-  rule  x ==. y => z &
-	bool_eq(z, true) => true
-	-------------------------
-	apply_bincomp(EQUAL,REAL(x),REAL(y)) => TRUE
-
-  rule  x ==. y => z &
-	bool_eq(z, false) => true
-	-------------------------
-	apply_bincomp(EQUAL,REAL(x),REAL(y)) => FALSE
-
-  rule  x >=. y => z &
-	bool_eq(z, true) => true
-	-------------------------
-	apply_bincomp(GEQUAL,REAL(x),REAL(y)) => TRUE
-
-  rule  x >=. y => z &
-	bool_eq(z, false) => true
-	-------------------------
-	apply_bincomp(GEQUAL,REAL(x),REAL(y)) => FALSE
-
-  rule  x >. y => z &
-	bool_eq(z, true) => true
-	-------------------------
-	apply_bincomp(GREATERTHAN,REAL(x),REAL(y)) => TRUE
-
-  rule  x >. y => z &
-	bool_eq(z, false) => true
-	-------------------------
-	apply_bincomp(GREATERTHAN,REAL(x),REAL(y)) => FALSE
-
-(* specials *)
-  axiom apply_bincomp(EQUAL,TRUE,TRUE) => TRUE
-  axiom apply_bincomp(EQUAL,FALSE,FALSE) => TRUE
-  axiom apply_bincomp(EQUAL,NIL,NIL) => TRUE
-
-(* generic *)
-  axiom apply_bincomp(EQUAL,_,_) => FALSE
-end
-
-relation apply_bincomb: (Comb,Value,Value) => Value =
-  axiom apply_bincomb(AND,TRUE,TRUE) => TRUE
-  axiom apply_bincomb(AND,TRUE,FALSE) => FALSE
-  axiom apply_bincomb(AND,FALSE,TRUE) => FALSE
-  axiom apply_bincomb(AND,FALSE,FALSE) => FALSE
+  rule Print.printC(C) => Cs &
+       Solver.solve(Cs) => El &
+       Print.parseEnvironment(El, []) => E
+       ------------------------------
+       models(C) => E
 end
 
 (*
