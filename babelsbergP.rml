@@ -61,10 +61,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
 
-  rule print "S-SeqSkip\n" &
-       step(Env, Cstore, s) => (Env', Cstore')
-       --------------------------------------------------
-       step(Env, Cstore, SEQ(SKIP, s)) => (Env', Cstore')
+  axiom step(Env, Cstore, SKIP) => (Env, Cstore)
 
   rule print "S-SeqStep\n" &
        step(Env, Cstore, s1) => (Env', Cstore') &
