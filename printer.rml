@@ -10,24 +10,28 @@ relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
   axiom parseEnvironment([], E) => E
 
   rule parseEnvironment(rest, E) => E' &
-       value = "true"
+       value = "true" &
+       print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.TRUE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.TRUE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
-       value = "false"
+       value = "false" &
+       print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.FALSE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.FALSE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
-       value = "nil"
+       value = "nil" &
+       print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.NIL) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.NIL) :: E')
 
   rule parseEnvironment(rest, E) => E' &
-       Solver.string_real(value) => v
+       Solver.string_real(value) => v &
+       print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.REAL(v)) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.REAL(v)) :: E')
 end
 
 relation printC: babelsbergP.Constraint => string =
@@ -35,7 +39,7 @@ relation printC: babelsbergP.Constraint => string =
        printE(e) => es &
        string_append("\nweak ", es) => cs
        --------------
-       printC(babelsbergP.CONSTRAINT(WEAK, e)) => cs
+       printC(babelsbergP.CONSTRAINT(babelsbergP.WEAK, e)) => cs
 
   rule print "PrintReq\n" &
        printE(e) => es &
@@ -57,10 +61,9 @@ relation printE: babelsbergP.Exp => string =
        --------------------
        printE(babelsbergP.VALUE(babelsbergP.REAL(c))) => cs
 
-  rule string_length(x) => xl &
-       int_string(xl) => xs
+  rule print x
        --------------------------
-       printE(babelsbergP.VARIABLE(x)) => xs
+       printE(babelsbergP.VARIABLE(babelsbergP.STRING(x))) => x
 
   rule print "Print OP\n" &
        printE(e1) => e1s &

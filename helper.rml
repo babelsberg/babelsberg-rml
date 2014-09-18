@@ -12,9 +12,13 @@ relation lookupEnv: (babelsbergP.Env, babelsbergP.Variable) => babelsbergP.Value
 	------------------------------
 	lookupEnv((id2,value) :: _, id) => value
 
-  rule  not id=id2  &  lookupEnv(rest, id) => value
+  rule  not id=id2 & lookupEnv(rest, id) => value
 	-------------------------------------
 	lookupEnv((id2,_) :: rest, id)  => value
+
+  rule  not id=id2 & print "Error during lookup"
+	-------------------------------------
+	lookupEnv((id2,_) :: rest, id)  => babelsbergP.REAL(1.0)
 end
 
 relation apply_binop: (babelsbergP.Op,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value =
