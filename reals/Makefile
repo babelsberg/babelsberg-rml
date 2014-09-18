@@ -1,20 +1,21 @@
-include ../../../config.cache
+include ../rml/config.cache
 # VARIABLES
 
-GOROOT = ../../..
+GOROOT = ../rml
 LDLIBS =  -lfl -lm
+BIN = babelsberg-reals
 
 # EVERYTHING
-all:	calc
+all: $(BIN)
 
 
 # MAIN PROGRAM
 
 CALCOBJS= main.o lexer.o parser.o babelsbergP.o solver.o printer.o helper.o
-CLEAN=calc calc.exe $(CALCOBJS) lexer.c parser.c parser.h babelsbergP.c babelsbergP.h
+CLEAN=$(BIN) $(BIN).exe $(CALCOBJS) lexer.c parser.c parser.h babelsbergP.c babelsbergP.h
 
-calc: $(CALCOBJS)
-	$(LINK.rml) $(CALCOBJS) $(LDLIBS) -o calc
+$(BIN): $(CALCOBJS)
+	$(LINK.rml) $(CALCOBJS) $(LDLIBS) -o $(BIN)
 
 main.o:	 main.c babelsbergP.h
 

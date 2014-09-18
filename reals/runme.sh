@@ -5,7 +5,7 @@ cat program.txt
 echo "
 "
 echo Running the calculator on the program
-cat program.txt | ./calc
+cat program.txt | ./babelsberg-reals
 
 echo "
 
