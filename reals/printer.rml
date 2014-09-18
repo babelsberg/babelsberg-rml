@@ -85,7 +85,8 @@ relation printE: babelsbergP.Exp => string =
   rule print "Print COMBINE\n" &
        printE(e1) => e1s &
        printE(e2) => e2s &
-       string_append(e1s, " && ") => es &
+       printComb(op) => os &
+       string_append(e1s, os) => es &
        string_append(es, e2s) => es'
        --------------------------------
        printE(babelsbergP.COMBINE(e1, op, e2)) => es'
@@ -108,4 +109,9 @@ relation printComp: babelsbergP.Comp => string =
   axiom printComp(babelsbergP.EQUAL) => " = "
   axiom printComp(babelsbergP.GEQUAL) => " >= "
   axiom printComp(babelsbergP.GREATERTHAN) => " > "
+end
+
+relation printComb: babelsbergP.Comb => string =
+  axiom printComb(babelsbergP.AND) => " and "
+  axiom printComb(babelsbergP.OR) => " or "
 end

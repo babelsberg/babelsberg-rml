@@ -102,5 +102,9 @@ relation apply_bincomb: (babelsbergP.Comb,babelsbergP.Value,babelsbergP.Value) =
   axiom apply_bincomb(babelsbergP.AND,babelsbergP.TRUE,babelsbergP.FALSE) => babelsbergP.FALSE
   axiom apply_bincomb(babelsbergP.AND,babelsbergP.FALSE,babelsbergP.TRUE) => babelsbergP.FALSE
   axiom apply_bincomb(babelsbergP.AND,babelsbergP.FALSE,babelsbergP.FALSE) => babelsbergP.FALSE
+  axiom apply_bincomb(babelsbergP.OR,babelsbergP.TRUE,babelsbergP.TRUE) => babelsbergP.TRUE
+  axiom apply_bincomb(babelsbergP.OR,babelsbergP.TRUE,babelsbergP.FALSE) => babelsbergP.TRUE
+  axiom apply_bincomb(babelsbergP.OR,babelsbergP.FALSE,babelsbergP.TRUE) => babelsbergP.TRUE
+  axiom apply_bincomb(babelsbergP.OR,babelsbergP.FALSE,babelsbergP.FALSE) => babelsbergP.FALSE
 end
 

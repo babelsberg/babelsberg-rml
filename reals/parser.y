@@ -23,6 +23,7 @@ extern void* absyntree;
 %token T_GEQUAL
 %token T_GREATERTHAN
 %token T_AND
+%token T_OR
 
 %token T_GARBAGE
 
@@ -67,7 +68,7 @@ statement       : statement T_SEMIC statement
 
 constraint      : rho expression
 			{ $$ = babelsbergP__CONSTRAINT($1, $2); }
-                | expression
+		| expression
 			{ $$ = babelsbergP__CONSTRAINT(babelsbergP__REQUIRED, $1); }
 		| constraint T_AND constraint
 			{ $$ = babelsbergP__COMPOUNDCONSTRAINT($1, $3); }
@@ -77,7 +78,10 @@ rho             : T_WEAK
 		| T_REQUIRED
 			{ $$ = babelsbergP__REQUIRED; }
 
-expression      : cexpression combination expression
+expression      : orexpression combination expression
+			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
+		| orexpression
+orexpression    : cexpression disjunction expression
 			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
 		| cexpression
 cexpression     : wexpression comparison expression
@@ -116,6 +120,9 @@ comparison      : T_LESSTHAN
 
 combination     : T_AND
 			{ $$ = babelsbergP__AND;}
+
+disjunction     : T_OR
+			{ $$ = babelsbergP__OR;}
 
 constant        : T_REALCONST
 			{ $$ = babelsbergP__REAL($1);}

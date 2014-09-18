@@ -30,7 +30,7 @@ module babelsbergP:
 
   datatype Op =  ADD | SUB | MUL | DIV
   datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
-  datatype Comb = AND
+  datatype Comb = AND | OR
 
 (* Values stored in environments *)
   type Value   = Constant

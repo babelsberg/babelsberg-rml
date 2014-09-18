@@ -39,6 +39,8 @@ rcon         {rcon1}|{rcon2}
 ">="         return T_GEQUAL;
 ">"          return T_GREATERTHAN;
 "&&"         return T_AND;
+"and"        return T_AND;
+"or"         return T_OR;
 "("          return T_LPAREN;
 ")"          return T_RPAREN;
 ";"          return T_SEMIC;
