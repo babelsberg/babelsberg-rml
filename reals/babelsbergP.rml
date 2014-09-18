@@ -1,0 +1,158 @@
+(* file assignment.rml *)
+
+module babelsbergP:
+(* Abstract syntax for the BabelsbergP language *)
+
+  datatype Program = PROGRAM of Statement
+
+  datatype Statement = SEQ of Statement * Statement
+		     | SKIP
+		     | ASSIGN of Variable * Exp
+		     | ALWAYS of Constraint
+		     | ONCE of Constraint
+		     | IF of Exp * Statement * Statement
+		     | WHILE of Exp * Statement
+
+  datatype Constraint = CONSTRAINT of Rho * Exp
+		      | COMPOUNDCONSTRAINT of Constraint * Constraint
+
+  datatype Rho = WEAK | REQUIRED
+
+  datatype Exp = VALUE of Value
+	       | VARIABLE of Variable
+	       | OP of Exp * Op * Exp
+	       | COMPARE of Exp * Comp * Exp
+	       | COMBINE of Exp * Comb * Exp
+
+  datatype Constant = REAL of real | TRUE | FALSE | NIL
+
+  type Variable = string
+
+  datatype Op =  ADD | SUB | MUL | DIV
+  datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
+  datatype Comb = AND
+
+(* Values stored in environments *)
+  type Value   = Constant
+
+(* Bindings and environments *)
+  type VarBnd      = (Variable * Value)
+  type Env         = VarBnd list
+  type Cstore      = Constraint
+
+  relation evalprogram: Program => ()
+end
+
+relation evalprogram: Program => () =
+  rule print "starting to evaluate\n" &
+       step([], CONSTRAINT(REQUIRED, VALUE(TRUE)), statement) => (Env, Cstore)
+       -------------------------------------
+       evalprogram(PROGRAM(statement))
+end
+
+relation step: (Env, Cstore, Statement) => (Env, Cstore) =
+  rule print "S-Asgn\n" &
+       eval(Env,e) => v &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs),
+              CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
+       ----------------------------------------------
+       step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
+
+  rule print "S-Once\n" &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
+       ----------------------------------------
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+
+  rule print "S-Always\n" &
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+       ----------------------------------------
+       step(Env, Cstore, ALWAYS(C0)) => (Env', COMPOUNDCONSTRAINT(Cstore, C0))
+
+  axiom step(Env, Cstore, SKIP) => (Env, Cstore)
+
+  rule print "S-SeqStep\n" &
+       step(Env, Cstore, s1) => (Env', Cstore') &
+       step(Env', Cstore', s2) => (Env'', Cstore'')
+       --------------------------------------------------
+       step(Env, Cstore, SEQ(s1, s2)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => TRUE &
+       print "S-IfThen\n" &
+       step(Env, Cstore, s1) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-IfElse\n" &
+       step(Env, Cstore, s2) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => TRUE &
+       print "S-WhileDo\n" &
+       step(Env, Cstore, s) => (Env', Cstore') &
+       step(Env', Cstore', WHILE(e, s)) => (Env'', Cstore'')
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-WhileSkip\n"
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env, Cstore)
+end
+
+relation eval: (Env, Exp) => Value =
+  axiom eval(_, VALUE(c)) => c
+
+  rule print "E-Var\n" &
+       Util.lookupEnv(Env, x) => v
+       ----------------------
+       eval(Env, VARIABLE(x)) => v
+
+  rule print "E-Op\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       Util.apply_binop(op,v1,v2) => v
+       ------------------------------
+       eval(Env, OP(e1, op, e2)) => v
+
+  rule print "E-Compare\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       Util.apply_bincomp(op,v1,v2) => v
+       ------------------------------
+       eval(Env, COMPARE(e1, op, e2)) => v
+
+  rule print "E-Combine\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       Util.apply_bincomb(op,v1,v2) => v
+       ------------------------------
+       eval(Env, COMBINE(e1, op, e2)) => v
+end
+
+relation stay: Env => Constraint =
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+
+  rule print "StayOne\n" &
+       stay(E0) => C0
+       --------------------------------
+       stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
+
+end
+
+with "solver.rml"
+with "printer.rml"
+with "helper.rml"
+
+relation models: Constraint => Env =
+  rule Print.printC(C) => Cs &
+       Solver.solve(Cs) => El &
+       Print.parseEnvironment(El, []) => E
+       ------------------------------
+       models(C) => E
+end
