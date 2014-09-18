@@ -67,6 +67,8 @@ statement       : statement T_SEMIC statement
 
 constraint      : rho expression
 			{ $$ = babelsbergP__CONSTRAINT($1, $2); }
+                | expression
+			{ $$ = babelsbergP__CONSTRAINT(babelsbergP__REQUIRED, $1); }
 		| constraint T_AND constraint
 			{ $$ = babelsbergP__COMPOUNDCONSTRAINT($1, $3); }
 

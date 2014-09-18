@@ -30,7 +30,7 @@ semantics.each do |s|
 end
 
 def run_example(s, example, errors)
-  puts "Program"
+  puts "Program #{example}:"
   puts File.read example
   exitcode = system "cat #{example} | ./babelsberg-#{s}"
   errors << example if exitcode != 0
