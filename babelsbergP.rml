@@ -59,13 +59,13 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
 
-  rule print "S-Once" &
+  rule print "S-Once\n" &
        stay(Env) => Cs &
        models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
        ----------------------------------------
        step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
 
-  rule print "S-Always" &
+  rule print "S-Always\n" &
        step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
        ----------------------------------------
        step(Env, Cstore, ALWAYS(C0)) => (Env', COMPOUNDCONSTRAINT(Cstore, C0))
@@ -79,20 +79,20 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        step(Env, Cstore, SEQ(s1, s2)) => (Env'', Cstore'')
 
   rule eval(Env, e) => TRUE &
-       print "S-IfThen" &
+       print "S-IfThen\n" &
        step(Env, Cstore, s1) => (Env', Cstore')
        ----------------------------------------
        step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
 
   rule eval(Env, e) => v &
        not v = TRUE &
-       print "S-IfElse" &
+       print "S-IfElse\n" &
        step(Env, Cstore, s2) => (Env', Cstore')
        ----------------------------------------
        step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
 
   rule eval(Env, e) => TRUE &
-       print "S-WhileDo" &
+       print "S-WhileDo\n" &
        step(Env, Cstore, s) => (Env', Cstore') &
        step(Env', Cstore', WHILE(e, s)) => (Env'', Cstore'')
        -----------------------------------------------------
@@ -100,7 +100,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
 
   rule eval(Env, e) => v &
        not v = TRUE &
-       print "S-WhileSkip"
+       print "S-WhileSkip\n"
        -----------------------------------------------------
        step(Env, Cstore, WHILE(e, s)) => (Env, Cstore)
 end
@@ -108,7 +108,7 @@ end
 relation eval: (Env, Exp) => Value =
   axiom eval(_, VALUE(c)) => c
 
-  rule print "E-Var" &
+  rule print "E-Var\n" &
        Util.lookupEnv(Env, x) => v
        ----------------------
        eval(Env, VARIABLE(x)) => v

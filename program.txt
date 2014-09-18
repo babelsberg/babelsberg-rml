@@ -1,1 +1,3 @@
-if false then a := 1 else a := 2
+a := 1;
+always required a = 2;
+a := 5
