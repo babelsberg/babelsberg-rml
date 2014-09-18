@@ -20,7 +20,7 @@ RML_BEGIN_LABEL(Solver__solve)
 	   "\n\nA terminal with nano will open. Please enter a new " \
 	   "environment satisfying the constraints as 'var[SPACE]value' pairs, "\
 	   "each separated by a newline. Save and close finishes.\n"\
-	   "To fail in the solver, just write 'unsat'.\n\n\n", first_param);
+	   "To fail in the solver, just write 'unsat'.\n\n", first_param);
     int exitcode = system("xterm -e '/usr/bin/nano input'");
     if (exitcode != 0) {
 	RML_TAILCALLK(rmlFC);
