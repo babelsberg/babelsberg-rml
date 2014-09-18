@@ -1,0 +1,3 @@
+x := 3;
+always weak x=5;
+always weak x="hello"
