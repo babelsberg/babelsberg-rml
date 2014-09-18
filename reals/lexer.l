@@ -35,6 +35,7 @@ rcon         {rcon1}|{rcon2}
 "/"          return T_DIV;
 "<"          return T_LESSTHAN;
 "<="         return T_LEQUAL;
+"!="         return T_NEQUAL;
 "="          return T_EQUAL;
 ">="         return T_GEQUAL;
 ">"          return T_GREATERTHAN;

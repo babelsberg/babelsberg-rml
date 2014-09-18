@@ -29,7 +29,7 @@ module babelsbergP:
   type Variable = string
 
   datatype Op =  ADD | SUB | MUL | DIV
-  datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
+  datatype Comp = LESSTHAN | LEQUAL | EQUAL | NEQUAL | GEQUAL | GREATERTHAN
   datatype Comb = AND | OR
 
 (* Values stored in environments *)

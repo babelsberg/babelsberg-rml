@@ -107,6 +107,7 @@ relation printComp: babelsbergP.Comp => string =
   axiom printComp(babelsbergP.LESSTHAN) => " < "
   axiom printComp(babelsbergP.LEQUAL) => " <= "
   axiom printComp(babelsbergP.EQUAL) => " = "
+  axiom printComp(babelsbergP.NEQUAL) => " != "
   axiom printComp(babelsbergP.GEQUAL) => " >= "
   axiom printComp(babelsbergP.GREATERTHAN) => " > "
 end

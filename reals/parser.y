@@ -20,6 +20,7 @@ extern void* absyntree;
 %token T_LESSTHAN
 %token T_LEQUAL
 %token T_EQUAL
+%token T_NEQUAL
 %token T_GEQUAL
 %token T_GREATERTHAN
 %token T_AND
@@ -113,6 +114,8 @@ comparison      : T_LESSTHAN
 			{ $$ = babelsbergP__LEQUAL;}
 		| T_EQUAL
 			{ $$ = babelsbergP__EQUAL;}
+		| T_NEQUAL
+			{ $$ = babelsbergP__NEQUAL;}
 		| T_GEQUAL
 			{ $$ = babelsbergP__GEQUAL;}
 		| T_GREATERTHAN
