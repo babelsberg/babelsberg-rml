@@ -1,2 +1,1 @@
-a := 1;
-b := a
+if false then a := 1 else a := 2

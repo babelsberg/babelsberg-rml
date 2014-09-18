@@ -59,6 +59,17 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
 
+  rule print "S-Once" &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
+       ----------------------------------------
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+
+  rule print "S-Always" &
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+       ----------------------------------------
+       step(Env, Cstore, ALWAYS(C0)) => (Env', COMPOUNDCONSTRAINT(Cstore, C0))
+
   axiom step(Env, Cstore, SKIP) => (Env, Cstore)
 
   rule print "S-SeqStep\n" &
@@ -66,6 +77,32 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        step(Env', Cstore', s2) => (Env'', Cstore'')
        --------------------------------------------------
        step(Env, Cstore, SEQ(s1, s2)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => TRUE &
+       print "S-IfThen" &
+       step(Env, Cstore, s1) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-IfElse" &
+       step(Env, Cstore, s2) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => TRUE &
+       print "S-WhileDo" &
+       step(Env, Cstore, s) => (Env', Cstore') &
+       step(Env', Cstore', WHILE(e, s)) => (Env'', Cstore'')
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-WhileSkip"
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env, Cstore)
 end
 
 relation eval: (Env, Exp) => Value =
@@ -102,9 +139,9 @@ relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
 
   rule print "StayOne\n" &
-       stay(rest) => C0
+       stay(E0) => C0
        --------------------------------
-       stay((x, v) :: rest) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
+       stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
 
 end
 
