@@ -152,7 +152,8 @@ with "helper.rml"
 relation models: Constraint => Env =
   rule Print.printC(C) => Cs &
        Solver.solve(Cs) => El &
-       Print.parseEnvironment(El, []) => E
+       Print.parseEnvironment(El, []) => E &
+       print "\n"
        ------------------------------
        models(C) => E
 end
