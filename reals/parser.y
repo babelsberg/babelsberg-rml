@@ -12,6 +12,7 @@ extern void* absyntree;
 %token T_ASSIGN
 %token T_IDENT
 %token T_REALCONST
+%token T_STRING
 %token T_LPAREN T_RPAREN
 %token T_ADD
 %token T_SUB
@@ -135,6 +136,8 @@ constant        : T_REALCONST
 			{ $$ = babelsbergP__FALSE; }
 		| T_NIL
 			{ $$ = babelsbergP__NIL; }
+		| T_STRING
+			{ $$ = babelsbergP__STRING($1);}
 
 variable        : T_IDENT
 			{ $$ = $1; }

@@ -24,7 +24,7 @@ module babelsbergP:
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
 
-  datatype Constant = REAL of real | TRUE | FALSE | NIL
+  datatype Constant = REAL of real | TRUE | FALSE | NIL | STRING of string
 
   type Variable = string
 

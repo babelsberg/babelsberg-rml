@@ -33,6 +33,15 @@ relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
        parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.REAL(v)) :: E')
+
+  rule parseEnvironment(rest, E) => E' &
+       string_nth(value, 0) => start &
+       start = #"\"" &
+       string_length(value) => len & int_sub(len, 1) => lastidx & string_nth(value, lastidx) => ende &
+       ende = #"\"" &
+       print variable & print " ||= " & print value & print " \n"
+       ----------------------------------------------------------
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.STRING(value)) :: E')
 end
 
 relation printC: babelsbergP.Constraint => string =
@@ -58,6 +67,8 @@ relation printC: babelsbergP.Constraint => string =
 end
 
 relation printE: babelsbergP.Exp => string =
+  axiom printE(babelsbergP.VALUE(babelsbergP.STRING(c))) => c
+
   rule real_string(c) => cs
        --------------------
        printE(babelsbergP.VALUE(babelsbergP.REAL(c))) => cs
