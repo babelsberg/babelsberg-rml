@@ -26,7 +26,7 @@ module babelsbergP:
 
   datatype Constant = REAL of real | TRUE | FALSE | NIL
 
-  datatype Variable = STRING of string
+  type Variable = string
 
   datatype Op =  ADD | SUB | MUL | DIV
   datatype Comp = LESSTHAN | LEQUAL | EQUAL | GEQUAL | GREATERTHAN
@@ -51,7 +51,6 @@ relation evalprogram: Program => () =
 end
 
 relation step: (Env, Cstore, Statement) => (Env, Cstore) =
-
   rule print "S-Asgn\n" &
        eval(Env,e) => v &
        stay(Env) => Cs &

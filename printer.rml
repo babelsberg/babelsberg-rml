@@ -3,6 +3,7 @@ module Print:
   with "solver.rml"
 
   relation printC: babelsbergP.Constraint => string
+  relation printE: babelsbergP.Exp => string
   relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env
 end
 
@@ -13,25 +14,25 @@ relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
        value = "true" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.TRUE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.TRUE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        value = "false" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.FALSE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.FALSE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        value = "nil" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.NIL) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.NIL) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        Solver.string_real(value) => v &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((babelsbergP.STRING(variable), babelsbergP.REAL(v)) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.REAL(v)) :: E')
 end
 
 relation printC: babelsbergP.Constraint => string =
@@ -61,9 +62,7 @@ relation printE: babelsbergP.Exp => string =
        --------------------
        printE(babelsbergP.VALUE(babelsbergP.REAL(c))) => cs
 
-  rule print x
-       --------------------------
-       printE(babelsbergP.VARIABLE(babelsbergP.STRING(x))) => x
+  axiom printE(babelsbergP.VARIABLE(x)) => x
 
   rule print "Print OP\n" &
        printE(e1) => e1s &
