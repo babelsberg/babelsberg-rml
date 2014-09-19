@@ -6,12 +6,15 @@
 #define YYSTYPE void*
 extern void* absyntree;
 
+#ifdef DEBUG
+int yydebug=1;
+#endif
+
 %}
 
 %token T_SEMIC
 %token T_ASSIGN
 %token T_IDENT
-%token T_LABEL
 %token T_REALCONST
 %token T_STRING
 %token T_LPAREN T_RPAREN
@@ -164,7 +167,7 @@ constant        : T_REALCONST
 variable        : T_IDENT
 			{ $$ = $1; }
 
-label           : T_LABEL
+label           : T_IDENT
 			{ $$ = $1; }
 
 value           : constant

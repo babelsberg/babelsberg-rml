@@ -24,14 +24,11 @@ rcon1        {digits}({pt}{digits}?)?{exponent}
 rcon2        {digits}?{pt}{digits}{exponent}?
 rcon         {rcon1}|{rcon2}
 string       {quote}({letter}|{digit}|{whitespace})+{quote}
-labelpref    "@"
-label        {labelpref}{ident}
 
 %%
 
 {whitespace} ;
 {string}     return lex_string();
-{label}      return lex_label();
 {icon}       return lex_rcon();  /* convert ints to T_REALCONST */
 {rcon}       return lex_rcon();  /* T_REALCONST */
 ":="         return T_ASSIGN;
@@ -83,13 +80,6 @@ int lex_ident(void)
 {
   yylval = (void*)mk_scon(yytext);
   return T_IDENT;
-}
-
-int lex_label(void)
-{
-  yylval = (void*)mk_scon(yytext);
-  printf("LABEL %s\n", yytext);
-  return T_LABEL;
 }
 
 int lex_string(void)
