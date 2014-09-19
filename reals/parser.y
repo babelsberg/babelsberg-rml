@@ -14,18 +14,18 @@ extern void* absyntree;
 %token T_REALCONST
 %token T_STRING
 %token T_LPAREN T_RPAREN
-%token T_ADD
-%token T_SUB
-%token T_MUL
-%token T_DIV
 %token T_LESSTHAN
 %token T_LEQUAL
 %token T_EQUAL
 %token T_NEQUAL
 %token T_GEQUAL
 %token T_GREATERTHAN
-%token T_AND
 %token T_OR
+%token T_AND
+%token T_ADD
+%token T_SUB
+%token T_MUL
+%token T_DIV
 
 %token T_GARBAGE
 
@@ -45,6 +45,12 @@ extern void* absyntree;
 
 
 %token T_ERR
+
+%left T_OR
+%left T_AND
+%left T_LESSTHAN T_LEQUAL T_EQUAL T_NEQUAL T_GEQUAL T_GREATERTHAN
+%left T_ADD T_SUB
+%left T_MUL T_DIV
 
 %%
 
@@ -80,22 +86,17 @@ rho             : T_WEAK
 		| T_REQUIRED
 			{ $$ = babelsbergP__REQUIRED; }
 
-expression      : orexpression combination expression
-			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
-		| orexpression
-orexpression    : cexpression disjunction expression
-			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
-		| cexpression
-cexpression     : wexpression comparison expression
+expression      : expression woperation expression %prec T_MUL
+			{ $$ = babelsbergP__OP($1, $2, $3); }
+                | expression soperation expression %prec T_ADD
+			{ $$ = babelsbergP__OP($1, $2, $3); }
+                | expression comparison expression %prec T_EQUAL
 			{ $$ = babelsbergP__COMPARE($1, $2, $3); }
-		| wexpression
-wexpression     : sexpression soperation expression
-			{ $$ = babelsbergP__OP($1, $2, $3); }
-		| sexpression
-sexpression     : eexpression woperation expression
-			{ $$ = babelsbergP__OP($1, $2, $3); }
-		| eexpression
-eexpression     : value
+                | expression combination expression %prec T_AND
+			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
+                | expression disjunction expression %prec T_OR
+			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
+                | value
 			{ $$ = babelsbergP__VALUE($1); }
 		| variable
 			{ $$ = babelsbergP__VARIABLE($1); }

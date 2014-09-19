@@ -127,11 +127,18 @@ relation eval: (Env, Exp) => Value =
        ------------------------------
        eval(Env, COMPARE(e1, op, e2)) => v
 
+  rule eval(Env, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (true, v) &
+       print "E-CombineShortCircuit\n"
+       ---------------------------------------------
+       eval(Env, COMBINE(e1, op, e2)) => v
+
   rule print "E-Combine\n" &
        eval(Env, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (false, v) &
        eval(Env, e2) => v2 &
        Util.apply_bincomb(op,v1,v2) => v
-       ------------------------------
+       ---------------------------------
        eval(Env, COMBINE(e1, op, e2)) => v
 end
 

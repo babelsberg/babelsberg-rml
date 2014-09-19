@@ -5,6 +5,7 @@ module Util:
   relation apply_binop: (babelsbergP.Op,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
   relation apply_bincomp: (babelsbergP.Comp,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
   relation apply_bincomb: (babelsbergP.Comb,babelsbergP.Value,babelsbergP.Value) => babelsbergP.Value
+  relation shortcircuit_bincomb: (babelsbergP.Comb,babelsbergP.Value) => (bool, babelsbergP.Value)
 end
 
 relation lookupEnv: (babelsbergP.Env, babelsbergP.Variable) => babelsbergP.Value  =
@@ -106,5 +107,12 @@ relation apply_bincomb: (babelsbergP.Comb,babelsbergP.Value,babelsbergP.Value) =
   axiom apply_bincomb(babelsbergP.OR,babelsbergP.TRUE,babelsbergP.FALSE) => babelsbergP.TRUE
   axiom apply_bincomb(babelsbergP.OR,babelsbergP.FALSE,babelsbergP.TRUE) => babelsbergP.TRUE
   axiom apply_bincomb(babelsbergP.OR,babelsbergP.FALSE,babelsbergP.FALSE) => babelsbergP.FALSE
+end
+
+relation shortcircuit_bincomb: (babelsbergP.Comb,babelsbergP.Value) => (bool, babelsbergP.Value) =
+  axiom shortcircuit_bincomb(babelsbergP.AND,babelsbergP.TRUE) => (false, babelsbergP.TRUE)
+  axiom shortcircuit_bincomb(babelsbergP.AND,babelsbergP.FALSE) => (true, babelsbergP.FALSE)
+  axiom shortcircuit_bincomb(babelsbergP.OR,babelsbergP.TRUE) => (true, babelsbergP.TRUE)
+  axiom shortcircuit_bincomb(babelsbergP.OR,babelsbergP.FALSE) => (false, babelsbergP.FALSE)
 end
 

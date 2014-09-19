@@ -79,8 +79,10 @@ relation printE: babelsbergP.Exp => string =
        printE(e1) => e1s &
        printE(e2) => e2s &
        printOp(op) => os &
-       string_append(e1s, os) => es &
-       string_append(es, e2s) => es'
+       string_append("(", e1s) => e1s' &
+       string_append(e2s, ")") => e2s' &
+       string_append(e1s', os) => es &
+       string_append(es, e2s') => es'
        --------------------------------
        printE(babelsbergP.OP(e1, op, e2)) => es'
 
@@ -88,8 +90,10 @@ relation printE: babelsbergP.Exp => string =
        printE(e1) => e1s &
        printE(e2) => e2s &
        printComp(op) => os &
-       string_append(e1s, os) => es &
-       string_append(es, e2s) => es'
+       string_append("(", e1s) => e1s' &
+       string_append(e2s, ")") => e2s' &
+       string_append(e1s', os) => es &
+       string_append(es, e2s') => es'
        --------------------------------
        printE(babelsbergP.COMPARE(e1, op, e2)) => es'
 
@@ -97,8 +101,10 @@ relation printE: babelsbergP.Exp => string =
        printE(e1) => e1s &
        printE(e2) => e2s &
        printComb(op) => os &
-       string_append(e1s, os) => es &
-       string_append(es, e2s) => es'
+       string_append("(", e1s) => e1s' &
+       string_append(e2s, ")") => e2s' &
+       string_append(e1s', os) => es &
+       string_append(es, e2s') => es'
        --------------------------------
        printE(babelsbergP.COMBINE(e1, op, e2)) => es'
 
