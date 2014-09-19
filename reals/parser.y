@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include "rml.h"
-#include "babelsbergP.h"
+#include "babelsberg.h"
 
 #define YYSTYPE void*
 extern void* absyntree;
@@ -57,88 +57,88 @@ extern void* absyntree;
 /* Yacc BNF grammar of the expression language BabelsbergPs */
 
 program         : statement
-			{ absyntree = babelsbergP__PROGRAM($1);}
+			{ absyntree = babelsberg__PROGRAM($1);}
 
 statement       : statement T_SEMIC statement
-			{ $$ = babelsbergP__SEQ($1, $3); }
+			{ $$ = babelsberg__SEQ($1, $3); }
 		| T_SKIP
-			{ $$ = babelsbergP__SKIP; }
+			{ $$ = babelsberg__SKIP; }
 		| variable T_ASSIGN expression
-			{ $$ = babelsbergP__ASSIGN($1, $3); }
+			{ $$ = babelsberg__ASSIGN($1, $3); }
 		| T_ALWAYS constraint
-			{ $$ = babelsbergP__ALWAYS($2); }
+			{ $$ = babelsberg__ALWAYS($2); }
 		| T_ONCE constraint
-			{ $$ = babelsbergP__ONCE($2); }
+			{ $$ = babelsberg__ONCE($2); }
 		| T_IF expression T_THEN statement T_ELSE statement
-			{ $$ = babelsbergP__IF($2, $4, $6); }
+			{ $$ = babelsberg__IF($2, $4, $6); }
 		| T_WHILE expression T_DO statement
-			{ $$ = babelsbergP__WHILE($2, $4); }
+			{ $$ = babelsberg__WHILE($2, $4); }
 
 constraint      : rho expression
-			{ $$ = babelsbergP__CONSTRAINT($1, $2); }
+			{ $$ = babelsberg__CONSTRAINT($1, $2); }
 		| expression
-			{ $$ = babelsbergP__CONSTRAINT(babelsbergP__REQUIRED, $1); }
+			{ $$ = babelsberg__CONSTRAINT(babelsberg__REQUIRED, $1); }
 		| constraint T_AND constraint
-			{ $$ = babelsbergP__COMPOUNDCONSTRAINT($1, $3); }
+			{ $$ = babelsberg__COMPOUNDCONSTRAINT($1, $3); }
 
 rho             : T_WEAK
-			{ $$ = babelsbergP__WEAK; }
+			{ $$ = babelsberg__WEAK; }
 		| T_REQUIRED
-			{ $$ = babelsbergP__REQUIRED; }
+			{ $$ = babelsberg__REQUIRED; }
 
 expression      : expression woperation expression %prec T_MUL
-			{ $$ = babelsbergP__OP($1, $2, $3); }
+			{ $$ = babelsberg__OP($1, $2, $3); }
                 | expression soperation expression %prec T_ADD
-			{ $$ = babelsbergP__OP($1, $2, $3); }
+			{ $$ = babelsberg__OP($1, $2, $3); }
                 | expression comparison expression %prec T_EQUAL
-			{ $$ = babelsbergP__COMPARE($1, $2, $3); }
+			{ $$ = babelsberg__COMPARE($1, $2, $3); }
                 | expression combination expression %prec T_AND
-			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
+			{ $$ = babelsberg__COMBINE($1, $2, $3); }
                 | expression disjunction expression %prec T_OR
-			{ $$ = babelsbergP__COMBINE($1, $2, $3); }
+			{ $$ = babelsberg__COMBINE($1, $2, $3); }
                 | value
-			{ $$ = babelsbergP__VALUE($1); }
+			{ $$ = babelsberg__VALUE($1); }
 		| variable
-			{ $$ = babelsbergP__VARIABLE($1); }
+			{ $$ = babelsberg__VARIABLE($1); }
 
 soperation      : T_ADD
-			{ $$ = babelsbergP__ADD;}
+			{ $$ = babelsberg__ADD;}
 		| T_SUB
-			{ $$ = babelsbergP__SUB;}
+			{ $$ = babelsberg__SUB;}
 woperation      : T_MUL
-			{ $$ = babelsbergP__MUL;}
+			{ $$ = babelsberg__MUL;}
 		| T_DIV
-			{ $$ = babelsbergP__DIV;}
+			{ $$ = babelsberg__DIV;}
 
 comparison      : T_LESSTHAN
-			{ $$ = babelsbergP__LESSTHAN;}
+			{ $$ = babelsberg__LESSTHAN;}
 		| T_LEQUAL
-			{ $$ = babelsbergP__LEQUAL;}
+			{ $$ = babelsberg__LEQUAL;}
 		| T_EQUAL
-			{ $$ = babelsbergP__EQUAL;}
+			{ $$ = babelsberg__EQUAL;}
 		| T_NEQUAL
-			{ $$ = babelsbergP__NEQUAL;}
+			{ $$ = babelsberg__NEQUAL;}
 		| T_GEQUAL
-			{ $$ = babelsbergP__GEQUAL;}
+			{ $$ = babelsberg__GEQUAL;}
 		| T_GREATERTHAN
-			{ $$ = babelsbergP__GEQUAL;}
+			{ $$ = babelsberg__GEQUAL;}
 
 combination     : T_AND
-			{ $$ = babelsbergP__AND;}
+			{ $$ = babelsberg__AND;}
 
 disjunction     : T_OR
-			{ $$ = babelsbergP__OR;}
+			{ $$ = babelsberg__OR;}
 
 constant        : T_REALCONST
-			{ $$ = babelsbergP__REAL($1);}
+			{ $$ = babelsberg__REAL($1);}
 		| T_TRUE
-			{ $$ = babelsbergP__TRUE; }
+			{ $$ = babelsberg__TRUE; }
 		| T_FALSE
-			{ $$ = babelsbergP__FALSE; }
+			{ $$ = babelsberg__FALSE; }
 		| T_NIL
-			{ $$ = babelsbergP__NIL; }
+			{ $$ = babelsberg__NIL; }
 		| T_STRING
-			{ $$ = babelsbergP__STRING($1);}
+			{ $$ = babelsberg__STRING($1);}
 
 variable        : T_IDENT
 			{ $$ = $1; }

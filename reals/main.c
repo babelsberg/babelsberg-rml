@@ -1,10 +1,10 @@
 /* file main.c */
-/* Main program for the small babelsbergP evaluator */
+/* Main program for the small babelsberg evaluator */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "rml.h"
-#include "babelsbergP.h"
+#include "babelsberg.h"
 
 typedef void * rml_t;
 rml_t absyntree;
@@ -22,7 +22,7 @@ main()
   /* Initialize the RML modules */
 
   printf("[Init]\n");
-  babelsbergP_5finit();
+  babelsberg_5finit();
 
   /* Parse the input into an abstract syntax tree (in RML form)
      using yacc and lex */
@@ -38,7 +38,7 @@ main()
 
   printf("[Eval]\n");
   rml_state_ARGS[0]= absyntree;
-  if (!rml_prim_once(RML_LABPTR(babelsbergP__evalprogram)) )
+  if (!rml_prim_once(RML_LABPTR(babelsberg__evalprogram)) )
   {
     fprintf(stderr,"Evaluation failed!\n");
     exit(2);

@@ -27,3 +27,15 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Generated files
+helper.c
+helper.h
+lexer.c
+lexer.h
+parser.c
+parser.h
+printer.c
+printer.h
+babelsberg.c
+babelsberg.h

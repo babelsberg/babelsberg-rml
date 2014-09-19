@@ -11,23 +11,23 @@ all: $(BIN)
 
 # MAIN PROGRAM
 
-CALCOBJS= main.o lexer.o parser.o babelsbergP.o solver.o printer.o helper.o
-CLEAN=$(BIN) $(BIN).exe $(CALCOBJS) lexer.c parser.c parser.h babelsbergP.c babelsbergP.h
+CALCOBJS= main.o lexer.o parser.o babelsberg.o solver.o printer.o helper.o
+CLEAN=$(BIN) $(BIN).exe $(CALCOBJS) lexer.c parser.c parser.h babelsberg.c babelsberg.h
 
 $(BIN): $(CALCOBJS)
 	$(LINK.rml) $(CALCOBJS) $(LDLIBS) -o $(BIN)
 
-main.o:	 main.c babelsbergP.h
+main.o:	 main.c babelsberg.h
 
 # LEXER
 
-lexer.o:  lexer.c parser.h babelsbergP.h
+lexer.o:  lexer.c parser.h babelsberg.h
 lexer.c:  lexer.l
 	flex -t -l lexer.l >lexer.c
 
 # PARSER
 
-parser.o:  parser.c babelsbergP.h
+parser.o:  parser.c babelsberg.h
 parser.c parser.h:  parser.y
 	bison -d parser.y
 	mv parser.tab.c parser.c
@@ -41,17 +41,17 @@ solver.c:
 
 # ABSTRACT SYNTAX and EVALUATION
 
-babelsbergP.o:  babelsbergP.c
-babelsbergP.c babelsbergP.h:	babelsbergP.rml solver.rml printer.rml
-	$(COMPILE.rml) babelsbergP.rml
+babelsberg.o:  babelsberg.c
+babelsberg.c babelsberg.h:	babelsberg.rml solver.rml printer.rml
+	$(COMPILE.rml) babelsberg.rml
 
 
 printer.o:  printer.c
-printer.c printer.h:	printer.rml babelsbergP.rml
+printer.c printer.h:	printer.rml babelsberg.rml
 	$(COMPILE.rml) printer.rml
 
 helper.o:  helper.c
-helper.c helper.h:	helper.rml babelsbergP.rml
+helper.c helper.h:	helper.rml babelsberg.rml
 	$(COMPILE.rml) helper.rml
 
 

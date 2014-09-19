@@ -1,38 +1,38 @@
 module Print:
-  with "babelsbergP.rml"
+  with "babelsberg.rml"
   with "solver.rml"
 
-  relation printC: babelsbergP.Constraint => string
-  relation printE: babelsbergP.Exp => string
-  relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env
+  relation printC: babelsberg.Constraint => string
+  relation printE: babelsberg.Exp => string
+  relation parseEnvironment: (string list, babelsberg.Env) => babelsberg.Env
 end
 
-relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
+relation parseEnvironment: (string list, babelsberg.Env) => babelsberg.Env =
   axiom parseEnvironment([], E) => E
 
   rule parseEnvironment(rest, E) => E' &
        value = "true" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.TRUE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.TRUE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        value = "false" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.FALSE) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.FALSE) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        value = "nil" &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.NIL) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.NIL) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        Solver.string_real(value) => v &
        print variable & print " ||= " & print value & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.REAL(v)) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.REAL(v)) :: E')
 
   rule parseEnvironment(rest, E) => E' &
        string_nth(value, 0) => start &
@@ -41,36 +41,36 @@ relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
        ende = #"\"" &
        print variable & print " ||= " & print value & print " \n"
        ----------------------------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsbergP.STRING(value)) :: E')
+       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.STRING(value)) :: E')
 end
 
-relation printC: babelsbergP.Constraint => string =
+relation printC: babelsberg.Constraint => string =
   rule printE(e) => es &
        string_append("\nweak ", es) => cs
        --------------
-       printC(babelsbergP.CONSTRAINT(babelsbergP.WEAK, e)) => cs
+       printC(babelsberg.CONSTRAINT(babelsberg.WEAK, e)) => cs
 
   rule printE(e) => es &
        string_append("\nrequired ", es) => cs
        --------------
-       printC(babelsbergP.CONSTRAINT(babelsbergP.REQUIRED, e)) => cs
+       printC(babelsberg.CONSTRAINT(babelsberg.REQUIRED, e)) => cs
 
   rule printC(c1) => c1s &
        printC(c2) => c2s &
        string_append(c1s, " && ") => cs &
        string_append(cs, c2s) => cs'
        --------------
-       printC(babelsbergP.COMPOUNDCONSTRAINT(c1, c2)) => cs'
+       printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs'
 end
 
-relation printE: babelsbergP.Exp => string =
-  axiom printE(babelsbergP.VALUE(babelsbergP.STRING(c))) => c
+relation printE: babelsberg.Exp => string =
+  axiom printE(babelsberg.VALUE(babelsberg.STRING(c))) => c
 
   rule real_string(c) => cs
        --------------------
-       printE(babelsbergP.VALUE(babelsbergP.REAL(c))) => cs
+       printE(babelsberg.VALUE(babelsberg.REAL(c))) => cs
 
-  axiom printE(babelsbergP.VARIABLE(x)) => x
+  axiom printE(babelsberg.VARIABLE(x)) => x
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -80,7 +80,7 @@ relation printE: babelsbergP.Exp => string =
        string_append(e1s', os) => es &
        string_append(es, e2s') => es'
        --------------------------------
-       printE(babelsbergP.OP(e1, op, e2)) => es'
+       printE(babelsberg.OP(e1, op, e2)) => es'
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -90,7 +90,7 @@ relation printE: babelsbergP.Exp => string =
        string_append(e1s', os) => es &
        string_append(es, e2s') => es'
        --------------------------------
-       printE(babelsbergP.COMPARE(e1, op, e2)) => es'
+       printE(babelsberg.COMPARE(e1, op, e2)) => es'
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -100,30 +100,30 @@ relation printE: babelsbergP.Exp => string =
        string_append(e1s', os) => es &
        string_append(es, e2s') => es'
        --------------------------------
-       printE(babelsbergP.COMBINE(e1, op, e2)) => es'
+       printE(babelsberg.COMBINE(e1, op, e2)) => es'
 
-  axiom printE(babelsbergP.VALUE(babelsbergP.TRUE)) => "true"
-  axiom printE(babelsbergP.VALUE(babelsbergP.FALSE)) => "false"
-  axiom printE(babelsbergP.VALUE(babelsbergP.NIL)) => "nil"
+  axiom printE(babelsberg.VALUE(babelsberg.TRUE)) => "true"
+  axiom printE(babelsberg.VALUE(babelsberg.FALSE)) => "false"
+  axiom printE(babelsberg.VALUE(babelsberg.NIL)) => "nil"
 end
 
-relation printOp: babelsbergP.Op => string =
-  axiom printOp(babelsbergP.ADD) => " + "
-  axiom printOp(babelsbergP.SUB) => " - "
-  axiom printOp(babelsbergP.DIV) => " / "
-  axiom printOp(babelsbergP.MUL) => " * "
+relation printOp: babelsberg.Op => string =
+  axiom printOp(babelsberg.ADD) => " + "
+  axiom printOp(babelsberg.SUB) => " - "
+  axiom printOp(babelsberg.DIV) => " / "
+  axiom printOp(babelsberg.MUL) => " * "
 end
 
-relation printComp: babelsbergP.Comp => string =
-  axiom printComp(babelsbergP.LESSTHAN) => " < "
-  axiom printComp(babelsbergP.LEQUAL) => " <= "
-  axiom printComp(babelsbergP.EQUAL) => " = "
-  axiom printComp(babelsbergP.NEQUAL) => " != "
-  axiom printComp(babelsbergP.GEQUAL) => " >= "
-  axiom printComp(babelsbergP.GREATERTHAN) => " > "
+relation printComp: babelsberg.Comp => string =
+  axiom printComp(babelsberg.LESSTHAN) => " < "
+  axiom printComp(babelsberg.LEQUAL) => " <= "
+  axiom printComp(babelsberg.EQUAL) => " = "
+  axiom printComp(babelsberg.NEQUAL) => " != "
+  axiom printComp(babelsberg.GEQUAL) => " >= "
+  axiom printComp(babelsberg.GREATERTHAN) => " > "
 end
 
-relation printComb: babelsbergP.Comb => string =
-  axiom printComb(babelsbergP.AND) => " and "
-  axiom printComb(babelsbergP.OR) => " or "
+relation printComb: babelsberg.Comb => string =
+  axiom printComb(babelsberg.AND) => " and "
+  axiom printComb(babelsberg.OR) => " or "
 end
