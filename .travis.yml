@@ -6,11 +6,12 @@ env:
 
 before_script:
   - cd rml
+  - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu precise main universe multiverse restricted'
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu quantal main universe multiverse restricted'
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu raring main universe multiverse restricted'
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu saucy main universe multiverse restricted'
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty main universe multiverse restricted'
-  - sudo apt-get update
+  - sudo apt-get update || true
   - sudo apt-get install -yy ml-lex ml-yacc libsmlnj-smlnj build-essential bison flex
   - export SMLNJ_HOME=/usr/lib/smlnj
   - ./configure --disable-debug
