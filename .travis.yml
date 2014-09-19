@@ -6,11 +6,14 @@ env:
 
 before_script:
   - cd rml
+  - sudo apt-get update
   - sudo apt-get install -yy ml-lex ml-yacc libsmlnj-smlnj build-essential bison flex
   - export SMLNJ_HOME=/usr/lib/smlnj
   - ./configure --disable-debug
   - make
   - make install
   - cd ..
+  - Xvfb :1 -screen 0 800x600x24 &
+  - export DISPLAY=:1
 
 script: "rake $IMPL:citest"
