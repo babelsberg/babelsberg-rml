@@ -1,4 +1,7 @@
+require "open3"
 require "pp"
+
+ENV["EDITOR"] ||= "/usr/bin/nano"
 
 semantics = [:reals]
 
@@ -24,15 +27,56 @@ semantics.each do |s|
           end
         end
       end
-      puts "The following programs failed:"
-      pp errors
+      puts "The following programs failed:\n#{errors.join}" if errors.any?
+    end
+
+    task :citest => :build do
+      input = "#{s}/input"
+      File.unlink(input) if File.exist?(input)
+
+      Errortest = lambda do |example, output|
+        return "#{example}: No input created" unless File.exist?("input")
+        lastinput = File.read("input")
+        File.unlink("input")
+
+        envinput = example.sub(/txt$/, "env")
+        return "#{example}: No environment given" unless File.exist?(envinput)
+        environments = File.read(envinput).split(";\n")
+
+        return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex (\d+)/m
+        idx = $1.to_i
+        return "#{example}: Not all environments used" unless environments.size == idx
+        if output.end_with?("Evaluation failed!\n")
+          return "#{example}: Unexpected failure" unless environments.last =~ /unsat/
+        end
+      end
+
+      ENV["EDITOR"] = File.expand_path("../cisolver.rb", __FILE__)
+      Rake::Task["#{s}:test"].invoke
     end
   end
+end
+
+Errortest = lambda do |example, output|
+  return example if output.end_with?("Evaluation failed!\n")
 end
 
 def run_example(s, example, errors)
   puts "Program #{example}:"
   puts File.read example
-  exitcode = system "cat #{example} | ./babelsberg-#{s}"
-  errors << example if exitcode != 0
+  output = ""
+  Open3.popen3("cat #{example} | ./babelsberg-#{s}") do |stdin, stdout, stderr|
+    ios = [stdout, stderr]
+    until stdout.eof? and stderr.eof?
+      ready = IO.select(ios)
+      ready[0].each do |io|
+        (ios.delete(io); next) if io.eof?
+        result = io.read_nonblock(1024)
+        print result
+        output << result
+      end
+    end
+  end
+  error = Errortest[example, output]
+  errors << "\t#{error}\n" if error
 end

@@ -17,11 +17,12 @@ RML_BEGIN_LABEL(Solver__solve)
     char c;
 
     printf("\n\n### These are the current constraints: %s\n"\
-	   "\n\nA terminal with nano will open. Please enter a new " \
+	   "\n\nA terminal with your $EDITOR will open. Please enter a new " \
 	   "environment satisfying the constraints as 'var[SPACE]value' pairs, "\
 	   "each separated by a newline. Save and close finishes.\n"\
 	   "To fail in the solver, just write 'unsat'.\n\n", first_param);
-    int exitcode = system("xterm -e '/usr/bin/nano input'");
+    fflush(NULL);
+    int exitcode = system("xterm -e '$EDITOR input'");
     if (exitcode != 0) {
 	RML_TAILCALLK(rmlFC);
     }
