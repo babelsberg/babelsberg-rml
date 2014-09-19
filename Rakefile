@@ -10,7 +10,7 @@ semantics.each do |s|
     desc "Build Babelsberg/#{s.to_s.capitalize}"
     task :build do
       Dir.chdir "#{s}" do
-        exitcode = system("make")
+        exitcode = system("make babelsberg-#{s}")
         fail unless exitcode
       end
     end
