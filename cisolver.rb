@@ -7,7 +7,7 @@ tree = Hash[*`ps -eo pid,ppid`.scan(/\d+/).map{|x|x.to_i}]
 shid = Process.ppid
 bbbid = tree[shid]
 catid = tree[bbbid]
-commandline = `ps -o cmd -fp #{catid}`.lines.last
+commandline = `ps -o cmd -fp #{catid}`.lines.to_a.last
 example = /cat\s+(.*\d+\.txt)\s+/.match(commandline)[1]
 solution = example.sub(/\.txt$/, ".env")
 
