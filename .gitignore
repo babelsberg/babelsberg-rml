@@ -39,3 +39,4 @@ printer.c
 printer.h
 babelsberg.c
 babelsberg.h
+Gemfile.lock
