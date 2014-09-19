@@ -4,9 +4,8 @@ outfile = ARGV[0]
 
 
 tree = Hash[*`ps -eo pid,ppid`.scan(/\d+/).map{|x|x.to_i}]
-xtermid = Process.ppid
-shxtermid = tree[xtermid]
-bbbid = tree[shxtermid]
+shid = Process.ppid
+bbbid = tree[shid]
 catid = tree[bbbid]
 commandline = `ps -o cmd -fp #{catid}`.lines.last
 example = /cat\s+(.*\d+\.txt)\s+/.match(commandline)[1]

@@ -1,7 +1,7 @@
 require "open3"
 require "pp"
 
-ENV["EDITOR"] ||= "/usr/bin/nano"
+ENV["BBBEDITOR"] ||= "xterm -e /usr/bin/nano"
 
 semantics = [:reals]
 
@@ -54,7 +54,7 @@ semantics.each do |s|
         end
       end
 
-      ENV["EDITOR"] = File.expand_path("../cisolver.rb", __FILE__)
+      ENV["BBBEDITOR"] = File.expand_path("../cisolver.rb", __FILE__)
       Rake::Task["#{s}:test"].invoke
     end
   end
