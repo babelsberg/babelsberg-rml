@@ -1,0 +1,195 @@
+(* file assignment.rml *)
+
+module babelsberg:
+(* Abstract syntax for the BabelsbergP language *)
+
+  datatype Program = PROGRAM of Statement
+
+  datatype Statement = SEQ of Statement * Statement
+		     | SKIP
+		     | ASSIGN of Variable * Exp
+		     | ALWAYS of Constraint
+		     | ONCE of Constraint
+		     | IF of Exp * Statement * Statement
+		     | WHILE of Exp * Statement
+
+  datatype Constraint = CONSTRAINT of Rho * Exp
+		      | COMPOUNDCONSTRAINT of Constraint * Constraint
+
+  datatype Rho = WEAK | REQUIRED
+
+  datatype Exp = VALUE of Value
+	       | VARIABLE of Variable
+	       | OP of Exp * Op * Exp
+	       | COMPARE of Exp * Comp * Exp
+	       | COMBINE of Exp * Comb * Exp
+               | RECORD of Fieldexpression list
+               | FIELD of Exp * Label
+
+(* Helper types to match a single label:exp pair *)
+  datatype Fieldexpression = LABELEXPRESSION of Label * Exp
+  datatype Fieldvalues = LABELVALUE of Label * Constant
+
+  datatype Constant = REAL of real | TRUE | FALSE | NIL | STRING of string | IRECORD of Fieldvalues list
+
+  type Variable = string
+  type Label = string
+
+  datatype Op =  ADD | SUB | MUL | DIV
+  datatype Comp = LESSTHAN | LEQUAL | EQUAL | NEQUAL | GEQUAL | GREATERTHAN
+  datatype Comb = AND | OR
+
+(* Values stored in environments *)
+  type Value   = Constant
+
+(* Bindings and environments *)
+  type VarBnd      = (Variable * Value)
+  type Env         = VarBnd list
+  type Cstore      = Constraint
+
+  relation evalprogram: Program => ()
+end
+
+relation evalprogram: Program => () =
+  rule print "starting to evaluate\n" &
+       step([], CONSTRAINT(REQUIRED, VALUE(TRUE)), statement) => (Env, Cstore)
+       -------------------------------------
+       evalprogram(PROGRAM(statement))
+end
+
+relation step: (Env, Cstore, Statement) => (Env, Cstore) =
+  rule print "S-Asgn\n" &
+       eval(Env,e) => v &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs),
+              CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
+       ----------------------------------------------
+       step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
+
+  rule print "S-Once\n" &
+       stay(Env) => Cs &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
+       ----------------------------------------
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+
+  rule print "S-Always\n" &
+       step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
+       ----------------------------------------
+       step(Env, Cstore, ALWAYS(C0)) => (Env', COMPOUNDCONSTRAINT(Cstore, C0))
+
+  axiom step(Env, Cstore, SKIP) => (Env, Cstore)
+
+  rule print "S-SeqStep\n" &
+       step(Env, Cstore, s1) => (Env', Cstore') &
+       step(Env', Cstore', s2) => (Env'', Cstore'')
+       --------------------------------------------------
+       step(Env, Cstore, SEQ(s1, s2)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => TRUE &
+       print "S-IfThen\n" &
+       step(Env, Cstore, s1) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-IfElse\n" &
+       step(Env, Cstore, s2) => (Env', Cstore')
+       ----------------------------------------
+       step(Env, Cstore, IF(e, s1, s2)) => (Env', Cstore')
+
+  rule eval(Env, e) => TRUE &
+       print "S-WhileDo\n" &
+       step(Env, Cstore, s) => (Env', Cstore') &
+       step(Env', Cstore', WHILE(e, s)) => (Env'', Cstore'')
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env'', Cstore'')
+
+  rule eval(Env, e) => v &
+       not v = TRUE &
+       print "S-WhileSkip\n"
+       -----------------------------------------------------
+       step(Env, Cstore, WHILE(e, s)) => (Env, Cstore)
+end
+
+relation eval: (Env, Exp) => Value =
+  axiom eval(_, VALUE(c)) => c
+
+  rule print "E-Var\n" &
+       Util.lookupEnv(Env, x) => v
+       ----------------------
+       eval(Env, VARIABLE(x)) => v
+
+  rule print "E-Op\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       Util.apply_binop(op,v1,v2) => v
+       ------------------------------
+       eval(Env, OP(e1, op, e2)) => v
+
+  rule print "E-Compare\n" &
+       eval(Env, e1) => v1 &
+       eval(Env, e2) => v2 &
+       Util.apply_bincomp(op,v1,v2) => v
+       ------------------------------
+       eval(Env, COMPARE(e1, op, e2)) => v
+
+  rule eval(Env, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (true, v) &
+       print "E-CombineShortCircuit\n"
+       ---------------------------------------------
+       eval(Env, COMBINE(e1, op, e2)) => v
+
+  rule print "E-Combine\n" &
+       eval(Env, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (false, v) &
+       eval(Env, e2) => v2 &
+       Util.apply_bincomb(op,v1,v2) => v
+       ---------------------------------
+       eval(Env, COMBINE(e1, op, e2)) => v
+
+  rule print "E-Rec\n" &
+       evalFields(Env, fexps) => fvalues
+       ---------------------------------
+       eval(Env, RECORD(fexps)) => IRECORD(fvalues)
+
+  rule print "E-Field\n" &
+       eval(Env, e) => IRECORD(fvalues) &
+       Util.lookupRecord(fvalues, l) => v
+       ----------------------------------
+       eval(Env, FIELD(e, l)) => v
+end
+
+relation evalFields: (Env, Fieldexpression list) => (Fieldvalues list) =
+(* Helper rules to evaluate the list of fields *)
+  axiom evalFields(Env, []) => []
+
+  rule eval(Env, e) => v &
+       evalFields(Env, rest) => fvalues &
+       list_append([LABELVALUE(l, v)], fvalues) => fvalues'
+       ----------------------------------------------------------------
+       evalFields(Env, LABELEXPRESSION(l, e) :: rest) => fvalues'
+end
+
+relation stay: Env => Constraint =
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+
+  rule print "StayOne\n" &
+       stay(E0) => C0
+       --------------------------------
+       stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))
+
+end
+
+with "solver.rml"
+with "printer.rml"
+with "helper.rml"
+
+relation models: Constraint => Env =
+  rule Print.printC(C) => Cs &
+       Solver.solve(Cs) => El &
+       Print.parseEnvironment(El, []) => E &
+       print "\n"
+       ------------------------------
+       models(C) => E
+end

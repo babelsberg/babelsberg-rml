@@ -1,0 +1,5 @@
+module Solver:
+  (* Call solver in C *)
+  relation solve: string => string list
+  relation string_real: string => real
+end
