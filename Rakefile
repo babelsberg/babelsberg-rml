@@ -27,7 +27,10 @@ semantics.each do |s|
           end
         end
       end
-      puts "The following programs failed:\n#{errors.join}" if errors.any?
+      if errors.any?
+        puts "The following programs failed:\n#{errors.join}"
+        fail
+      end
     end
 
     task :citest => :build do

@@ -12,7 +12,7 @@ before_script:
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu saucy main universe multiverse restricted'
   - sudo apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty main universe multiverse restricted'
   - sudo apt-get update || true
-  - sudo apt-get install -yy ml-lex ml-yacc libsmlnj-smlnj build-essential bison flex
+  - sudo apt-get install -yy ml-lex ml-yacc libsmlnj-smlnj build-essential bison flex xterm
   - export SMLNJ_HOME=/usr/lib/smlnj
   - ./configure --disable-debug
   - make
