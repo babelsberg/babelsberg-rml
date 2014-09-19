@@ -1,9 +1,16 @@
 include ../rml/config.cache
 # VARIABLES
 
+SHELL=/bin/sh
+COMPILE.rml=$(RMLC) $(RMLCFLAGS) $(CPPFLAGS) -c
+LINK.rml=$(RMLC) $(RMLCFLAGS)
 GOROOT = ../rml
 LDLIBS =  -lfl -lm
+RMLC=$(PREFIX)/bin/rmlc
+
+
 BIN = babelsberg-reals
+
 
 # EVERYTHING
 all: $(BIN)
@@ -54,9 +61,8 @@ helper.o:  helper.c
 helper.c helper.h:	helper.rml babelsberg.rml
 	$(COMPILE.rml) helper.rml
 
+.c.o:
+	$(COMPILE.rml) $<
 
-# AUX
-
-include $(GOROOT)/etc/client.mk
-
-
+clean:
+	rm -f a.out core mon.out gmon.out $(CLEAN) *.ast *.cps *.fol *~ *.rdb *.srz *.sig *.rmod *.rsig
