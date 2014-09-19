@@ -1,0 +1,16 @@
+language: ruby
+
+env:
+  matrix:
+    - IMPL=reals
+
+before_script:
+  - cd rml
+  - sudo apt-get install -yy ml-lex ml-yacc libsmlnj-smlnj build-essential bison flex
+  - export SMLNJ_HOME=/usr/lib/smlnj
+  - ./configure --disable-debug
+  - make
+  - make install
+  - cd ..
+
+script: "rake $IMPL:citest"
