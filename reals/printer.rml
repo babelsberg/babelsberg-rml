@@ -45,20 +45,17 @@ relation parseEnvironment: (string list, babelsbergP.Env) => babelsbergP.Env =
 end
 
 relation printC: babelsbergP.Constraint => string =
-  rule print "PrintWeak\n" &
-       printE(e) => es &
+  rule printE(e) => es &
        string_append("\nweak ", es) => cs
        --------------
        printC(babelsbergP.CONSTRAINT(babelsbergP.WEAK, e)) => cs
 
-  rule print "PrintReq\n" &
-       printE(e) => es &
+  rule printE(e) => es &
        string_append("\nrequired ", es) => cs
        --------------
        printC(babelsbergP.CONSTRAINT(babelsbergP.REQUIRED, e)) => cs
 
-  rule print "PrintCompund\n" &
-       printC(c1) => c1s &
+  rule printC(c1) => c1s &
        printC(c2) => c2s &
        string_append(c1s, " && ") => cs &
        string_append(cs, c2s) => cs'
@@ -75,8 +72,7 @@ relation printE: babelsbergP.Exp => string =
 
   axiom printE(babelsbergP.VARIABLE(x)) => x
 
-  rule print "Print OP\n" &
-       printE(e1) => e1s &
+  rule printE(e1) => e1s &
        printE(e2) => e2s &
        printOp(op) => os &
        string_append("(", e1s) => e1s' &
@@ -86,8 +82,7 @@ relation printE: babelsbergP.Exp => string =
        --------------------------------
        printE(babelsbergP.OP(e1, op, e2)) => es'
 
-  rule print "Print COMPARE\n" &
-       printE(e1) => e1s &
+  rule printE(e1) => e1s &
        printE(e2) => e2s &
        printComp(op) => os &
        string_append("(", e1s) => e1s' &
@@ -97,8 +92,7 @@ relation printE: babelsbergP.Exp => string =
        --------------------------------
        printE(babelsbergP.COMPARE(e1, op, e2)) => es'
 
-  rule print "Print COMBINE\n" &
-       printE(e1) => e1s &
+  rule printE(e1) => e1s &
        printE(e2) => e2s &
        printComb(op) => os &
        string_append("(", e1s) => e1s' &
