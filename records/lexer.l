@@ -17,7 +17,7 @@ digit        [0-9]
 digits       {digit}+
 pt           "."
 quote        "\""
-sign         [+-]
+sign         [-]
 exponent     ([eE]{sign}?{digits})
 rcon1        {sign}?{digits}({pt}{digits}?)?{exponent}
 rcon2        {sign}?{digits}?{pt}{digits}{exponent}?
