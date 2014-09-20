@@ -2,7 +2,7 @@ module Util:
   with "babelsberg.rml"
 
   relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value
-  relation lookupRecord: (babelsberg.Fieldvalues list, babelsberg.Label) => babelsberg.Value
+  relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value
   relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation apply_bincomp: (babelsberg.Comp,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation apply_bincomb: (babelsberg.Comb,babelsberg.Value,babelsberg.Value) => babelsberg.Value
@@ -20,15 +20,15 @@ relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value  =
 	lookupEnv((id2,_) :: rest, id)  => value
 end
 
-relation lookupRecord: (babelsberg.Fieldvalues list, babelsberg.Label) => babelsberg.Value  =
+relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value  =
   rule  id = id2
 	------------------------------
-	lookupRecord(babelsberg.LABELVALUE(id2, value) :: _, id) => value
+	lookupRecord(babelsberg.LABELEXPRESSION(id2, babelsberg.VALUE(value)) :: _, id) => value
 
   rule  not id=id2 &
 	lookupRecord(rest, id) => value
 	-------------------------------------
-	lookupRecord(babelsberg.LABELVALUE(id2, _) :: rest, id)  => value
+	lookupRecord(babelsberg.LABELEXPRESSION(id2, _) :: rest, id)  => value
 end
 
 relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value =

@@ -87,17 +87,17 @@ relation printE: babelsberg.Exp => string =
   axiom printE(babelsberg.VALUE(babelsberg.NIL)) => "nil"
 end
 
-relation printRContents: babelsberg.Fieldvalues list => string =
+relation printRContents: babelsberg.Fieldexpression list => string =
   axiom printRContents([]) => ""
 
-  rule printE(babelsberg.VALUE(e)) => es &
+  rule printE(e) => es &
        string_append(l, ": ") => ls &
        string_append(ls, es) => es' &
        string_append(es', ", ") => es'' &
        printRContents(rest) => rests &
        string_append(es'', rests) => str
        ----------------------------------------------------------
-       printRContents(babelsberg.LABELVALUE(l, e) :: rest) => str
+       printRContents(babelsberg.LABELEXPRESSION(l, e) :: rest) => str
 end
 
 relation printOp: babelsberg.Op => string =

@@ -28,9 +28,8 @@ module babelsberg:
 
 (* Helper types to match a single label:exp pair *)
   datatype Fieldexpression = LABELEXPRESSION of Label * Exp
-  datatype Fieldvalues = LABELVALUE of Label * Constant
 
-  datatype Constant = REAL of real | TRUE | FALSE | NIL | STRING of string | IRECORD of Fieldvalues list
+  datatype Constant = REAL of real | TRUE | FALSE | NIL | STRING of string | IRECORD of Fieldexpression list
 
   type Variable = string
   type Label = string
@@ -161,13 +160,13 @@ relation eval: (Env, Exp) => Value =
        eval(Env, FIELD(e, l)) => v
 end
 
-relation evalFields: (Env, Fieldexpression list) => (Fieldvalues list) =
+relation evalFields: (Env, Fieldexpression list) => (Fieldexpression list) =
 (* Helper rules to evaluate the list of fields *)
   axiom evalFields(Env, []) => []
 
   rule eval(Env, e) => v &
        evalFields(Env, rest) => fvalues &
-       list_append([LABELVALUE(l, v)], fvalues) => fvalues'
+       list_append([LABELEXPRESSION(l, VALUE(v))], fvalues) => fvalues'
        ----------------------------------------------------------------
        evalFields(Env, LABELEXPRESSION(l, e) :: rest) => fvalues'
 end
