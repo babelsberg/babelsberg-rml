@@ -18,7 +18,7 @@ rescue Exception
 end
 
 
-if File.exist?(outfile) && File.read(outfile) =~ /^CIIndex (\d+)$/m
+if File.exist?(outfile) && File.read(outfile) =~ /^CIIndex := (\d+)$/m
   idx = $1.to_i
 else
   idx = 0
