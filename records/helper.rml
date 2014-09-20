@@ -3,6 +3,7 @@ module Util:
 
   relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value
   relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value
+  relation lookupRecordType: (babelsberg.Fieldtypes list, babelsberg.Label) => babelsberg.Type
   relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation apply_bincomp: (babelsberg.Comp,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation apply_bincomb: (babelsberg.Comb,babelsberg.Value,babelsberg.Value) => babelsberg.Value
@@ -30,6 +31,18 @@ relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => ba
 	-------------------------------------
 	lookupRecord(babelsberg.LABELEXPRESSION(id2, _) :: rest, id)  => value
 end
+
+relation lookupRecordType: (babelsberg.Fieldtypes list, babelsberg.Label) => babelsberg.Type  =
+  rule  id = id2
+	------------------------------
+	lookupRecordType(babelsberg.LABELTYPE(id2, T) :: _, id) => T
+
+  rule  not id=id2 &
+	lookupRecordType(rest, id) => T
+	-------------------------------------
+	lookupRecordType(babelsberg.LABELTYPE(id2, _) :: rest, id)  => T
+end
+
 
 relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value =
 

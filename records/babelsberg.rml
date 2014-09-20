@@ -41,6 +41,11 @@ module babelsberg:
 (* Values stored in environments *)
   type Value   = Constant
 
+(* Type syntax *)
+  datatype Type = PRIMITIVE | TRECORD of Fieldtypes list
+  datatype Fieldtypes = LABELTYPE of Label * Type
+
+
 (* Bindings and environments *)
   type VarBnd      = (Variable * Value)
   type Env         = VarBnd list
@@ -60,6 +65,7 @@ end
 relation step: (Env, Cstore, Statement) => (Env, Cstore) =
   rule print "S-Asgn\n" &
        eval(Env,e) => v &
+       welltyped(((x, v) :: Env), Cstore) &
        stay(Env) => Cs &
        models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs),
               CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
@@ -67,6 +73,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
 
   rule print "S-Once\n" &
+       welltyped(Env, C0) &
        stay(Env) => Cs &
        models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
        ----------------------------------------
@@ -170,6 +177,77 @@ relation evalFields: (Env, Fieldexpression list) => (Fieldexpression list) =
        ----------------------------------------------------------------
        evalFields(Env, LABELEXPRESSION(l, e) :: rest) => fvalues'
 end
+
+relation tC: (Env, Exp) => Type =
+  axiom tC(_, VALUE(REAL(c))) => PRIMITIVE
+  axiom tC(_, VALUE(TRUE)) => PRIMITIVE
+  axiom tC(_, VALUE(FALSE)) => PRIMITIVE
+  axiom tC(_, VALUE(NIL)) => PRIMITIVE
+  axiom tC(_, VALUE(STRING(c))) => PRIMITIVE
+
+  rule print "T-Var\n" &
+       eval(Env, VARIABLE(x)) => v &
+       tC(Env, VALUE(v)) => T
+       -----------------
+       tC(Env, VARIABLE(x)) => T
+
+  rule print "T-Op\n" &
+       tC(Env, e1) => PRIMITIVE &
+       tC(Env, e2) => PRIMITIVE
+       --------------------------
+       tC(Env, OP(e1, op, e2)) => PRIMITIVE
+
+  rule print "T-Compare\n" &
+       tC(Env, e1) => T1 &
+       tC(Env, e2) => T2 &
+       T1 = T2
+       --------------------------
+       tC(Env, COMPARE(e1, op, e2)) => PRIMITIVE
+
+  rule print "T-Combine\n" &
+       tC(Env, e1) => PRIMITIVE &
+       tC(Env, e2) => PRIMITIVE
+       --------------------------
+       tC(Env, COMBINE(e1, op, e2)) => PRIMITIVE
+
+  rule print "T-Record\n" &
+       tCFields(Env, fexps) => ftypes
+       ----------------------------
+       tC(Env, RECORD(fexps)) => TRECORD(ftypes)
+
+  rule print "T-Record\n" &
+       tCFields(Env, fvalues) => ftypes
+       ----------------------------
+       tC(Env, VALUE(IRECORD(fvalues))) => TRECORD(ftypes)
+
+  rule print "T-Field\n" &
+       tC(Env, e) => TRECORD(ftypes) &
+       Util.lookupRecordType(ftypes, l) => T
+       -------------------------------------
+       tC(Env, FIELD(e, l)) => T
+       
+end    
+
+relation tCFields: (Env, Fieldexpression list) => (Fieldtypes list) =
+(* Helper rules to type the list of fields *)
+  axiom tCFields(Env, []) => []
+
+  rule tC(Env, e) => T &
+       tCFields(Env, rest) => ftypes &
+       list_append([LABELTYPE(l, T)], ftypes) => ftypes'
+       ----------------------------------------------------------------
+       tCFields(Env, LABELEXPRESSION(l, e) :: rest) => ftypes'
+end
+
+relation welltyped: (Env, Constraint) => () =
+  rule tC(Env, e) => T
+       -----------------
+       welltyped(Env, CONSTRAINT(rho, e))
+
+  rule welltyped(Env, C1) & welltyped(Env, C2)
+       -----------------------------
+       welltyped(Env, COMPOUNDCONSTRAINT(C1, C2))
+end    
 
 relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
