@@ -23,8 +23,8 @@ module babelsberg:
 	       | OP of Exp * Op * Exp
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
-               | RECORD of Fieldexpression list
-               | FIELD of Exp * Label
+	       | RECORD of Fieldexpression list
+	       | FIELD of Exp * Label
 
 (* Helper types to match a single label:exp pair *)
   datatype Fieldexpression = LABELEXPRESSION of Label * Exp
@@ -68,7 +68,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        welltyped(((x, v) :: Env), Cstore) &
        stay(Env) => Cs &
        models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs),
-              CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
+	      CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
 
@@ -225,8 +225,8 @@ relation tC: (Env, Exp) => Type =
        Util.lookupRecordType(ftypes, l) => T
        -------------------------------------
        tC(Env, FIELD(e, l)) => T
-       
-end    
+
+end
 
 relation tCFields: (Env, Fieldexpression list) => (Fieldtypes list) =
 (* Helper rules to type the list of fields *)
@@ -247,7 +247,7 @@ relation welltyped: (Env, Constraint) => () =
   rule welltyped(Env, C1) & welltyped(Env, C2)
        -----------------------------
        welltyped(Env, COMPOUNDCONSTRAINT(C1, C2))
-end    
+end
 
 relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
