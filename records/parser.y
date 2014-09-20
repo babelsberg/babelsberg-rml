@@ -66,11 +66,6 @@ extern void* absyntree;
 
 program         : statement
                         { absyntree = babelsberg__PROGRAM($1);}
-                /* These are just for parsing the model                 */
-                | value
-                        { absyntree = babelsberg__VALUE($1); }
-                | T_LBRACE fieldexpressions T_RBRACE
-                        { absyntree = babelsberg__RECORD($2); }
 
 statement       : statement T_SEMIC statement
                         { $$ = babelsberg__SEQ($1, $3); }

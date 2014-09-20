@@ -16,15 +16,14 @@ void Solver_5finit(void) {}
 /* The glue function */
 RML_BEGIN_LABEL(Solver__solve)
 {
-    char *variable;
-    char *value;
+    char *assignment;
     double rvalue = 0;
     char *first_param = RML_STRINGDATA(rmlA0);
     char c;
 
     printf("\n\n### These are the current constraints: %s\n"\
 	   "\n\nA terminal with your $BBBEDITOR will open. Please enter a new " \
-	   "environment satisfying the constraints as 'var[SPACE]value' pairs, "\
+	   "environment satisfying the constraints as 'var := value' pairs, "\
 	   "each separated by a newline. Save and close finishes.\n"\
 	   "To fail in the solver, just write 'unsat'.\n\n", first_param);
     fflush(NULL);
@@ -36,19 +35,16 @@ RML_BEGIN_LABEL(Solver__solve)
     FILE* input = fopen("input", "r");
     void* list = mk_nil();
 
-    while(fscanf(input, "%ms %m[-{}a-zA-Z0-9.:, \"]\n", &variable, &value) != EOF) {
-	printf("%s - %s\n", variable, value);
-	yy_scan_string(value);
+    while(fscanf(input, "%m[-{}a-zA-Z0-9.:=, \"]\n", &assignment) != EOF) {
+	printf("%s\n", assignment);
+	yy_scan_string(assignment);
 	if (yyparse() != 0) {
 	    fprintf(stderr, "Parsing model failed!\n");
 	    RML_TAILCALLK(rmlFC);
 	}
-	list = mk_cons(babelsberg__BINDING(mk_scon(variable),
-					   absyntree),
-		       list);
+	list = mk_cons(absyntree, list);
 
-	free(variable);
-	free(value);
+	free(assignment);
     }
 
     rmlA0 = list;

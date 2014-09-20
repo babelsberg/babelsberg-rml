@@ -4,18 +4,18 @@ module Print:
 
   relation printC: babelsberg.Constraint => string
   relation printE: babelsberg.Exp => string
-  relation parseEnvironment: (babelsberg.ModBnd list, babelsberg.Env) => babelsberg.Env
+  relation parseEnvironment: (babelsberg.Program list, babelsberg.Env) => babelsberg.Env
 end
 
-relation parseEnvironment: (babelsberg.ModBnd list, babelsberg.Env) => babelsberg.Env =
+relation parseEnvironment: (babelsberg.Program list, babelsberg.Env) => babelsberg.Env =
   axiom parseEnvironment([], E) => E
 
   rule parseEnvironment(rest, E) => E' &
-       babelsberg.eval([], value) => v &
+       babelsberg.eval([], e) => v &
        printE(babelsberg.VALUE(v)) => vs &
-       print variable & print " ||= " & print vs & print " \n"
-       -------------------------------------
-       parseEnvironment(babelsberg.BINDING(variable, value) :: rest, E) => ((variable, v) :: E')
+       print x & print " ||= " & print vs & print " \n"
+       ------------------------------------------------
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(x, e)) :: rest, E) => ((x, v) :: E')
 end
 
 relation printC: babelsberg.Constraint => string =
