@@ -33,7 +33,7 @@ semantics.each do |s|
       end
     end
 
-    task :citest => :build do
+    task :citest, [:example] => :build do |t, args|
       input = "#{s}/input"
       File.unlink(input) if File.exist?(input)
 
@@ -61,7 +61,7 @@ semantics.each do |s|
       end
 
       ENV["BBBEDITOR"] = File.expand_path("../#{s}/cisolver.rb", __FILE__)
-      Rake::Task["#{s}:test"].invoke
+      Rake::Task["#{s}:test"].invoke(args[:example])
     end
   end
 end
