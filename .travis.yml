@@ -3,6 +3,7 @@ language: ruby
 env:
   matrix:
     - IMPL=reals
+    - IMPL=records
 
 before_script:
   - cd rml
