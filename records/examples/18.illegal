@@ -1,0 +1,2 @@
+This program also fails the structural compatibility check, since the
+always constraint expects p to have a y field but it doesn’t

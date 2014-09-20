@@ -25,6 +25,11 @@ relation printC: babelsberg.Constraint => string =
        printC(babelsberg.CONSTRAINT(babelsberg.WEAK, e)) => cs
 
   rule printE(e) => es &
+       string_append("\nmedium ", es) => cs
+       --------------
+       printC(babelsberg.CONSTRAINT(babelsberg.MEDIUM, e)) => cs
+
+  rule printE(e) => es &
        string_append("\nrequired ", es) => cs
        --------------
        printC(babelsberg.CONSTRAINT(babelsberg.REQUIRED, e)) => cs

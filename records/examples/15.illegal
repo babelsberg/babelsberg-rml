@@ -1,0 +1,8 @@
+Here, assigning a record with a different structure to a is OK on its
+own, but the always constraint would also require b to change. It’s a
+bit weird that this behavior is different from the behavior with
+primitive types (in which a similar program was OK). However, once we
+introduce object identity, we will be able to have changes to the
+types of variables ripple through the system via identity constraints
+(but it will need to be via identity constraints and not value
+constraints).
