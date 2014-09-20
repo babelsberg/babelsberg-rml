@@ -55,6 +55,12 @@ relation printE: babelsberg.Exp => string =
        string_append("{", s) => s' &
        string_append(s', "}") => s''
        -----------------------------
+       printE(babelsberg.RECORD(ary)) => s''
+
+  rule printRContents(ary) => s &
+       string_append("{", s) => s' &
+       string_append(s', "}") => s''
+       -----------------------------
        printE(babelsberg.VALUE(babelsberg.IRECORD(ary))) => s''
 
   rule printE(e) => es &

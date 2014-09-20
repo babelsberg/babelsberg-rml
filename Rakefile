@@ -37,26 +37,35 @@ semantics.each do |s|
       input = "#{s}/input"
       File.unlink(input) if File.exist?(input)
 
-      Errortest = lambda do |example, output|
+      $Errortest = lambda do |example, output|
         if File.exist?(example.sub(/txt$/, "illegal"))
-          return "#{example}: Illegal but input created" if File.exist?("input")
           return "#{example}: Illegal, but didn't fail" unless output.end_with?("Evaluation failed!\n")
+          if File.exist?("input")
+            lastinput = File.read("input")
+            File.unlink("input")
+            envinput = example.sub(/txt$/, "env")
+            return "#{example}: No environment given" unless File.exist?(envinput)
+            environments = File.read(envinput).split(";\n")
+            return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
+            idx = $1.to_i
+            return "#{example}: Not all environments used" unless environments.size == idx
+          end
           return nil
-        end
+        else
+          return "#{example}: No input created" unless File.exist?("input")
+          lastinput = File.read("input")
+          File.unlink("input")
 
-        return "#{example}: No input created" unless File.exist?("input")
-        lastinput = File.read("input")
-        File.unlink("input")
+          envinput = example.sub(/txt$/, "env")
+          return "#{example}: No environment given" unless File.exist?(envinput)
+          environments = File.read(envinput).split(";\n")
 
-        envinput = example.sub(/txt$/, "env")
-        return "#{example}: No environment given" unless File.exist?(envinput)
-        environments = File.read(envinput).split(";\n")
-
-        return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
-        idx = $1.to_i
-        return "#{example}: Not all environments used" unless environments.size == idx
-        if output.end_with?("Evaluation failed!\n")
-          return "#{example}: Unexpected failure" unless environments.last =~ /unsat/
+          return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
+          idx = $1.to_i
+          return "#{example}: Not all environments used" unless environments.size == idx
+          if output.end_with?("Evaluation failed!\n")
+            return "#{example}: Unexpected failure" unless environments.last =~ /unsat/
+          end
         end
       end
 
@@ -66,7 +75,7 @@ semantics.each do |s|
   end
 end
 
-Errortest = lambda do |example, output|
+$Errortest = lambda do |example, output|
   return example if output.end_with?("Evaluation failed!\n")
 end
 
@@ -86,6 +95,6 @@ def run_example(s, example, errors)
       end
     end
   end
-  error = Errortest[example, output]
+  error = $Errortest[example, output]
   errors << "\t#{error}\n" if error
 end

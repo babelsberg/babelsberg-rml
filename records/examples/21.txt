@@ -1,0 +1,3 @@
+p := {x:0};
+always medium p = {x:3};
+always medium p = {x:4}
