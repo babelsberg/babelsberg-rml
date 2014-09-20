@@ -15,14 +15,16 @@ letter       [a-zA-Z_]
 ident        {letter}({letter}|{digit})*
 digit        [0-9]
 digits       {digit}+
-icon         {digits}
 pt           "."
 quote        "\""
 sign         [+-]
 exponent     ([eE]{sign}?{digits})
-rcon1        {digits}({pt}{digits}?)?{exponent}
-rcon2        {digits}?{pt}{digits}{exponent}?
+rcon1        {sign}?{digits}({pt}{digits}?)?{exponent}
+rcon2        {sign}?{digits}?{pt}{digits}{exponent}?
 rcon         {rcon1}|{rcon2}
+icon1        {digits}
+icon2        {sign}{digits}
+icon         {icon1}|{icon2}
 string       {quote}({letter}|{digit}|{whitespace})+{quote}
 
 %%

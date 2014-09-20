@@ -4,44 +4,18 @@ module Print:
 
   relation printC: babelsberg.Constraint => string
   relation printE: babelsberg.Exp => string
-  relation parseEnvironment: (string list, babelsberg.Env) => babelsberg.Env
+  relation parseEnvironment: (babelsberg.ModBnd list, babelsberg.Env) => babelsberg.Env
 end
 
-relation parseEnvironment: (string list, babelsberg.Env) => babelsberg.Env =
+relation parseEnvironment: (babelsberg.ModBnd list, babelsberg.Env) => babelsberg.Env =
   axiom parseEnvironment([], E) => E
 
   rule parseEnvironment(rest, E) => E' &
-       value = "true" &
-       print variable & print " ||= " & print value & print " \n"
+       babelsberg.eval([], value) => v &
+       printE(babelsberg.VALUE(v)) => vs &
+       print variable & print " ||= " & print vs & print " \n"
        -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.TRUE) :: E')
-
-  rule parseEnvironment(rest, E) => E' &
-       value = "false" &
-       print variable & print " ||= " & print value & print " \n"
-       -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.FALSE) :: E')
-
-  rule parseEnvironment(rest, E) => E' &
-       value = "nil" &
-       print variable & print " ||= " & print value & print " \n"
-       -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.NIL) :: E')
-
-  rule parseEnvironment(rest, E) => E' &
-       Solver.string_real(value) => v &
-       print variable & print " ||= " & print value & print " \n"
-       -------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.REAL(v)) :: E')
-
-  rule parseEnvironment(rest, E) => E' &
-       string_nth(value, 0) => start &
-       start = #"\"" &
-       string_length(value) => len & int_sub(len, 1) => lastidx & string_nth(value, lastidx) => ende &
-       ende = #"\"" &
-       print variable & print " ||= " & print value & print " \n"
-       ----------------------------------------------------------
-       parseEnvironment(variable :: value :: rest, E) => ((variable, babelsberg.STRING(value)) :: E')
+       parseEnvironment(babelsberg.BINDING(variable, value) :: rest, E) => ((variable, v) :: E')
 end
 
 relation printC: babelsberg.Constraint => string =

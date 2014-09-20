@@ -43,11 +43,13 @@ module babelsberg:
   type Value   = Constant
 
 (* Bindings and environments *)
+  datatype ModBnd  = BINDING of Variable * Exp
   type VarBnd      = (Variable * Value)
   type Env         = VarBnd list
   type Cstore      = Constraint
 
   relation evalprogram: Program => ()
+  relation eval: (Env, Exp) => Value
 end
 
 relation evalprogram: Program => () =

@@ -43,5 +43,5 @@ main()
     fprintf(stderr,"Evaluation failed!\n");
     exit(2);
   }
+  exit(0);
 }
-

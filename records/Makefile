@@ -36,7 +36,7 @@ lexer.c:  lexer.l
 
 parser.o:  parser.c babelsberg.h
 parser.c parser.h:  parser.y
-	bison -d parser.y
+	bison --debug --verbose -d parser.y
 	mv parser.tab.c parser.c
 	mv parser.tab.h parser.h
 

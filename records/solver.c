@@ -4,14 +4,20 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "rml.h"
+#include "babelsberg.h"
+#include "parser.h"
+
+
+extern int yy_scan_string(char *yy_str);
+extern void* absyntree;
 
 /* No init for this module */
 void Solver_5finit(void) {}
 /* The glue function */
 RML_BEGIN_LABEL(Solver__solve)
 {
-    char variable[1024] = {'\0'};
-    char value[1024] = {'\0'};
+    char *variable;
+    char *value;
     double rvalue = 0;
     char *first_param = RML_STRINGDATA(rmlA0);
     char c;
@@ -29,9 +35,20 @@ RML_BEGIN_LABEL(Solver__solve)
 
     FILE* input = fopen("input", "r");
     void* list = mk_nil();
-    while(fscanf(input, "%s %s\n", variable, value) != EOF) {
-	list = mk_cons(mk_scon(value), list);
-	list = mk_cons(mk_scon(variable), list);
+
+    while(fscanf(input, "%ms %m[-{}a-zA-Z0-9.:, \"]\n", &variable, &value) != EOF) {
+	printf("%s - %s\n", variable, value);
+	yy_scan_string(value);
+	if (yyparse() != 0) {
+	    fprintf(stderr, "Parsing model failed!\n");
+	    RML_TAILCALLK(rmlFC);
+	}
+	list = mk_cons(babelsberg__BINDING(mk_scon(variable),
+					   absyntree),
+		       list);
+
+	free(variable);
+	free(value);
     }
 
     rmlA0 = list;
