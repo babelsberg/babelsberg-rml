@@ -67,7 +67,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
        eval(Env,e) => v &
        welltyped(((x, v) :: Env), Cstore) &
        stay(Env) => Cs &
-       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs),
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cs, Cstore),
 	      CONSTRAINT(REQUIRED, COMPARE(VARIABLE(x), EQUAL, VALUE(v))))) => Env'
        ----------------------------------------------
        step(Env, Cstore, ASSIGN(x, e)) => (Env', Cstore)
@@ -75,7 +75,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
   rule print "S-Once\n" &
        welltyped(Env, C0) &
        stay(Env) => Cs &
-       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cstore, Cs), C0)) => Env'
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cs, Cstore), C0)) => Env'
        ----------------------------------------
        step(Env, Cstore, ONCE(C0)) => (Env', Cstore)
 
