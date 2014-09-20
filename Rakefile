@@ -39,7 +39,7 @@ semantics.each do |s|
 
       $Errortest = lambda do |example, output|
         if File.exist?(example.sub(/txt$/, "illegal"))
-          return "#{example}: Illegal, but didn't fail" unless output.end_with?("Evaluation failed!\n")
+          return "#{example}: Illegal, but didn't fail" unless output =~ /Evaluation failed!/
           if File.exist?("input")
             lastinput = File.read("input")
             File.unlink("input")
@@ -63,7 +63,7 @@ semantics.each do |s|
           return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
           idx = $1.to_i
           return "#{example}: Not all environments used" unless environments.size == idx
-          if output.end_with?("Evaluation failed!\n")
+          if output =~ /Evaluation failed!/
             return "#{example}: Unexpected failure" unless environments.last =~ /unsat/
           end
         end
