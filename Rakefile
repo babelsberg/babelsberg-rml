@@ -38,6 +38,12 @@ semantics.each do |s|
       File.unlink(input) if File.exist?(input)
 
       Errortest = lambda do |example, output|
+        if File.exist?(example.sub(/txt$/, "illegal"))
+          return "#{example}: Illegal but input created" if File.exist?("input")
+          return "#{example}: Illegal, but didn't fail" unless output.end_with?("Evaluation failed!\n")
+          return nil
+        end
+
         return "#{example}: No input created" unless File.exist?("input")
         lastinput = File.read("input")
         File.unlink("input")
