@@ -1,0 +1,4 @@
+p := new {x:2, y:5};
+a := p.x;
+p.x := 6;
+always p.x = 100
