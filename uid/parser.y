@@ -76,9 +76,9 @@ statement       : statement T_SEMIC statement
                         { $$ = babelsberg__SEQ($1, $3); }
                 | T_SKIP
                         { $$ = babelsberg__SKIP; }
-                | variable T_ASSIGN T_NEW record
-                        { $$ = babelsberg__NEWASSIGN($1, $3); }
-                | variable T_ASSIGN expression
+                | accessor T_ASSIGN T_NEW record
+                        { $$ = babelsberg__NEWASSIGN($1, $4); }
+                | accessor T_ASSIGN expression
                         { $$ = babelsberg__ASSIGN($1, $3); }
                 | T_ALWAYS constraint
                         { $$ = babelsberg__ALWAYS($2); }

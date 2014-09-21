@@ -26,7 +26,7 @@ icon1        {digits}
 icon2        {sign}{digits}
 icon         {icon1}|{icon2}
 string       {quote}({letter}|{digit}|{whitespace})+{quote}
-amp          "&"
+amp          "#"
 reference    {amp}{icon}
 
 %%

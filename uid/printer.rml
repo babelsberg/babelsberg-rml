@@ -59,6 +59,16 @@ relation printE: babelsberg.Exp => string =
 
   axiom printE(babelsberg.ACCESSOR(babelsberg.VARIABLE(x))) => x
 
+  rule int_string(r) => rs &
+       string_append("#", rs) => rs'
+       -----------------------------
+       printE(babelsberg.VALUE(babelsberg.REF(r))) => rs'
+
+  rule printE(babelsberg.VALUE(babelsberg.REF(r))) => rs &
+       string_append("H(", rs) => rs' & string_append(rs', ")") => rs''
+       ----------------------------------------------------------------
+       printE(babelsberg.DEREF(r)) => rs''
+
   rule printRContents(ary) => s &
        string_append("{", s) => s' &
        string_append(s', "}") => s''
