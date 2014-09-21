@@ -13,16 +13,17 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
   rule parseEnvironment(rest, E, H) => (E', H') &
        babelsberg.eval([], [], e) => v &
        printE(babelsberg.VALUE(v)) => vs &
-       print x & print " ||= " & print vs & print " \n"
+       int_string(r) => rs &
+       print "H(" & print rs & print ")" & print " ||= " & print vs & print " \n"
        ------------------------------------------------
-       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ACCESSOR(babelsberg.ASSIGNDEREF(r), e))) :: rest, E, H) => (E', (r, v) :: H')
-
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(r), e)) :: rest, E, H) => (E', (r, v) :: H')
+  
   rule parseEnvironment(rest, E, H) => (E', H') &
        babelsberg.eval([], [], e) => v &
        printE(babelsberg.VALUE(v)) => vs &
        print x & print " ||= " & print vs & print " \n"
        ------------------------------------------------
-       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ACCESSOR(babelsberg.VARIABLE(x), e))) :: rest, E, H) => ((x, v) :: E', H')
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.VARIABLE(x), e)) :: rest, E, H) => ((x, v) :: E', H')
 end
 
 relation printC: babelsberg.Constraint => string =
