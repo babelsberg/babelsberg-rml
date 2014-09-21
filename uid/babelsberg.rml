@@ -1,0 +1,351 @@
+(* file assignment.rml *)
+
+module babelsberg:
+(* Abstract syntax for the BabelsbergP language *)
+
+  datatype Program = PROGRAM of Statement
+
+  datatype Statement = SEQ of Statement * Statement
+		     | SKIP
+		     | ASSIGN of Accessor * Exp
+		     | NEWASSIGN of Accessor * Record
+		     | ALWAYS of Constraint
+		     | ONCE of Constraint
+		     | IF of Exp * Statement * Statement
+		     | WHILE of Exp * Statement
+
+  datatype Constraint = CONSTRAINT of Rho * Exp
+		      | COMPOUNDCONSTRAINT of Constraint * Constraint
+
+  datatype Rho = WEAK | MEDIUM | REQUIRED
+
+  datatype Exp = VALUE of Value
+	       | ACCESSOR of Accessor
+	       | OP of Exp * Op * Exp
+	       | COMPARE of Exp * Comp * Exp
+	       | COMBINE of Exp * Comb * Exp
+	       | IDENTITY of Identity
+	       | DEREF of Dereference
+
+  datatype Identity = ID of Accessor * Accessor
+
+  datatype Accessor = VARIABLE of Variable | FIELD of Accessor * Label
+                    | ASSIGNDEREF of Dereference (* just for the parsing *)
+
+  datatype Record = RECORD of Fieldexpression list
+
+  type Dereference = Reference
+
+  type Reference = int
+
+(* Helper types to match a single label:exp pair *)
+  datatype Fieldexpression = LABELEXPRESSION of Label * Exp
+
+  datatype Constant = TRUE | FALSE | NIL | REAL of real | STRING of string | IRECORD of Fieldexpression list | REF of Reference
+
+  type Variable = string
+
+  type Label = string
+
+  datatype Op =  ADD | SUB | MUL | DIV
+  datatype Comp = LESSTHAN | LEQUAL | EQUAL | NEQUAL | GEQUAL | GREATERTHAN
+  datatype Comb = AND | OR
+
+(* Values stored in environments *)
+  type Value   = Constant
+
+(* Type syntax *)
+  datatype Type = PRIMITIVE | TRECORD of Fieldtypes list
+  datatype Fieldtypes = LABELTYPE of Label * Type
+
+
+(* Bindings and environments *)
+  type VarBnd      = (Variable * Value)
+  type Env         = VarBnd list
+  type RefBnd      = (Reference * Value)
+  type Heap        = RefBnd list
+  type Cstore      = Constraint
+  type Istore      = Constraint
+
+  relation evalprogram: Program => ()
+  relation eval: (Env, Heap, Exp) => Value
+end
+
+relation evalprogram: Program => () =
+  rule print "starting to evaluate\n" &
+       step([], [], CONSTRAINT(REQUIRED, VALUE(TRUE)), CONSTRAINT(REQUIRED, VALUE(TRUE)), statement) => (Env, Heap, Cstore, Istore)
+       -------------------------------------
+       evalprogram(PROGRAM(statement))
+end
+
+relation step: (Env, Heap, Cstore, Istore, Statement) => (Env, Heap, Cstore, Istore) =
+  rule print "S-Asgn\n" &
+       eval(Env, Heap, e) => v &
+       (* first solve identities *)
+       stay(Env) => C_Es & stayH(Heap) => C_Hs &
+       models(COMPOUNDCONSTRAINT(
+                  COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es, C_Hs), Istore),
+	          CONSTRAINT(REQUIRED, COMPARE(ACCESSOR(a), EQUAL, VALUE(v))))) => (Env', Heap') &
+       (* then solve constraints *)
+       stay(Env') => C_Es' & stayH(Heap') => C_Hs' &
+       welltyped(Env', Heap', Cstore) &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), Cstore)) => (Env'', Heap'')
+       ---------------------------------------------------------------------------------------
+       step(Env, Heap, Cstore, Istore, ASSIGN(a, e)) => (Env'', Heap'', Cstore, Istore)
+
+  rule print "S-AsgnNew\n" &
+       evalFields(Env, Heap, fexps) => fvalues &
+       tick() => r & (* creates a unique integer *)
+       list_append([(r, IRECORD(fvalues))], Heap) => H0 &
+       (* first solve identities *)
+       stay(Env) => C_Es & stayH(H0) => C_Hs &
+       models(COMPOUNDCONSTRAINT(
+                  COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es, C_Hs), Istore),
+	          CONSTRAINT(REQUIRED, COMPARE(ACCESSOR(a), EQUAL, VALUE(REF(r)))))) => (Env', Heap') &
+       (* then solve constraints *)
+       stay(Env') => C_Es' & stayH(Heap') => C_Hs' &
+       welltyped(Env', Heap', Cstore) &
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), Cstore)) => (Env'', Heap'')
+       ---------------------------------------------------------------------------------------
+       step(Env, Heap, Cstore, Istore, NEWASSIGN(a, RECORD(fexps))) => (Env'', Heap'', Cstore, Istore)
+
+  rule print "S-Once\n" &
+       welltyped(Env, Heap, C0) &
+       stay(Env) => C_Es &
+       stayH(Heap) => C_Hs &
+       models(COMPOUNDCONSTRAINT(
+                  COMPOUNDCONSTRAINT(C_Es, C_Hs),
+                  COMPOUNDCONSTRAINT(Cstore, C0))) => (Env', Heap')
+       ------------------------------------------------------------
+       step(Env, Heap, Cstore, Istore, ONCE(C0)) => (Env', Heap', Cstore, Istore)
+
+  rule print "S-Always\n" &
+       step(Env, Heap, Cstore, Istore, ONCE(C0)) => (Env', Heap', Cstore, Istore)
+       --------------------------------------------------------------------------
+       step(Env, Heap, Cstore, Istore, ALWAYS(C0)) => (Env', Heap', COMPOUNDCONSTRAINT(Cstore, C0), Istore)
+
+  axiom step(Env, Heap, Cstore, Istore, SKIP) => (Env, Heap, Cstore, Istore)
+
+  rule print "S-SeqStep\n" &
+       step(Env, Heap, Cstore, Istore, s1) => (Env', Heap', Cstore', Istore') &
+       step(Env', Heap', Cstore', Istore', s2) => (Env'', Heap'', Cstore'', Istore'')
+       ------------------------------------------------------------------------------
+       step(Env, Heap, Cstore, Istore, SEQ(s1, s2)) => (Env'', Heap'', Cstore'', Istore'')
+
+  rule eval(Env, Heap, e) => TRUE &
+       print "S-IfThen\n" &
+       step(Env, Heap, Cstore, Istore, s1) => (Env', Heap', Cstore', Istore')
+       ----------------------------------------
+       step(Env, Heap, Cstore, Istore, IF(e, s1, s2)) => (Env', Heap', Cstore', Istore')
+
+  rule eval(Env, Heap, e) => v &
+       not v = TRUE &
+       print "S-IfElse\n" &
+       step(Env, Heap, Cstore, Istore, s2) => (Env', Heap', Cstore', Istore')
+       ----------------------------------------
+       step(Env, Heap, Cstore, Istore, IF(e, s1, s2)) => (Env', Heap', Cstore', Istore')
+
+  rule eval(Env, Heap, e) => TRUE &
+       print "S-WhileDo\n" &
+       step(Env, Heap, Cstore, Istore, s) => (Env', Heap', Cstore', Istore') &
+       step(Env', Heap', Cstore', Istore', WHILE(e, s)) => (Env'', Heap'', Cstore'', Istore'')
+       -----------------------------------------------------
+       step(Env, Heap, Cstore, Istore, WHILE(e, s)) => (Env'', Heap'', Cstore'', Istore'')
+
+  rule eval(Env, Heap, e) => v &
+       not v = TRUE &
+       print "S-WhileSkip\n"
+       -----------------------------------------------------
+       step(Env, Heap, Cstore, Istore, WHILE(e, s)) => (Env, Heap, Cstore, Istore)
+
+  rule print "S-OnceIdentity\n" &
+       eval(E, H, ACCESSOR(a0)) => v0 & eval(E, H, ACCESSOR(a1)) => v1 & v0 = v1
+       ---------------------------------------------------------------
+       step(E, H, C, I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(ID(a0, a1))))) => (E, H, C, I)
+
+  rule print "S-AlwaysIdentity\n" &
+       step(E, H, C, I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(ID(a0, a1))))) => (E, H, C, I)
+       ---------------------------------------------------------------
+       step(E, H, C, I, ALWAYS(CONSTRAINT(REQUIRED, IDENTITY(ID(a0, a1))))) => (E, H, C, COMPOUNDCONSTRAINT(I, CONSTRAINT(REQUIRED, IDENTITY(ID(a0, a1)))))
+
+end    
+
+relation evalFields: (Env, Heap, Fieldexpression list) => (Fieldexpression list) =
+(* Helper rules to evaluate the list of fields *)
+  axiom evalFields(Env, Heap, []) => []
+
+  rule eval(Env, Heap, e) => v &
+       evalFields(Env, Heap, rest) => fvalues &
+       list_append([LABELEXPRESSION(l, VALUE(v))], fvalues) => fvalues'
+       ----------------------------------------------------------------
+       evalFields(Env, Heap, LABELEXPRESSION(l, e) :: rest) => fvalues'
+end
+
+relation eval: (Env, Heap, Exp) => Value =
+  axiom eval(E, H, VALUE(c)) => c
+
+  rule print "E-Var\n" &
+       Util.lookupEnv(Env, x) => v
+       ----------------------
+       eval(Env, Heap, ACCESSOR(VARIABLE(x))) => v
+
+  rule print "E-Field\n" &
+       eval(Env, Heap, ACCESSOR(a)) => REF(r) &
+       Util.lookupHeap(Heap, r) => IRECORD(fvalues) &
+       Util.lookupRecord(fvalues, l) => v
+       ----------------------------------
+       eval(Env, Heap, ACCESSOR(FIELD(a, l))) => v
+
+  rule print "E-Op\n" &
+       eval(Env, Heap, e1) => v1 &
+       eval(Env, Heap, e2) => v2 &
+       Util.apply_binop(op,v1,v2) => v
+       ------------------------------
+       eval(Env, Heap, OP(e1, op, e2)) => v
+
+  rule print "E-Compare\n" &
+       eval(Env, Heap, e1) => v1 &
+       eval(Env, Heap, e2) => v2 &
+       Util.apply_bincomp(op,v1,v2) => v
+       ------------------------------
+       eval(Env, Heap, COMPARE(e1, op, e2)) => v
+
+  rule eval(Env, Heap, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (true, v) &
+       print "E-CombineShortCircuit\n"
+       ---------------------------------------------
+       eval(Env, Heap, COMBINE(e1, op, e2)) => v
+
+  rule print "E-Combine\n" &
+       eval(Env, Heap, e1) => v1 &
+       Util.shortcircuit_bincomb(op,v1) => (false, v) &
+       eval(Env, Heap, e2) => v2 &
+       Util.apply_bincomb(op,v1,v2) => v
+       ---------------------------------
+       eval(Env, Heap, COMBINE(e1, op, e2)) => v
+
+  rule eval(Env, Heap, ACCESSOR(a1)) => v1 &
+       eval(Env, Heap, ACCESSOR(a2)) => v2 &
+       a1 = a2 &
+       print "E-IdentityTrue\n"
+       ------------------------
+       eval(Env, Heap, IDENTITY(ID(a1, a2))) => FALSE
+
+  rule eval(Env, Heap, ACCESSOR(a1)) => v1 &
+       eval(Env, Heap, ACCESSOR(a2)) => v2 &
+       not a1 = a2 &
+       print "E-IdentityFalse\n"
+       ------------------------
+       eval(Env, Heap, IDENTITY(ID(a1, a2))) => TRUE
+end
+
+relation tC: (Env, Heap, Exp) => Type =
+  axiom tC(_, _, VALUE(REAL(c))) => PRIMITIVE
+  axiom tC(_, _, VALUE(TRUE)) => PRIMITIVE
+  axiom tC(_, _, VALUE(FALSE)) => PRIMITIVE
+  axiom tC(_, _, VALUE(NIL)) => PRIMITIVE
+  axiom tC(_, _, VALUE(STRING(c))) => PRIMITIVE
+
+  rule print "T-Ref\n" &
+       Util.lookupHeap(Heap, r) => IRECORD(fvalues) &
+       tCFields(Env, Heap, fvalues) => ftypes
+       ---------------------------------------
+       tC(Env, Heap, VALUE(REF(r))) => TRECORD(ftypes)
+
+  rule print "T-Var\n" &
+       eval(Env, Heap, ACCESSOR(VARIABLE(x))) => v &
+       tC(Env, Heap, VALUE(v)) => T
+       -----------------
+       tC(Env, Heap, ACCESSOR(VARIABLE(x))) => T
+
+  rule print "T-Field\n" &
+       tC(Env, Heap, ACCESSOR(a)) => TRECORD(ftypes) &
+       Util.lookupRecordType(ftypes, l) => T
+       -------------------------------------
+       tC(Env, Heap, ACCESSOR(FIELD(a, l))) => T
+
+  rule print "T-Op\n" &
+       tC(Env, Heap, e1) => PRIMITIVE &
+       tC(Env, Heap, e2) => PRIMITIVE
+       --------------------------
+       tC(Env, Heap, OP(e1, op, e2)) => PRIMITIVE
+
+  rule print "T-Compare\n" &
+       tC(Env, Heap, e1) => T1 &
+       tC(Env, Heap, e2) => T2 &
+       T1 = T2
+       --------------------------
+       tC(Env, Heap, COMPARE(e1, op, e2)) => PRIMITIVE
+
+  rule print "T-Combine\n" &
+       tC(Env, Heap, e1) => PRIMITIVE &
+       tC(Env, Heap, e2) => PRIMITIVE
+       --------------------------
+       tC(Env, Heap, COMBINE(e1, op, e2)) => PRIMITIVE
+end
+
+relation tCFields: (Env, Heap, Fieldexpression list) => (Fieldtypes list) =
+(* Helper rules to type the list of fields *)
+  axiom tCFields(Env, Heap, []) => []
+
+  rule tC(Env, Heap, e) => T &
+       tCFields(Env, Heap, rest) => ftypes &
+       list_append([LABELTYPE(l, T)], ftypes) => ftypes'
+       ----------------------------------------------------------------
+       tCFields(Env, Heap, LABELEXPRESSION(l, e) :: rest) => ftypes'
+end
+
+relation welltyped: (Env, Heap, Constraint) => () =
+  rule tC(Env, Heap, e) => T
+       ---------------------
+       welltyped(Env, Heap, CONSTRAINT(rho, e))
+
+  rule welltyped(Env, Heap, C1) & welltyped(Env, Heap, C2)
+       ---------------------------------------------------
+       welltyped(Env, Heap, COMPOUNDCONSTRAINT(C1, C2))
+end
+
+relation stay: Env => Constraint =
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+
+  rule print "StayOne\n" &
+       stay(E0) => C0
+       --------------------------------
+       stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(ACCESSOR(VARIABLE(x)), EQUAL, VALUE(v))))
+end
+
+relation stayH: Heap => Constraint =
+  axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+
+  rule print "StayHeap\n" &
+       stayFields(r, fvalues) => Cf &
+       stayH(H0) => C0
+       --------------------------------
+       stayH((r, IRECORD(fvalues)) :: H0) => COMPOUNDCONSTRAINT(C0,
+                                 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(IRECORD(fvalues)))), Cf))
+end
+
+relation stayFields: (Reference, Fieldexpression list) => Constraint =
+  axiom stayFields(_, []) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+
+  rule stayFields(r, rest) => C &
+       int_string(r) => is &
+       string_append("#", is) => is' &
+       string_append(is', "_") => is'' &
+       string_append(is'', l) => x
+       -------------------------------
+       stayFields(r, LABELEXPRESSION(l, e) :: rest) => COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(ACCESSOR(VARIABLE(x)), EQUAL, e)), C)
+end    
+
+with "solver.rml"
+with "printer.rml"
+with "helper.rml"
+
+relation models: Constraint => (Env, Heap) =
+  rule Print.printC(C) => Cs &
+       Solver.solve(Cs) => El &
+       Print.parseEnvironment(El, [], []) => (E, H) &
+       print "\n"
+       ------------------------------
+       models(C) => (E, H)
+end

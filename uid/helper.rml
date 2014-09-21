@@ -1,0 +1,156 @@
+module Util:
+  with "babelsberg.rml"
+
+  relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value
+  relation lookupHeap: (babelsberg.Heap, babelsberg.Reference) => babelsberg.Value
+  relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value
+  relation lookupRecordType: (babelsberg.Fieldtypes list, babelsberg.Label) => babelsberg.Type
+  relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value
+  relation apply_bincomp: (babelsberg.Comp,babelsberg.Value,babelsberg.Value) => babelsberg.Value
+  relation apply_bincomb: (babelsberg.Comb,babelsberg.Value,babelsberg.Value) => babelsberg.Value
+  relation shortcircuit_bincomb: (babelsberg.Comb,babelsberg.Value) => (bool, babelsberg.Value)
+end
+
+relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value  =
+  rule  id = id2
+	------------------------------
+	lookupEnv((id2,value) :: _, id) => value
+
+  rule  not id=id2 &
+	lookupEnv(rest, id) => value
+	-------------------------------------
+	lookupEnv((id2,_) :: rest, id)  => value
+end
+
+relation lookupHeap: (babelsberg.Heap, babelsberg.Reference) => babelsberg.Value  =
+  rule  id = id2
+	------------------------------
+	lookupHeap((id2,value) :: _, id) => value
+
+  rule  not id=id2 &
+	lookupHeap(rest, id) => value
+	-------------------------------------
+	lookupHeap((id2,_) :: rest, id)  => value
+end
+
+relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value  =
+  rule  id = id2
+	------------------------------
+	lookupRecord(babelsberg.LABELEXPRESSION(id2, babelsberg.VALUE(value)) :: _, id) => value
+
+  rule  not id=id2 &
+	lookupRecord(rest, id) => value
+	-------------------------------------
+	lookupRecord(babelsberg.LABELEXPRESSION(id2, _) :: rest, id)  => value
+end
+
+relation lookupRecordType: (babelsberg.Fieldtypes list, babelsberg.Label) => babelsberg.Type  =
+  rule  id = id2
+	------------------------------
+	lookupRecordType(babelsberg.LABELTYPE(id2, T) :: _, id) => T
+
+  rule  not id=id2 &
+	lookupRecordType(rest, id) => T
+	-------------------------------------
+	lookupRecordType(babelsberg.LABELTYPE(id2, _) :: rest, id)  => T
+end
+
+
+relation apply_binop: (babelsberg.Op,babelsberg.Value,babelsberg.Value) => babelsberg.Value =
+
+ rule   x +. y => z
+	-------------------------                             (* x+y *)
+	apply_binop(babelsberg.ADD,babelsberg.REAL(x),babelsberg.REAL(y)) => (babelsberg.REAL(z))
+
+ rule   x -. y => z
+	-------------------------                             (* x-y *)
+	apply_binop(babelsberg.SUB,babelsberg.REAL(x),babelsberg.REAL(y)) => (babelsberg.REAL(z))
+
+ rule   x *. y => z
+	-------------------------                             (* x*y *)
+	apply_binop(babelsberg.MUL,babelsberg.REAL(x),babelsberg.REAL(y)) => (babelsberg.REAL(z))
+
+ rule   x /. y => z
+	------------------------                              (* x/y *)
+	apply_binop(babelsberg.DIV,babelsberg.REAL(x),babelsberg.REAL(y)) => (babelsberg.REAL(z))
+end
+
+relation apply_bincomp: (babelsberg.Comp,babelsberg.Value,babelsberg.Value) => babelsberg.Value =
+(* reals *)
+  rule  x <. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsberg.LESSTHAN,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.TRUE
+
+  rule  x <. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsberg.LESSTHAN,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.FALSE
+
+  rule  x <=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsberg.LEQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.TRUE
+
+  rule  x <=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsberg.LEQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.FALSE
+
+  rule  x ==. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsberg.EQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.TRUE
+
+  rule  x ==. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsberg.EQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.FALSE
+
+  rule  x >=. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsberg.GEQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.TRUE
+
+  rule  x >=. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsberg.GEQUAL,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.FALSE
+
+  rule  x >. y => z &
+	bool_eq(z, true) => true
+	-------------------------
+	apply_bincomp(babelsberg.GREATERTHAN,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.TRUE
+
+  rule  x >. y => z &
+	bool_eq(z, false) => true
+	-------------------------
+	apply_bincomp(babelsberg.GREATERTHAN,babelsberg.REAL(x),babelsberg.REAL(y)) => babelsberg.FALSE
+
+(* specials *)
+  axiom apply_bincomp(babelsberg.EQUAL,babelsberg.TRUE,babelsberg.TRUE) => babelsberg.TRUE
+  axiom apply_bincomp(babelsberg.EQUAL,babelsberg.FALSE,babelsberg.FALSE) => babelsberg.TRUE
+  axiom apply_bincomp(babelsberg.EQUAL,babelsberg.NIL,babelsberg.NIL) => babelsberg.TRUE
+
+(* generic *)
+  axiom apply_bincomp(babelsberg.EQUAL,_,_) => babelsberg.FALSE
+end
+
+relation apply_bincomb: (babelsberg.Comb,babelsberg.Value,babelsberg.Value) => babelsberg.Value =
+  axiom apply_bincomb(babelsberg.AND,babelsberg.TRUE,babelsberg.TRUE) => babelsberg.TRUE
+  axiom apply_bincomb(babelsberg.AND,babelsberg.TRUE,babelsberg.FALSE) => babelsberg.FALSE
+  axiom apply_bincomb(babelsberg.AND,babelsberg.FALSE,babelsberg.TRUE) => babelsberg.FALSE
+  axiom apply_bincomb(babelsberg.AND,babelsberg.FALSE,babelsberg.FALSE) => babelsberg.FALSE
+  axiom apply_bincomb(babelsberg.OR,babelsberg.TRUE,babelsberg.TRUE) => babelsberg.TRUE
+  axiom apply_bincomb(babelsberg.OR,babelsberg.TRUE,babelsberg.FALSE) => babelsberg.TRUE
+  axiom apply_bincomb(babelsberg.OR,babelsberg.FALSE,babelsberg.TRUE) => babelsberg.TRUE
+  axiom apply_bincomb(babelsberg.OR,babelsberg.FALSE,babelsberg.FALSE) => babelsberg.FALSE
+end
+
+relation shortcircuit_bincomb: (babelsberg.Comb,babelsberg.Value) => (bool, babelsberg.Value) =
+  axiom shortcircuit_bincomb(babelsberg.AND,babelsberg.TRUE) => (false, babelsberg.TRUE)
+  axiom shortcircuit_bincomb(babelsberg.AND,babelsberg.FALSE) => (true, babelsberg.FALSE)
+  axiom shortcircuit_bincomb(babelsberg.OR,babelsberg.TRUE) => (true, babelsberg.TRUE)
+  axiom shortcircuit_bincomb(babelsberg.OR,babelsberg.FALSE) => (false, babelsberg.FALSE)
+end
+
