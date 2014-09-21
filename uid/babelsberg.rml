@@ -318,23 +318,23 @@ relation stayH: Heap => Constraint =
   axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(TRUE))
 
   rule print "StayHeap\n" &
-       stayFields(r, fvalues) => Cf &
+       stayFields(r, fvalues) => (Cf, fvariables) &
        stayH(H0) => C0
        --------------------------------
        stayH((r, IRECORD(fvalues)) :: H0) => COMPOUNDCONSTRAINT(C0,
-                                 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(IRECORD(fvalues)))), Cf))
+                                 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(IRECORD(fvariables)))), Cf))
 end
 
-relation stayFields: (Reference, Fieldexpression list) => Constraint =
-  axiom stayFields(_, []) => CONSTRAINT(REQUIRED, VALUE(TRUE))
+relation stayFields: (Reference, Fieldexpression list) => (Constraint, Fieldexpression list) =
+  axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(TRUE)), [])
 
-  rule stayFields(r, rest) => C &
+  rule stayFields(r, rest) => (C, fvariables) &
        int_string(r) => is &
-       string_append("#", is) => is' &
-       string_append(is', "_") => is'' &
-       string_append(is'', l) => x
+       string_append(is, "_") => is' &
+       string_append(is', l) => x
        -------------------------------
-       stayFields(r, LABELEXPRESSION(l, e) :: rest) => COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(ACCESSOR(VARIABLE(x)), EQUAL, e)), C)
+       stayFields(r, LABELEXPRESSION(l, e) :: rest) => (COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(ACCESSOR(VARIABLE(x)), EQUAL, e)), C),
+							LABELEXPRESSION(l, ACCESSOR(VARIABLE(x))) :: fvariables)
 end    
 
 with "solver.rml"

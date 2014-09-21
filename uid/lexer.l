@@ -27,7 +27,7 @@ icon2        {sign}{digits}
 icon         {icon1}|{icon2}
 string       {quote}({letter}|{digit}|{whitespace})+{quote}
 amp          "#"
-reference    {amp}{icon}
+reference    {amp}{digits}
 
 %%
 
@@ -99,6 +99,6 @@ int lex_string(void)
 
 int lex_ref(void)
 {
-  yylval = (void*)mk_icon(yytext + 1);
+  yylval = (void*)mk_icon(atoi(yytext + 1));
   return T_REF;
 }

@@ -117,8 +117,6 @@ expression      : expression woperation expression %prec T_MUL
                         { $$ = babelsberg__COMBINE($1, $2, $3); }
                 | value
                         { $$ = babelsberg__VALUE($1); }
-                | reference
-		        { $$ = babelsberg__REF($1); }
                 | accessor
                         { $$ = babelsberg__ACCESSOR($1); }
                 | dereference
@@ -128,6 +126,8 @@ accessor        : variable
                         { $$ = babelsberg__VARIABLE($1); }
                 | expression T_DOT label
                         { $$ = babelsberg__FIELD($1, $3); }
+                | dereference
+                        { $$ = babelsberg__ASSIGNDEREF($1); }
 
 record          : T_LBRACE fieldexpressions T_RBRACE
                         { $$ = babelsberg__RECORD($2); }
@@ -148,6 +148,8 @@ constant        : T_REALCONST
                         { $$ = babelsberg__NIL; }
                 | T_STRING
                         { $$ = babelsberg__STRING($1);}
+                | reference
+		        { $$ = babelsberg__REF($1); }
 
 variable        : T_IDENT
                         { $$ = $1; }

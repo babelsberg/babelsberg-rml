@@ -35,7 +35,7 @@ RML_BEGIN_LABEL(Solver__solve)
     FILE* input = fopen("input", "r");
     void* list = mk_nil();
 
-    while(fscanf(input, "%m[-{}a-zA-Z0-9.:=, \"]\n", &assignment) != EOF) {
+    while(fscanf(input, "%m[()#-{}a-zA-Z0-9.:=, \"]\n", &assignment) != EOF) {
 	printf("%s\n", assignment);
 	yy_scan_string(assignment);
 	if (yyparse() != 0) {
