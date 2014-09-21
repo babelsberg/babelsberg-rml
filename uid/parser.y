@@ -124,7 +124,7 @@ expression      : expression woperation expression %prec T_MUL
 
 accessor        : variable
                         { $$ = babelsberg__VARIABLE($1); }
-                | expression T_DOT label
+                | accessor T_DOT label
                         { $$ = babelsberg__FIELD($1, $3); }
                 | dereference
                         { $$ = babelsberg__ASSIGNDEREF($1); }
