@@ -105,6 +105,15 @@ relation printE: babelsberg.Exp => string =
        --------------------------------
        printE(babelsberg.COMPARE(e1, op, e2)) => es'
 
+  rule printE(babelsberg.ACCESSOR(a1)) => e1s &
+       printE(babelsberg.ACCESSOR(a2)) => e2s &
+       string_append("(", e1s) => e1s' &
+       string_append(e2s, ")") => e2s' &
+       string_append(e1s', " == ") => es &
+       string_append(es, e2s') => es'
+       --------------------------------
+       printE(babelsberg.IDENTITY(babelsberg.ID(a1, a2))) => es'
+
   rule printE(e1) => e1s &
        printE(e2) => e2s &
        printComb(op) => os &
