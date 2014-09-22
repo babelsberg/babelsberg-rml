@@ -89,7 +89,7 @@ relation step: (Env, Heap, Cstore, Istore, Statement) => (Env, Heap, Cstore, Ist
        (* then solve constraints *)
        stay(Env') => C_Es' & stayH(Heap') => C_Hs' &
        welltyped(Env', Heap', Cstore) &
-       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), Cstore)) => (Env'', Heap'')
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), COMPOUNDCONSTRAINT(Cstore, CONSTRAINT(REQUIRED, COMPARE(ACCESSOR(a), EQUAL, VALUE(v)))))) => (Env'', Heap'')
        ---------------------------------------------------------------------------------------
        step(Env, Heap, Cstore, Istore, ASSIGN(a, e)) => (Env'', Heap'', Cstore, Istore)
 
@@ -105,7 +105,7 @@ relation step: (Env, Heap, Cstore, Istore, Statement) => (Env, Heap, Cstore, Ist
        (* then solve constraints *)
        stay(Env') => C_Es' & stayH(Heap') => C_Hs' &
        welltyped(Env', Heap', Cstore) &
-       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), Cstore)) => (Env'', Heap'')
+       models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C_Es', C_Hs'), COMPOUNDCONSTRAINT(Cstore, CONSTRAINT(REQUIRED, COMPARE(ACCESSOR(a), EQUAL, VALUE(REF(r))))))) => (Env'', Heap'')
        ---------------------------------------------------------------------------------------
        step(Env, Heap, Cstore, Istore, NEWASSIGN(a, RECORD(fexps))) => (Env'', Heap'', Cstore, Istore)
 
