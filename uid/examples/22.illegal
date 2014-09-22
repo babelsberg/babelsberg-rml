@@ -1,0 +1,10 @@
+This program fails even though there actually are records that would
+satisfy the required a=b constraint — the issue is that the assignment
+to a leaves it with a record type that has a single x field, the
+assignment to b leaves it with a record type that has a single y
+field, and the structural compatibility check prevents the solver from
+changing either of these types. This illustrates one aspect of using
+the structural compatibility checks to tame the solver — one could
+otherwise imagine the solver coming up with the solution a → {x:0,
+y:5} and b → {x:0, y:5}, or even a → {x:0, y:5, z:10} and b → {x:0,
+y:5, z:10}.
