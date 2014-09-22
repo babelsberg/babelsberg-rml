@@ -1,0 +1,4 @@
+p := new {x:2, y:5};
+q := p;
+always q==p;
+q := new {z:10}
