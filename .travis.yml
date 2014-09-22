@@ -4,6 +4,7 @@ env:
   matrix:
     - IMPL=reals
     - IMPL=records
+    - IMPL=uid
 
 before_script:
   - cd rml

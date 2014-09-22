@@ -3,7 +3,7 @@ require "pp"
 
 ENV["BBBEDITOR"] ||= "xterm -e /usr/bin/nano"
 
-semantics = [:reals, :records]
+semantics = [:reals, :records, :uid]
 
 semantics.each do |s|
   namespace s do
