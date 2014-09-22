@@ -109,8 +109,8 @@ relation step: (Env, Heap, Cstore, Istore, Statement) => (Env, Heap, Cstore, Ist
        ---------------------------------------------------------------------------------------
        step(Env, Heap, Cstore, Istore, NEWASSIGN(a, RECORD(fexps))) => (Env'', Heap'', Cstore, Istore)
 
-  rule print "S-Once\n" &
-       welltyped(Env, Heap, C0) &
+  rule welltyped(Env, Heap, C0) &
+       print "S-Once\n" &
        stay(Env) => C_Es &
        stayH(Heap) => C_Hs &
        models(COMPOUNDCONSTRAINT(
@@ -119,7 +119,8 @@ relation step: (Env, Heap, Cstore, Istore, Statement) => (Env, Heap, Cstore, Ist
        ------------------------------------------------------------
        step(Env, Heap, Cstore, Istore, ONCE(C0)) => (Env', Heap', Cstore, Istore)
 
-  rule print "S-Always\n" &
+  rule welltyped(Env, Heap, C0) &
+       print "S-Always\n" &
        step(Env, Heap, Cstore, Istore, ONCE(C0)) => (Env', Heap', Cstore, Istore)
        --------------------------------------------------------------------------
        step(Env, Heap, Cstore, Istore, ALWAYS(C0)) => (Env', Heap', COMPOUNDCONSTRAINT(Cstore, C0), Istore)
