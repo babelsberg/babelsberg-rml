@@ -86,9 +86,8 @@ end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
   rule evalEach(E, S, H, C, I, argexps) => (En, Hn, Cn, In, argvals) &
-       step(En, [], Hn, Cn, In, ASSIGN(VARIABLE("self"), VALUE(v))) => (E0, S0, Hn, Cn, In) &
-       assignEach(E0, S0, Hn, Cn, In, argnames, argvals) => (E2n, Sn, Hn, Cn, In)
-       --------------------------------------------------------------------------
+       assignEachFresh(En, [], Hn, Cn, In, "self" :: argnames, v :: argvals) => (E2n, Sn, Hn, Cn, In)
+       ----------------------------------------------------------------------------------------------
        enter(E, S, H, C, I, v, argnames, argexps) => (E2n, Sn, Hn, Cn, In)
 end
 
@@ -101,13 +100,15 @@ relation evalEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Heap, C
 	evalEach(E,S,H,C,I,e :: rest) => (E'',H'',C'',I'',v :: values)
 end
 
-relation assignEach: (Env, Scope, Heap, Cstore, Istore, Variable list, Value list) => (Env, Scope, Heap, Cstore, Istore) =
-  axiom	assignEach(E,S,H,C,I,[],[]) => (E,S,H,C,I)
+relation assignEachFresh: (Env, Scope, Heap, Cstore, Istore, Variable list, Value list) => (Env, Scope, Heap, Cstore, Istore) =
+  axiom	assignEachFresh(E,S,H,C,I,[],[]) => (E,S,H,C,I)
 
-  rule	step(E,S,H,C,I,ASSIGN(VARIABLE(x), VALUE(v))) => (E',S',H',C',I') &
-	assignEach(E',S',H',C',I',xrest, vrest) => (E'',S'',H'',C'',I'')
-	---------------------------------------------------------
-	assignEach(E,S,H,C,I,x :: xrest, v :: vrest) => (E'',S'',H'',C'',I'')
+  rule	tick() => i & int_string(i) => is & string_append(x,is) => xg &
+	list_append(S,[(x,xg)]) => S' &
+	list_append(E,[(xg,v)]) => E' &
+	assignEachFresh(E',S',H,C,I,xrest, vrest) => (E'',S'',H,C,I)
+	------------------------------------------------------------
+	assignEachFresh(E,S,H,C,I,x :: xrest, v :: vrest) => (E'',S'',H,C,I)
 end
 
 relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value) =
@@ -431,7 +432,7 @@ relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, H
   rule	stay(E) => CEs & stayH(H) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),
 				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2))))) => (E',H') &
-	stay(E') => CEs' & stayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(E',H',Cc) &
+	stay(E') => CEs' & stayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(Ec,H',Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
 						     COMPOUNDCONSTRAINT(CEs',CHs')),
 				  CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2)))) => (E'',H'')
