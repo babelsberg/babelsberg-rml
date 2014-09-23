@@ -49,12 +49,12 @@ solver.c:
 # ABSTRACT SYNTAX and EVALUATION
 
 babelsberg.o:  babelsberg.c
-babelsberg.c babelsberg.h:	babelsberg.rml solver.rml printer.rml
+babelsberg.c babelsberg.h:	babelsberg.rml
 	$(COMPILE.rml) babelsberg.rml
 
 
 printer.o:  printer.c
-printer.c printer.h:	printer.rml babelsberg.rml
+printer.c printer.h:	printer.rml
 	$(COMPILE.rml) printer.rml
 
 helper.o:  helper.c
