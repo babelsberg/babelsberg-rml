@@ -170,7 +170,7 @@ label           : T_IDENT
 reference       : T_REF
                         { $$ = $1; }
 
-dereference     : T_H_DEREF T_LPAREN reference T_RPAREN
+dereference     : T_H_DEREF T_LPAREN expression T_RPAREN
                         { $$ = $3; }
 
 value           : constant

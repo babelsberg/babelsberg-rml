@@ -15,7 +15,7 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
        int_string(r) => rs &
        print "H(#" & print rs & print ")" & print " ||= " & print vs & print " \n"
        ------------------------------------------------
-       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(r), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, fields) :: H')
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(babelsberg.VALUE(babelsberg.R(r))), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, fields) :: H')
 
   rule parseEnvironment(rest, E, H) => (E', H') &
        printE(babelsberg.IRECORD(fields)) => vs &
@@ -68,10 +68,10 @@ relation printE: babelsberg.Exp => string =
        -----------------------------
        printE(babelsberg.VALUE(babelsberg.R(r))) => rs'
 
-  rule printE(babelsberg.VALUE(babelsberg.R(r))) => rs &
-       string_append("H(", rs) => rs' & string_append(rs', ")") => rs''
+  rule printE(e) => es &
+       string_append("H(", es) => es' & string_append(es', ")") => es''
        ----------------------------------------------------------------
-       printE(babelsberg.DEREF(r)) => rs''
+       printE(babelsberg.DEREF(e)) => es''
 
   rule printRContents(ary) => s &
        string_append("{", s) => s' &

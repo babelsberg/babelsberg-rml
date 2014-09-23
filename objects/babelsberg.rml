@@ -42,7 +42,7 @@ module babelsberg:
 
   type Reference = int
 
-  type Dereference = Reference
+  type Dereference = Exp
 
   datatype MethodBody = METHOD of Statement * Exp | SIMPLE of Exp
 
@@ -310,7 +310,7 @@ relation stayH: Heap => Constraint =
        stayH(H0) => C0
        --------------------------------
        stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
-				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(O(o')))), Cf))
+				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
 end
 
 relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
@@ -333,6 +333,11 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
   rule	inlineEachField(E,S,H,C,I,o) => (En,ec,o')
 	------------------------------------
 	inline(E,S,H,C,I,VALUE(O(o))) => (En,ec,VALUE(O(o')))
+
+  rule  inline(E,S,H,C,I,e) => (E',ec,e') &
+	eval(E',S,H,C,I,e) => (E'',H,C,I,R(r))
+	---------------------------------------------
+	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',ec,LVALUE(FIELD(DEREF(e'),l)))
 
   rule  inline(E,S,H,C,I,e) => (E',ec,e') &
 	eval(E',S,H,C,I,e) => (E'',H,C,I,O(o))
