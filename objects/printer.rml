@@ -11,11 +11,11 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
   axiom parseEnvironment([], E, H) => (E, H)
 
   rule parseEnvironment(rest, E, H) => (E', H') &
-       printE(babelsberg.VALUE(babelsberg.IRECORD(fields))) => vs &
+       printE(babelsberg.IRECORD(fields)) => vs &
        int_string(r) => rs &
        print "H(#" & print rs & print ")" & print " ||= " & print vs & print " \n"
        ------------------------------------------------
-       parseEnvironment(babelsberg.PROGRAM(babelsberg.NEWASSIGN(babelsberg.ASSIGNDEREF(r), babelsberg.RECORD(fields))) :: rest, E, H) => (E', (r, babelsberg.IRECORD(fields)) :: H')
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(r), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, fields) :: H')
   
   rule parseEnvironment(rest, E, H) => (E', H') &
        printE(babelsberg.VALUE(v)) => vs &
@@ -49,20 +49,20 @@ relation printC: babelsberg.Constraint => string =
 end
 
 relation printE: babelsberg.Exp => string =
-  axiom printE(babelsberg.VALUE(babelsberg.STRING(c))) => c
+  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => c
 
   rule real_string(c) => cs
        --------------------
-       printE(babelsberg.VALUE(babelsberg.REAL(c))) => cs
+       printE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => cs
 
-  axiom printE(babelsberg.ACCESSOR(babelsberg.VARIABLE(x))) => x
+  axiom printE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => x
 
   rule int_string(r) => rs &
        string_append("#", rs) => rs'
        -----------------------------
-       printE(babelsberg.VALUE(babelsberg.REF(r))) => rs'
+       printE(babelsberg.VALUE(babelsberg.R(r))) => rs'
 
-  rule printE(babelsberg.VALUE(babelsberg.REF(r))) => rs &
+  rule printE(babelsberg.VALUE(babelsberg.R(r))) => rs &
        string_append("H(", rs) => rs' & string_append(rs', ")") => rs''
        ----------------------------------------------------------------
        printE(babelsberg.DEREF(r)) => rs''
@@ -71,19 +71,13 @@ relation printE: babelsberg.Exp => string =
        string_append("{", s) => s' &
        string_append(s', "}") => s''
        -----------------------------
-       printE(babelsberg.VALUE(babelsberg.IRECORD(ary))) => s''
+       printE(babelsberg.VALUE(babelsberg.O(ary))) => s''
 
-  rule printRContents(ary) => s &
-       string_append("{", s) => s' &
-       string_append(s', "}") => s''
-       -----------------------------
-       printE(babelsberg.VALUE(babelsberg.IRECORD(ary))) => s''
-
-  rule printE(babelsberg.ACCESSOR(a)) => es &
+  rule printE(e) => es &
        string_append(es, ".") => es' &
        string_append(es', l) => es''
        -----------------------------
-       printE(babelsberg.ACCESSOR(babelsberg.FIELD(a, l))) => es''
+       printE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es''
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -105,14 +99,14 @@ relation printE: babelsberg.Exp => string =
        --------------------------------
        printE(babelsberg.COMPARE(e1, op, e2)) => es'
 
-  rule printE(babelsberg.ACCESSOR(a1)) => e1s &
-       printE(babelsberg.ACCESSOR(a2)) => e2s &
+  rule printE(e1) => e1s &
+       printE(e2) => e2s &
        string_append("(", e1s) => e1s' &
        string_append(e2s, ")") => e2s' &
        string_append(e1s', " == ") => es &
        string_append(es, e2s') => es'
        --------------------------------
-       printE(babelsberg.IDENTITY(babelsberg.ID(a1, a2))) => es'
+       printE(babelsberg.IDENTITY(e1, e2)) => es'
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -124,12 +118,12 @@ relation printE: babelsberg.Exp => string =
        --------------------------------
        printE(babelsberg.COMBINE(e1, op, e2)) => es'
 
-  axiom printE(babelsberg.VALUE(babelsberg.TRUE)) => "true"
-  axiom printE(babelsberg.VALUE(babelsberg.FALSE)) => "false"
-  axiom printE(babelsberg.VALUE(babelsberg.NIL)) => "nil"
+  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "true"
+  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "false"
+  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => "nil"
 end
 
-relation printRContents: babelsberg.Fieldexpression list => string =
+relation printRContents: babelsberg.ObjectLiteral => string =
   axiom printRContents([]) => ""
 
   rule printE(e) => es &
@@ -139,7 +133,7 @@ relation printRContents: babelsberg.Fieldexpression list => string =
        printRContents(rest) => rests &
        string_append(es'', rests) => str
        ----------------------------------------------------------
-       printRContents(babelsberg.LABELEXPRESSION(l, e) :: rest) => str
+       printRContents((l, e) :: rest) => str
 end
 
 relation printOp: babelsberg.Op => string =

@@ -126,11 +126,18 @@ expression      : value
                 | dereference
                         { $$ = babelsberg__DEREF($1); }
 
+callargs        : /* empty */
+                       { $$ = mk_nil(); }
+                | expression
+                       { $$ = mk_cons($1, mk_nil()); }
+                | expression T_COMMA expression
+                       { $$ = mk_cons($1, $3); }
+
 objectliteral   : /* empty */
                        { $$ = mk_nil(); }
                 | fieldexpression
-                       { $$ = mk_cons($1, mk_nil()); };
-                | fieldexpression T_COMMA fieldexpressions
+                       { $$ = mk_cons($1, mk_nil()); }
+                | fieldexpression T_COMMA objectliteral
                        { $$ = mk_cons($1, $3); }
 
 fieldexpression : label T_COLON expression
@@ -167,7 +174,7 @@ dereference     : T_H_DEREF T_LPAREN reference T_RPAREN
                         { $$ = $3; }
 
 value           : constant
-                        { $$ = babelsberg__C($1); }
+                        { $$ = babelsberg__K($1); }
                 /*
                  * | objectliteral
                  *         { $$ = babelsberg__O($1); }

@@ -23,13 +23,11 @@ module babelsberg:
 	       | OP of Exp * Op * Exp
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
-	       | IDENTITY of Identity
+	       | IDENTITY of Exp * Exp
 	       | CALL of Exp * Label * Exp list
 	       | IRECORD of ObjectLiteral
 	       | UIDRECORD of ObjectLiteral
 	       | DEREF of Dereference
-
-  type Identity = Exp * Exp
 
   type ObjectLiteral = (Label * Exp) list
 
@@ -48,7 +46,7 @@ module babelsberg:
 
   datatype MethodBody = METHOD of Statement * Exp | SIMPLE of Exp
 
-  datatype Value = C of Constant | O of ObjectLiteral | R of Reference
+  datatype Value = K of Constant | O of ObjectLiteral | R of Reference
 
 (* Helper types *)
   datatype Op =  ADD | SUB | MUL | DIV
@@ -62,33 +60,33 @@ module babelsberg:
   type Env         = (Variable * Value) list
   type Scope       = (Variable * Variable) list
   type Heap        = (Reference * ObjectLiteral) list
-  type Cstore      = (Env * Constraint) list
-  type Istore      = (Env * Constraint) list
+  type Cstore      = (Scope * Constraint) list
+  type Istore      = (Scope * Constraint) list
 
   relation evalprogram: Program => ()
-  relation eval: (Env, Heap, Exp) => Value
+  relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value)
 end
 
 relation evalprogram: Program => () =
   rule print "starting to evaluate\n" &
-       step([], [], CONSTRAINT(REQUIRED, VALUE(TRUE)), CONSTRAINT(REQUIRED, VALUE(TRUE)), statement) => (Env, Heap, Cstore, Istore)
-       -------------------------------------
+       step([], [], [], [], [], statement) => (E,S,H,C,I)
+       --------------------------------------------------
        evalprogram(PROGRAM(statement))
 end
 
 relation lookup: (Value, Label) => (Variable list, MethodBody) =
   (* hard coded methods *)
-  axiom (_, "center") => ([], (* (self.upper_left + self.lower_right) / 2 *)
-			  SIMPLE(OP(OP(LVALUE(FIELD(LVALUE(VARIABLE(self)), "upper_left")),
+  axiom lookup(_, "center") => ([], (* (self.upper_left + self.lower_right) / 2 *)
+			  SIMPLE(OP(OP(LVALUE(FIELD(LVALUE(VARIABLE("self")), "upper_left")),
 				       ADD,
-				       LVALUE(FIELD(LVALUE(VARIABLE(self)), "lower_right"))),
+				       LVALUE(FIELD(LVALUE(VARIABLE("self")), "lower_right"))),
 				     DIV,
-				     VALUE(C(REAL(2.0))))))
+				     VALUE(K(REAL(2.0))))))
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
-  rule evalEach(E, S, H, C, I, argexps) => (En, Sn, Hn, Cn, In, argvals) &
-       step(En, [], Hn, Cn, In, ASSIGN(LVALUE(VARIABLE("self")), v)) => (E0, S0, Hn, Cn, In) &
+  rule evalEach(E, S, H, C, I, argexps) => (En, Hn, Cn, In, argvals) &
+       step(En, [], Hn, Cn, In, ASSIGN(VARIABLE("self"), VALUE(v))) => (E0, S0, Hn, Cn, In) &
        assignEach(E0, S0, Hn, Cn, In, argnames, argvals) => (E2n, Sn, Hn, Cn, In)
        --------------------------------------------------------------------------
        enter(E, S, H, C, I, v, argnames, argexps) => (E2n, Sn, Hn, Cn, In)
@@ -98,7 +96,7 @@ relation evalEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Heap, C
   axiom	evalEach(E,S,H,C,I,[]) => (E,H,C,I,[])
 
   rule	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	evalEach(E',H',C',I',rest) => (E'',H'',C'',I'',values)
+	evalEach(E',S,H',C',I',rest) => (E'',H'',C'',I'',values)
 	------------------------------------------------------
 	evalEach(E,S,H,C,I,e :: rest) => (E'',H'',C'',I'',v :: values)
 end
@@ -106,14 +104,14 @@ end
 relation assignEach: (Env, Scope, Heap, Cstore, Istore, Variable list, Value list) => (Env, Scope, Heap, Cstore, Istore) =
   axiom	assignEach(E,S,H,C,I,[],[]) => (E,S,H,C,I)
 
-  rule	step(E,S,H,C,I,ASSIGN(LVALUE(VARIABLE(x)), v)) => (E',S',H',C',I') &
-	assignEach(E',H',C',I',xrest, vrest) => (E'',H'',C'',I'')
+  rule	step(E,S,H,C,I,ASSIGN(VARIABLE(x), VALUE(v))) => (E',S',H',C',I') &
+	assignEach(E',S',H',C',I',xrest, vrest) => (E'',S'',H'',C'',I'')
 	---------------------------------------------------------
-	assignEach(E,S,H,C,I,x :: xrest, v :: vrest) => (E'',H'',C'',I'')
+	assignEach(E,S,H,C,I,x :: xrest, v :: vrest) => (E'',S'',H'',C'',I'')
 end
 
 relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value) =
-  axiom eval(E,S,H,C,I,VALUE(C(c))) => (E,H,C,I,C(c))
+  axiom eval(E,S,H,C,I,VALUE(K(c))) => (E,H,C,I,K(c))
 
   rule	print "E-Var\n" &
 	Util.lookupScope(S, x) => xg & Util.lookupEnv(E, xg) => v
@@ -133,7 +131,7 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 	----------------------------------
 	eval(E,S,H,C,I, LVALUE(FIELD(e, l))) => (E',H',C',I',v)
 
-  axiom	eval(E,S,H,C,I, VALUE(R(r))) => (E,S,H,C,I, VALUE(R(r)))
+  axiom	eval(E,S,H,C,I, VALUE(R(r))) => (E,H,C,I, R(r))
 
   rule print "E-Op\n" &
        eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
@@ -168,17 +166,17 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
        v1 = v2 &
        print "E-IdentityTrue\n"
        ------------------------
-       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',TRUE)
+       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(TRUE))
 
   rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
        not v1 = v2 &
        print "E-IdentityFalse\n"
        ------------------------
-       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',FALSE)
+       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(FALSE))
 
   rule	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
-	lookup(v,l) => (argnames, COMPLEX(s, e)) &
+	lookup(v,l) => (argnames, METHOD(s, e)) &
 	print "E-Call\n" &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
 	step(E1,Sm,H1,C1,I1,s) => (E',S',H',C',I') &
@@ -204,24 +202,24 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
   rule	print "E-Value\n" &
 	evalEachField(E,S,H,C,I,fieldexps) => (En,Hn,Cn,In,fieldvalues)
 	------------------------------------------------------------------
-	eval(E,S,H,C,I,IRECORD(fieldexps)) => (En,H',Cn,In,O(fieldvalues))
+	eval(E,S,H,C,I,IRECORD(fieldexps)) => (En,Hn,Cn,In,O(fieldvalues))
 end
 
-relation evalEachField: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Heap, Cstore, Istore, Value list) =
-  axiom	evalEach(E,S,H,C,I,[]) => (E,H,C,I,[])
+relation evalEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (Env, Heap, Cstore, Istore, ObjectLiteral) =
+  axiom	evalEachField(E,S,H,C,I,[]) => (E,H,C,I,[])
 
   rule	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	evalEach(E',H',C',I',rest) => (E'',H'',C'',I'',values)
+	evalEachField(E',S,H',C',I',rest) => (E'',H'',C'',I'',values)
 	------------------------------------------------------
-	evalEach(E,S,H,C,I,e :: rest) => (E'',H'',C'',I'',v :: values)
+	evalEachField(E,S,H,C,I,(l,e) :: rest) => (E'',H'',C'',I'',(l,VALUE(v)) :: values)
 end
 
 relation tC: (Env, Heap, Exp) => Type =
-  axiom tC(E, H, VALUE(C(c))) => PRIMITIVE
+  axiom tC(E, H, VALUE(K(c))) => PRIMITIVE
 
   rule	print "T-Var\n" &
 	Util.lookupEnv(E, x) => v &
-	tC(E,H,v) => T
+	tC(E,H,VALUE(v)) => T
 	---------------------------------
 	tC(E,H, LVALUE(VARIABLE(x))) => T
 
@@ -232,7 +230,7 @@ relation tC: (Env, Heap, Exp) => Type =
        tC(E,H, LVALUE(FIELD(e, l))) => T
 
   rule	print "T-Ref\n" &
-	Util.lookupHeap(Heap, r) => fvalues &
+	Util.lookupHeap(H, r) => fvalues &
 	tC(E,H,VALUE(O(fvalues))) => T
 	------------------------------
 	tC(E,H,VALUE(R(r))) => T
@@ -296,7 +294,7 @@ relation models: Constraint => (Env, Heap) =
 end
 
 relation stay: Env => Constraint =
-  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(C(TRUE)))
+  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule print "StayOne\n" &
        stay(E0) => C0
@@ -305,7 +303,7 @@ relation stay: Env => Constraint =
 end
 
 relation stayH: Heap => Constraint =
-  axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(C(TRUE)))
+  axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule print "StayHeap\n" &
        stayFields(r, o) => (Cf, o') &
@@ -316,7 +314,7 @@ relation stayH: Heap => Constraint =
 end
 
 relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
-  axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(TRUE)), [])
+  axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
 
   rule stayFields(r, rest) => (C, o) &
        int_string(r) => is &string_append(is, "_") => is' & string_append(is', l) => x
@@ -326,22 +324,22 @@ relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
 end
 
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
-  axiom inline(E,S,H,C,I,VALUE(C(c))) => (E,VALUE(C(TRUE)),VALUE(C(c)))
+  axiom inline(E,S,H,C,I,VALUE(K(c))) => (E,VALUE(K(TRUE)),VALUE(K(c)))
 
   rule	Util.lookupScope(S,x) => xg
 	---------------------------
-	inline(E,S,H,C,I,LVALUE(VARIABLE(x))) => (E,VALUE(C(TRUE)),xg)
+	inline(E,S,H,C,I,LVALUE(VARIABLE(x))) => (E,VALUE(K(TRUE)),LVALUE(VARIABLE(xg)))
 
-  rule	inlineEach(E,S,H,C,I,o) => (En,ec,o')
+  rule	inlineEachField(E,S,H,C,I,o) => (En,ec,o')
 	------------------------------------
 	inline(E,S,H,C,I,VALUE(O(o))) => (En,ec,VALUE(O(o')))
 
   rule  inline(E,S,H,C,I,e) => (E',ec,e') &
-	eval(E',S,H,C,I,e) => (E'',H,C,I,VALUE(O(o)))
+	eval(E',S,H,C,I,e) => (E'',H,C,I,O(o))
 	---------------------------------------------
 	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',ec,LVALUE(FIELD(e',l)))
 
-  axiom inline(E,S,H,C,I,VALUE(R(r))) => (E,VALUE(C(TRUE)),VALUE(R(r)))
+  axiom inline(E,S,H,C,I,VALUE(R(r))) => (E,VALUE(K(TRUE)),VALUE(R(r)))
 
   rule	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
@@ -368,7 +366,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	step(E'',Sm,H,C,I,s) => (E''',S',H,C,I) &
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
 	-----------------------------------------
-	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(C(TRUE)),VALUE(vr))
+	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(K(TRUE)),VALUE(vr))
 
   rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) &
 	lookup(v,l) => (argnames,SIMPLE(e)) &
@@ -379,13 +377,13 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	Util.pairwiseEqualEach(xgself :: globalargnames, e0' :: inlinedargexps) => argequalities &
 	Util.combineEach(argequalities) => ec &
 	inline(En,Sm,H,C,I,e) => (En',ecm,e') &
-	Util.combineEach(ec :: ecm :: ecn) => eC
+	Util.combineEach([ec, ecm, ecn]) => eC
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e0,l,argexps)) => (En',eC,e')
 end
 
 relation inlineEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Exp, Exp list) =
-  axiom inlineEach(E,S,H,C,I,[]) => (E,VALUE(C(TRUE)),[])
+  axiom inlineEach(E,S,H,C,I,[]) => (E,VALUE(K(TRUE)),[])
 
   rule	inline(E,S,H,C,I,e) => (E',eC,e') &
 	inlineEach(E',S,H,C,I,rest) => (E'',restC,rest')
@@ -393,8 +391,17 @@ relation inlineEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Exp, 
 	inlineEach(E,S,H,C,I,e :: rest) => (E'',COMBINE(eC,AND,restC),e' :: rest')
 end
 
+relation inlineEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (Env, Exp, ObjectLiteral) =
+  axiom inlineEachField(E,S,H,C,I,[]) => (E,VALUE(K(TRUE)),[])
+
+  rule	inline(E,S,H,C,I,e) => (E',eC,e') &
+	inlineEachField(E',S,H,C,I,rest) => (E'',restC,rest')
+	------------------------------------------------
+	inlineEachField(E,S,H,C,I,(l,e) :: rest) => (E'',COMBINE(eC,AND,restC),(l,e') :: rest')
+end
+
 relation reinlineC: (Env, Heap, Istore, Cstore) => (Env, Constraint) =
-  axiom reinlineC(E,H,I,[]) => (E,CONSTRAINT(REQUIRED, VALUE(C(TRUE))))
+  axiom reinlineC(E,H,I,[]) => (E,CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 
   rule	reinlineC(E,H,I,Cstore0) => (E0,C0) &
 	inline(E0,S,H,(S,CONSTRAINT(rho,e)) :: Cstore0,I,e) => (E',eC,e')
@@ -403,7 +410,7 @@ relation reinlineC: (Env, Heap, Istore, Cstore) => (Env, Constraint) =
 end
 
 relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
-  axiom reinlineI(E,H,C,[]) => (E,CONSTRAINT(REQUIRED, VALUE(C(TRUE))))
+  axiom reinlineI(E,H,C,[]) => (E,CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 
   rule	reinlineI(E,H,C,Istore0) => (E0,C0) &
 	inline(E0,S,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0,e) => (E',eC,e')
@@ -411,7 +418,7 @@ relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
 	reinlineI(E,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(REQUIRED,COMBINE(e',AND,eC))))
 end
 
-relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Constraint, Constraint) => (Env, Heap) =
+relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, Heap) =
   rule	stay(E) => CEs & stayH(H) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),
 				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2))))) => (E',H') &
@@ -433,20 +440,20 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	------------------------------------------------
 	step(E,S,H,C,I,SEQ(s1,s2)) => (E'',S'',H'',C'',I'')
 
-  rule  eval(E,S,H,C,I,e) => (E',H',C',I',TRUE) &
+  rule  eval(E,S,H,C,I,e) => (E',H',C',I',K(TRUE)) &
 	print "S-IfThen\n" &
 	step(E',S,H',C',I',s1) => (E'',S',H'',C'',I'')
 	----------------------------------------------
 	step(E,S,H,C,I,IF(e, s1, s2)) => (E'',S',H'',C'',I'')
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	not v = TRUE &
+	not v = K(TRUE) &
 	print "S-IfElse\n" &
 	step(E',S,H',C',I',s2) => (E'',S',H'',C'',I'')
 	----------------------------------------------
 	step(E,S,H,C,I,IF(e, s1, s2)) => (E'',S',H'',C'',I'')
 
-  rule  eval(E,S,H,C,I,e) => (E',H',C',I',TRUE) &
+  rule  eval(E,S,H,C,I,e) => (E',H',C',I',K(TRUE)) &
 	print "S-WhileDo\n" &
 	step(E',S,H',C',I',s) => (E'',S',H'',C'',I'') &
 	step(E'',S',H'',C'',I'', WHILE(e, s)) => (E''',S'',H''',C''',I''')
@@ -454,31 +461,31 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	step(E,S,H,C,I,WHILE(e, s)) => (E''',S'',H''',C''',I''')
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	not v = TRUE &
+	not v = K(TRUE) &
 	print "S-WhileSkip\n"
 	-----------------------------------------------------
 	step(E,S,H,C,I, WHILE(e, s)) => (E',S,H',C',I')
 
   rule	Util.lookupScope(S,x) => xg & print "S-AsgnLocal\n" &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(TRUE))) => (E'',H'')
+	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
 	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(LVALUE(VARIABLE(x)),e)) => (E'',H'',S,C',I')
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
 
   rule	not Util.lookupScope(S,x) => _ & print "S-AsgnNewLocal\n" &
 	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
 	list_append(S,[(x,xg)]) => S' &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(TRUE))) => (E'',H'')
+	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
 	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(LVALUE(VARIABLE(x)),e)) => (E'',H'',S',C',I')
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H'',C',I')
 
   rule  print "S-AsgnLValue\n" &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
-	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',v),CONSTRAINT(REQUIRED,VALUE(C(TRUE)))) => (E''',H'')
+	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E''',H'')
 	---------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(LVALUE(FIELD(el,l)),e)) => (E''',S,H'',C',I')
+	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
 
   rule  print "S-OnceIdentity\n" &
 	eval(E,S,H,C,I,e0) => (E0,H,C,I,v0) & eval(E0,S,H,C,I,e1) => (E1,H,C,I,v1) & v0 = v1 &
@@ -498,7 +505,7 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	stay(E') => CEs & stayH(H) => CHs &
 	reinlineC(E',H,I,C) => (E'', Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(CEs, CHs),
-				  COMPOUNDCONSTRAINT(C, CONSTRAINT(rho,COMBINE(e',AND,eC))))) => (E''',H')
+				  COMPOUNDCONSTRAINT(Cc, CONSTRAINT(rho,COMBINE(e',AND,eC))))) => (E''',H')
 	--------------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E''',S,H',C,I)
 
