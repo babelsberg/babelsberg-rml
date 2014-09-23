@@ -259,6 +259,10 @@ relation tC: (Env, Heap, Exp) => Type =
        ---------------------------------------
        tC(E,H, VALUE(O(fvalues))) => TRECORD(ftypes)
 
+  rule print "T-Deref\n" &
+       tC(E,H, e) => T
+       ---------------------------------------
+       tC(E,H, DEREF(e)) => T
 end
 
 relation tCFields: (Env, Heap, ObjectLiteral) => (Label * Type) list =
