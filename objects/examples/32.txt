@@ -1,0 +1,5 @@
+y := 0;
+x := 0;
+always y = x.double();
+y := 20;
+x := 7
