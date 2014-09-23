@@ -3,7 +3,7 @@ require "pp"
 
 ENV["BBBEDITOR"] ||= "xterm -e /usr/bin/nano"
 
-semantics = [:reals, :records, :uid]
+semantics = [:reals, :records, :uid, :objects]
 
 semantics.each do |s|
   namespace s do
@@ -12,6 +12,13 @@ semantics.each do |s|
       Dir.chdir "#{s}" do
         exitcode = system("make babelsberg-#{s}")
         fail unless exitcode
+      end
+    end
+
+    desc "Run Babelsberg/#{s.to_s.capitalize}/program.txt"
+    task :program => [:build] do |t, args|
+      Dir.chdir "#{s}" do
+        run_example(s, "program.txt", [])
       end
     end
 
