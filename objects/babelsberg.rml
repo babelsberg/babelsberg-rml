@@ -24,8 +24,9 @@ module babelsberg:
 	       | COMPARE of Exp * Comp * Exp
 	       | COMBINE of Exp * Comb * Exp
 	       | IDENTITY of Identity
-               | CALL of Exp * Label * Exp list
-               | UIDRECORD of ObjectLiteral
+	       | CALL of Exp * Label * Exp list
+	       | IRECORD of ObjectLiteral
+	       | UIDRECORD of ObjectLiteral
 	       | DEREF of Dereference
 
   type Identity = Exp * Exp
@@ -33,7 +34,7 @@ module babelsberg:
   type ObjectLiteral = (Label * Exp) list
 
   datatype LValue = VARIABLE of Variable | FIELD of Exp * Label
-                  | ASSIGNDEREF of Dereference (* just for the parsing *)
+		  | ASSIGNDEREF of Dereference (* just for the parsing *)
 
   datatype Constant = TRUE | FALSE | NIL | REAL of real | STRING of string
 
@@ -106,7 +107,7 @@ relation assignEach: (Env, Scope, Heap, Cstore, Istore, Variable list, Value lis
   axiom	assignEach(E,S,H,C,I,[],[]) => (E,S,H,C,I)
 
   rule	step(E,S,H,C,I,ASSIGN(LVALUE(VARIABLE(x)), v)) => (E',S',H',C',I') &
-        assignEach(E',H',C',I',xrest, vrest) => (E'',H'',C'',I'')
+	assignEach(E',H',C',I',xrest, vrest) => (E'',H'',C'',I'')
 	---------------------------------------------------------
 	assignEach(E,S,H,C,I,x :: xrest, v :: vrest) => (E'',H'',C'',I'')
 end
@@ -118,13 +119,6 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 	Util.lookupScope(S, x) => xg & Util.lookupEnv(E, xg) => v
 	---------------------------------------------------------
 	eval(E,S,H,C,I, LVALUE(VARIABLE(x))) => (E,H,C,I,v)
-
-  rule	print "E-Field\n" &
-	eval(E,S,H,C,I,e) => (E',H',C',I',R(r)) &
-	Util.lookupHeap(H', r) => fvalues &
-	Util.lookupRecord(fvalues, l) => v
-	----------------------------------
-	eval(E,S,H,C,I, LVALUE(FIELD(e, l))) => (E',H',C',I',v)
 
   rule	print "E-Field\n" &
 	eval(E,S,H,C,I,e) => (E',H',C',I',R(r)) &
@@ -185,7 +179,7 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 
   rule	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
 	lookup(v,l) => (argnames, COMPLEX(s, e)) &
-        print "E-Call\n" &
+	print "E-Call\n" &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
 	step(E1,Sm,H1,C1,I1,s) => (E',S',H',C',I') &
 	eval(E',S',H',C',I',e) => (E'',H'',C'',I'',vr)
@@ -210,8 +204,7 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
   rule	print "E-Value\n" &
 	evalEachField(E,S,H,C,I,fieldexps) => (En,Hn,Cn,In,fieldvalues)
 	------------------------------------------------------------------
-	eval(E,S,H,C,I,UIDRECORD(fieldexps)) => (En,H',Cn,In,O(fieldvalues))
-
+	eval(E,S,H,C,I,IRECORD(fieldexps)) => (En,H',Cn,In,O(fieldvalues))
 end
 
 relation evalEachField: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Heap, Cstore, Istore, Value list) =
@@ -319,7 +312,7 @@ relation stayH: Heap => Constraint =
        stayH(H0) => C0
        --------------------------------
        stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
-                                 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(O(o')))), Cf))
+				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(r), EQUAL, VALUE(O(o')))), Cf))
 end
 
 relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
@@ -377,8 +370,8 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(C(TRUE)),VALUE(vr))
 
-  rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) & 
-        lookup(v,l) => (argnames,SIMPLE(e)) &
+  rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) &
+	lookup(v,l) => (argnames,SIMPLE(e)) &
 	enter(E'',S,H,C,I,v,argnames,argexps) => (E''',Sm,H,C,I) &
 	inlineEach(E''',S,H,C,I,argexps) => (En,ecn,inlinedargexps) &
 	Util.lookupScope(Sm,"self") => xgself &
@@ -426,7 +419,7 @@ relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Constraint, Constraint) => 
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
 						     COMPOUNDCONSTRAINT(CEs',CHs')),
 				  CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2)))) => (E'',H'')
-        ----------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------
 	twoPhaseUpdate(E,H,C,I,IDENTITY(e1,e2),C0) => (E'',H'')
 end
 
@@ -514,4 +507,4 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	list_append(C,[(S,C0)]) => C'
 	---------------------------------------------
 	step(E,S,H,C,I, ALWAYS(C0)) => (E',S,H',C',I)
-end    
+end

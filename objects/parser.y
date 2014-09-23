@@ -72,18 +72,16 @@ extern void* absyntree;
 program         : statement
                         { absyntree = babelsberg__PROGRAM($1);}
 
-statement       : statement T_SEMIC statement
-                        { $$ = babelsberg__SEQ($1, $3); }
-                | T_SKIP
+statement       : T_SKIP
                         { $$ = babelsberg__SKIP; }
-                | accessor T_ASSIGN T_NEW record
-                        { $$ = babelsberg__NEWASSIGN($1, $4); }
-                | accessor T_ASSIGN expression
+                | lvalue T_ASSIGN expression
                         { $$ = babelsberg__ASSIGN($1, $3); }
                 | T_ALWAYS constraint
                         { $$ = babelsberg__ALWAYS($2); }
                 | T_ONCE constraint
                         { $$ = babelsberg__ONCE($2); }
+                | statement T_SEMIC statement
+                        { $$ = babelsberg__SEQ($1, $3); }
                 | T_IF expression T_THEN statement T_ELSE statement
                         { $$ = babelsberg__IF($2, $4, $6); }
                 | T_WHILE expression T_DO statement
@@ -103,53 +101,58 @@ rho             : T_WEAK
                 | T_REQUIRED
                         { $$ = babelsberg__REQUIRED; }
 
-expression      : expression woperation expression %prec T_MUL
+expression      : value
+                        { $$ = babelsberg__VALUE($1); }
+                | lvalue
+                        { $$ = babelsberg__LVALUE($1); }
+                | expression woperation expression %prec T_MUL
                         { $$ = babelsberg__OP($1, $2, $3); }
                 | expression soperation expression %prec T_ADD
                         { $$ = babelsberg__OP($1, $2, $3); }
                 | expression comparison expression %prec T_EQUAL
                         { $$ = babelsberg__COMPARE($1, $2, $3); }
-                | accessor T_IDENTICAL accessor %prec T_EQUAL
-		        { $$ = babelsberg__IDENTITY(babelsberg__ID($1, $3)); }
                 | expression combination expression %prec T_AND
                         { $$ = babelsberg__COMBINE($1, $2, $3); }
                 | expression disjunction expression %prec T_OR
                         { $$ = babelsberg__COMBINE($1, $2, $3); }
-                | value
-                        { $$ = babelsberg__VALUE($1); }
-                | accessor
-                        { $$ = babelsberg__ACCESSOR($1); }
+                | expression T_IDENTICAL expression %prec T_EQUAL
+                        { $$ = babelsberg__IDENTITY($1, $3); }
+                | expression T_DOT label T_LPAREN callargs T_RPAREN
+                        { $$ = babelsberg__CALL($1, $3, $5); }
+                | T_LBRACE objectliteral T_RBRACE
+                        { $$ = babelsberg__IRECORD($2); }
+                | T_NEW T_LBRACE objectliteral T_RBRACE
+                        { $$ = babelsberg__UIDRECORD($3); }
                 | dereference
-		        { $$ = babelsberg__DEREF($1); }
+                        { $$ = babelsberg__DEREF($1); }
 
-accessor        : variable
+objectliteral   : /* empty */
+                       { $$ = mk_nil(); }
+                | fieldexpression
+                       { $$ = mk_cons($1, mk_nil()); };
+                | fieldexpression T_COMMA fieldexpressions
+                       { $$ = mk_cons($1, $3); }
+
+fieldexpression : label T_COLON expression
+                       { $$ = mk_box2(1, $1, $3); }
+
+lvalue          : variable
                         { $$ = babelsberg__VARIABLE($1); }
-                | accessor T_DOT label
+                | expression T_DOT label
                         { $$ = babelsberg__FIELD($1, $3); }
-                | dereference
+                | dereference /* only for solver model parsing */
                         { $$ = babelsberg__ASSIGNDEREF($1); }
 
-record          : T_LBRACE fieldexpressions T_RBRACE
-                        { $$ = babelsberg__RECORD($2); }
-
-dereference     : T_H_DEREF T_LPAREN reference T_RPAREN
-                        { $$ = $3; }
-
-reference       : T_REF
-                        { $$ = $1; }
-
-constant        : T_REALCONST
-                        { $$ = babelsberg__REAL($1);}
-                | T_TRUE
+constant        : T_TRUE
                         { $$ = babelsberg__TRUE; }
                 | T_FALSE
                         { $$ = babelsberg__FALSE; }
                 | T_NIL
                         { $$ = babelsberg__NIL; }
+                | T_REALCONST
+                        { $$ = babelsberg__REAL($1);}
                 | T_STRING
                         { $$ = babelsberg__STRING($1);}
-                | reference
-		        { $$ = babelsberg__REF($1); }
 
 variable        : T_IDENT
                         { $$ = $1; }
@@ -157,19 +160,20 @@ variable        : T_IDENT
 label           : T_IDENT
                         { $$ = $1; }
 
+reference       : T_REF
+                        { $$ = $1; }
+
+dereference     : T_H_DEREF T_LPAREN reference T_RPAREN
+                        { $$ = $3; }
+
 value           : constant
-
-
-
-fieldexpressions : /* empty */
-                        { $$ = mk_nil(); }
-                 | fieldexpression
-                        { $$ = mk_cons($1, mk_nil()); };
-                 | fieldexpression T_COMMA fieldexpressions
-                        { $$ = mk_cons($1, $3); }
-
-fieldexpression : label T_COLON expression
-                        { $$ = babelsberg__LABELEXPRESSION($1, $3); }
+                        { $$ = babelsberg__C($1); }
+                /*
+                 * | objectliteral
+                 *         { $$ = babelsberg__O($1); }
+                 */
+                | reference
+                        { $$ = babelsberg__R($1); }
 
 soperation      : T_ADD
                         { $$ = babelsberg__ADD;}
