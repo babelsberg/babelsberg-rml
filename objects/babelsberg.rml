@@ -76,6 +76,12 @@ end
 
 relation lookup: (Value, Label) => (Variable list, MethodBody) =
   (* hard coded methods *)
+  axiom lookup(_, "one") => ([], (* return 1.0 *)
+			  SIMPLE(VALUE(K(REAL(1.0)))))
+
+  axiom lookup(_, "double") => ([], (* return 2*self *)
+			  SIMPLE(OP(VALUE(K(REAL(2.0))),MUL,LVALUE(VARIABLE("self")))))
+
   axiom lookup(_, "center") => ([], (* (self.upper_left + self.lower_right) / 2 *)
 			  SIMPLE(OP(OP(LVALUE(FIELD(LVALUE(VARIABLE("self")), "upper_left")),
 				       ADD,
