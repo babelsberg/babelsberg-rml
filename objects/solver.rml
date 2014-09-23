@@ -1,0 +1,7 @@
+module Solver:
+  with "babelsberg.rml"
+
+  (* Call solver in C *)
+  relation solve: string => babelsberg.Program list
+  relation string_real: string => real
+end
