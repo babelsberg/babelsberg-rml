@@ -130,7 +130,7 @@ callargs        : /* empty */
                        { $$ = mk_nil(); }
                 | expression
                        { $$ = mk_cons($1, mk_nil()); }
-                | expression T_COMMA expression
+                | expression T_COMMA callargs
                        { $$ = mk_cons($1, $3); }
 
 objectliteral   : /* empty */
