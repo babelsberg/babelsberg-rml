@@ -48,6 +48,18 @@ relation printC: babelsberg.Constraint => string =
 
   rule printC(c1) => c1s &
        printC(c2) => c2s &
+       c1s = "\nrequired true"
+       --------------
+       printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c2s
+
+  rule printC(c1) => c1s &
+       printC(c2) => c2s &
+       c2s = "\nrequired true"
+       --------------
+       printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c1s
+
+  rule printC(c1) => c1s &
+       printC(c2) => c2s &
        string_append(c1s, " && ") => cs &
        string_append(cs, c2s) => cs'
        --------------
