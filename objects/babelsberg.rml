@@ -345,6 +345,44 @@ relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
 					 (l, LVALUE(VARIABLE(x))) :: o)
 end
 
+relation identityStay: Env => Constraint =
+  axiom identityStay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+
+  rule print "StayRef\n" &
+       identityStay(E0) => C0
+       --------------------------------
+       identityStay((x, R(r)) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(REQUIRED, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r)))))
+
+  rule print "StayObj\n" & identityStay(E0) => C0 & stay([(x, O(o))]) => C1
+       --------------------------------------------------------------------
+       identityStay((x, O(o)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
+
+  rule print "StayConst\n" & identityStay(E0) => C0 & stay([(x, K(c))]) => C1
+       ----------------------------------------------------------------------
+       identityStay((x, K(c)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
+end
+
+relation identityStayH: Heap => Constraint =
+  axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+
+  rule print "StayHeap\n" &
+       identityStayFields(r, o) => (Cf, o') &
+       identityStayH(H0) => C0
+       --------------------------------
+       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
+				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
+end
+
+relation identityStayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
+  axiom identityStayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
+
+  rule identityStayFields(r, rest) => (C, o) &
+       int_string(r) => is &string_append(is, "_") => is' & string_append(is', l) => x &
+       identityStay([(x, v)]) => C0
+       ---------------------------------------------------------------------------------
+       identityStayFields(r, (l, VALUE(v)) :: rest) => (COMPOUNDCONSTRAINT(C0, C), (l, LVALUE(VARIABLE(x))) :: o)
+end
+
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
   axiom inline(E,S,H,C,I,VALUE(K(c))) => (E,VALUE(K(TRUE)),VALUE(K(c)))
 
@@ -449,7 +487,7 @@ relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, H
   rule	stay(E) => CEs & stayH(H) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),
 				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2))))) => (E',H') &
-	stay(E') => CEs' & stayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(Ec,H',Cc) &
+	identityStay(E') => CEs' & identityStayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(Ec,H',Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
 						     COMPOUNDCONSTRAINT(CEs',CHs')),
 				  CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2)))) => (E'',H'')
@@ -529,7 +567,7 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
   rule	print "S-Once\n" &
 	inline(E,S,H,C,I,e) => (E',eC,e') &
 	welltyped(E',H, CONSTRAINT(rho,COMBINE(e',AND,eC))) &
-	stay(E') => CEs & stayH(H) => CHs &
+	identityStay(E') => CEs & identityStayH(H) => CHs &
 	reinlineC(E',H,I,C) => (E'', Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(CEs, CHs),
 				  COMPOUNDCONSTRAINT(Cc, CONSTRAINT(rho,COMBINE(e',AND,eC))))) => (E''',H')
