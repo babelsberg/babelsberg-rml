@@ -151,34 +151,34 @@ end
 relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value) =
   axiom eval(E,S,H,C,I,VALUE(K(c))) => (E,H,C,I,K(c))
 
-  rule	print "E-Var\n" &
+  rule	alert(["E-Var(", x],[],[")\n"]) &
 	Util.lookupScope(S, x) => xg & Util.lookupEnv(E, xg) => v
 	---------------------------------------------------------
 	eval(E,S,H,C,I, LVALUE(VARIABLE(x))) => (E,H,C,I,v)
 
-  rule	print "E-Field\n" &
-	eval(E,S,H,C,I,e) => (E',H',C',I',R(r)) &
+  rule	eval(E,S,H,C,I,e) => (E',H',C',I',R(r)) &
+	alert(["E-Field(", l, ")\n"], [], []) &
 	Util.lookupHeap(H', r) => fvalues &
 	Util.lookupRecord(fvalues, l) => v
 	----------------------------------
 	eval(E,S,H,C,I, LVALUE(FIELD(e, l))) => (E',H',C',I',v)
 
-  rule	print "E-ValueField\n" &
-	eval(E,S,H,C,I,e) => (E',H',C',I',O(fvalues)) &
+  rule	eval(E,S,H,C,I,e) => (E',H',C',I',O(fvalues)) &
+	alert(["E-ValueField(", l, ")"], [], []) &
 	Util.lookupRecord(fvalues, l) => v
 	----------------------------------
 	eval(E,S,H,C,I, LVALUE(FIELD(e, l))) => (E',H',C',I',v)
 
   axiom	eval(E,S,H,C,I, VALUE(R(r))) => (E,H,C,I, R(r))
 
-  rule print "E-Op\n" &
+  rule alert(["E-Op\n"],[],[]) &
        eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
        Util.apply_binop(op,v1,v2) => v
        -------------------------------
        eval(E,S,H,C,I, OP(e1, op, e2)) => (E'',H'',C'',I'',v)
 
-  rule print "E-Compare\n" &
+  rule alert(["E-Compare\n"],[],[]) &
        eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
        Util.apply_bincomp(op,v1,v2) => v
@@ -187,11 +187,11 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 
   rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        Util.shortcircuit_bincomb(op,v1) => (true, v) &
-       print "E-CombineShortCircuit\n"
+       alert(["E-CombineShortCircuit\n"],[],[])
        -------------------------------
        eval(E,S,H,C,I, COMBINE(e1, op, e2)) => (E',H',C',I',v1)
 
-  rule print "E-Combine\n" &
+  rule alert(["E-Combine\n"],[],[]) &
        eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        Util.shortcircuit_bincomb(op,v1) => (false, v) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
@@ -202,27 +202,27 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
   rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
        v1 = v2 &
-       print "E-IdentityTrue\n"
+       alert(["E-IdentityTrue\n"],[],[])
        ------------------------
        eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(TRUE))
 
   rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
        eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
        not v1 = v2 &
-       print "E-IdentityFalse\n"
+       alert(["E-IdentityFalse\n"],[],[])
        ------------------------
        eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(FALSE))
 
   rule	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
 	lookup(v,l) => (argnames, METHOD(s, returne)) &
-	print "E-Call\n" &
+	alert(["E-Call\n"],[],[]) &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
 	step(E1,Sm,H1,C1,I1,s) => (E',S',H',C',I') &
 	eval(E',S',H',C',I',returne) => (E'',H'',C'',I'',vr)
 	----------------------------------------------
 	eval(E,S,H,C,I,CALL(e,l,argexps)) => (E'',H'',C'',I'',vr)
 
-  rule	print "E-CallSimple\n" &
+  rule	alert(["E-CallSimple\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
 	lookup(v,l) => (argnames, SIMPLE(returne)) &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
@@ -230,14 +230,14 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 	----------------------------------------------
 	eval(E,S,H,C,I,CALL(e,l,argexps)) => (E',H',C',I',vr)
 
-  rule	print "E-New\n" &
+  rule	alert(["E-New\n"],[],[]) &
 	evalEachField(E,S,H,C,I,fieldexps) => (En,Hn,Cn,In,fieldvalues) &
 	tick() => r &
 	list_append([(r, fieldvalues)], Hn) => H'
 	------------------------------------------------------------------
 	eval(E,S,H,C,I,UIDRECORD(fieldexps)) => (En,H',Cn,In,R(r))
 
-  rule	print "E-Value\n" &
+  rule	alert(["E-Value\n"],[],[]) &
 	evalEachField(E,S,H,C,I,fieldexps) => (En,Hn,Cn,In,fieldvalues)
 	------------------------------------------------------------------
 	eval(E,S,H,C,I,IRECORD(fieldexps)) => (En,Hn,Cn,In,O(fieldvalues))
@@ -255,49 +255,49 @@ end
 relation tC: (Env, Heap, Exp) => Type =
   axiom tC(E, H, VALUE(K(c))) => PRIMITIVE
 
-  rule	print "T-Var\n" &
+  rule	alert(["T-Var\n"],[],[]) &
 	Util.lookupEnv(E, x) => v &
 	tC(E,H,VALUE(v)) => T
 	---------------------------------
 	tC(E,H, LVALUE(VARIABLE(x))) => T
 
-  rule print "T-Field\n" &
+  rule alert(["T-Field\n"],[],[]) &
        tC(E,H,e) => TRECORD(ftypes) &
        Util.lookupRecordType(ftypes, l) => T
        -------------------------------------
        tC(E,H, LVALUE(FIELD(e, l))) => T
 
-  rule	print "T-Ref\n" &
+  rule	alert(["T-Ref\n"],[],[]) &
 	Util.lookupHeap(H, r) => fvalues &
 	tC(E,H,VALUE(O(fvalues))) => T
 	------------------------------
 	tC(E,H,VALUE(R(r))) => T
 
-  rule	print "T-Op\n" &
+  rule	alert(["T-Op\n"],[],[]) &
 	tC(E,H,e1) => PRIMITIVE &
 	tC(E,H,e2) => PRIMITIVE
 	--------------------------
 	tC(E,H, OP(e1, op, e2)) => PRIMITIVE
 
-  rule print "T-Compare\n" &
+  rule alert(["T-Compare\n"],[],[]) &
        tC(E,H,e1) => T1 &
        tC(E,H,e2) => T2 &
        T1 = T2
        --------------------------
        tC(E,H, COMPARE(e1, op, e2)) => PRIMITIVE
 
-  rule print "T-Combine\n" &
+  rule alert(["T-Combine\n"],[],[]) &
        tC(E,H,e1) => PRIMITIVE &
        tC(E,H,e2) => PRIMITIVE
        --------------------------
        tC(E,H, COMBINE(e1, op, e2)) => PRIMITIVE
 
-  rule print "T-ValueObject\n" &
+  rule alert(["T-ValueObject\n"],[],[]) &
        tCFields(E,H, fvalues) => ftypes
        ---------------------------------------
        tC(E,H, VALUE(O(fvalues))) => TRECORD(ftypes)
 
-  rule print "T-Deref\n" &
+  rule alert(["T-Deref\n"],[],[]) &
        tC(E,H, e) => T
        ---------------------------------------
        tC(E,H, DEREF(e)) => T
@@ -338,7 +338,7 @@ end
 relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule print "StayOne\n" &
+  rule alert(["StayOne\n"],[],[]) &
        stay(E0) => C0
        --------------------------------
        stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(v))))
@@ -347,7 +347,7 @@ end
 relation stayH: Heap => Constraint =
   axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule print "StayHeap\n" &
+  rule alert(["StayHeap\n"],[],[]) &
        stayFields(r, o) => (Cf, o') &
        stayH(H0) => C0
        --------------------------------
@@ -368,16 +368,16 @@ end
 relation identityStay: Env => Constraint =
   axiom identityStay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule print "StayRef\n" &
+  rule alert(["StayRef\n"],[],[]) &
        identityStay(E0) => C0
        --------------------------------
        identityStay((x, R(r)) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(REQUIRED, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r)))))
 
-  rule print "StayObj\n" & identityStay(E0) => C0 & stay([(x, O(o))]) => C1
+  rule alert(["StayObj\n"],[],[]) & identityStay(E0) => C0 & stay([(x, O(o))]) => C1
        --------------------------------------------------------------------
        identityStay((x, O(o)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
 
-  rule print "StayConst\n" & identityStay(E0) => C0 & stay([(x, K(c))]) => C1
+  rule alert(["StayConst\n"],[],[]) & identityStay(E0) => C0 & stay([(x, K(c))]) => C1
        ----------------------------------------------------------------------
        identityStay((x, K(c)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
 end
@@ -385,7 +385,7 @@ end
 relation identityStayH: Heap => Constraint =
   axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule print "StayHeap\n" &
+  rule alert(["StayHeap\n"],[],[]) &
        identityStayFields(r, o) => (Cf, o') &
        identityStayH(H0) => C0
        --------------------------------
@@ -406,47 +406,61 @@ end
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
   axiom inline(E,S,H,C,I,VALUE(K(c))) => (E,VALUE(K(TRUE)),VALUE(K(c)))
 
-  rule	Util.lookupScope(S,x) => xg
+  rule	alert(["I-Var"],[],[]) &
+	Util.lookupScope(S,x) => xg
 	---------------------------
 	inline(E,S,H,C,I,LVALUE(VARIABLE(x))) => (E,VALUE(K(TRUE)),LVALUE(VARIABLE(xg)))
 
-  rule	inlineEachField(E,S,H,C,I,o) => (En,ec,o')
+  rule	alert(["I-Record"],[],[]) &
+	inlineEachField(E,S,H,C,I,o) => (En,ec,o')
+	------------------------------------
+	inline(E,S,H,C,I,IRECORD(o)) => (En,ec,VALUE(O(o')))
+
+  rule	alert(["I-Record"],[],[]) &
+	inlineEachField(E,S,H,C,I,o) => (En,ec,o')
 	------------------------------------
 	inline(E,S,H,C,I,VALUE(O(o))) => (En,ec,VALUE(O(o')))
 
-  rule  inline(E,S,H,C,I,e) => (E',ec,e') &
+  rule	alert(["I-Field"],[],[]) &
+	inline(E,S,H,C,I,e) => (E',ec,e') &
 	eval(E',S,H,C,I,e) => (E'',H,C,I,R(r))
 	---------------------------------------------
 	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',ec,LVALUE(FIELD(DEREF(e'),l)))
 
-  rule  inline(E,S,H,C,I,e) => (E',ec,e') &
+  rule	alert(["I-ValueField"],[],[]) &
+	inline(E,S,H,C,I,e) => (E',ec,e') &
 	eval(E',S,H,C,I,e) => (E'',H,C,I,O(o))
 	---------------------------------------------
 	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',ec,LVALUE(FIELD(e',l)))
 
   axiom inline(E,S,H,C,I,VALUE(R(r))) => (E,VALUE(K(TRUE)),VALUE(R(r)))
 
-  rule	inline(E,S,H,C,I,e1) => (E',eca,ea) &
+  rule	alert(["I-Op"],[],[]) &
+	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-------------------------------------
 	inline(E,S,H,C,I,OP(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),OP(ea,op,eb))
 
-  rule	inline(E,S,H,C,I,e1) => (E',eca,ea) &
+  rule	alert(["I-Compare"],[],[]) &
+	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-------------------------------------
 	inline(E,S,H,C,I,COMPARE(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),COMPARE(ea,op,eb))
 
-  rule	inline(E,S,H,C,I,e1) => (E',eca,ea) &
+  rule	alert(["I-Combine"],[],[]) &
+	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-------------------------------------
 	inline(E,S,H,C,I,COMBINE(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),COMBINE(ea,op,eb))
 
-  rule	inline(E,S,H,C,I,e1) => (E',eca,ea) &
+  rule	alert(["I-Identity"],[],[]) &
+	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-----------------------------------------------------
 	inline(E,S,H,C,I,IDENTITY(e1,e2)) => (E'',COMBINE(eca,AND,ecb),IDENTITY(ea,eb))
 
   rule	eval(E,S,H,C,I,e) => (E',H,C,I,v) & lookup(v,l) => (argnames,METHOD(s,e)) &
+	alert(["I-Call"],[],[]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
 	step(E'',Sm,H,C,I,s) => (E''',S',H,C,I) &
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
@@ -455,6 +469,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 
   rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) &
 	lookup(v,l) => (argnames,SIMPLE(e)) &
+	alert(["I-SimpleCall"],[],[]) &
 	enter(E'',S,H,C,I,v,argnames,argexps) => (E''',Sm,H,C,I) &
 	inlineEach(E''',S,H,C,I,argexps) => (En,ecn,inlinedargexps) &
 	Util.lookupScope(Sm,"self") => xgself &
@@ -519,27 +534,27 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 
   axiom step(E,S,H,C,I,SKIP) => (E,S,H,C,I)
 
-  rule  print "S-Seq\n" &
+  rule  alert(["S-Seq\n"],[],[]) &
 	step(E, S, H, C, I, s1) => (E',S',H',C',I') &
 	step(E',S',H',C',I',s2) => (E'',S'',H'',C'',I'')
 	------------------------------------------------
 	step(E,S,H,C,I,SEQ(s1,s2)) => (E'',S'',H'',C'',I'')
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',K(TRUE)) &
-	print "S-IfThen\n" &
+	alert(["S-IfThen\n"],[],[]) &
 	step(E',S,H',C',I',s1) => (E'',S',H'',C'',I'')
 	----------------------------------------------
 	step(E,S,H,C,I,IF(e, s1, s2)) => (E'',S',H'',C'',I'')
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	not v = K(TRUE) &
-	print "S-IfElse\n" &
+	alert(["S-IfElse\n"],[],[]) &
 	step(E',S,H',C',I',s2) => (E'',S',H'',C'',I'')
 	----------------------------------------------
 	step(E,S,H,C,I,IF(e, s1, s2)) => (E'',S',H'',C'',I'')
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',K(TRUE)) &
-	print "S-WhileDo\n" &
+	alert(["S-WhileDo\n"],[],[]) &
 	step(E',S,H',C',I',s) => (E'',S',H'',C'',I'') &
 	step(E'',S',H'',C'',I'', WHILE(e, s)) => (E''',S'',H''',C''',I''')
 	------------------------------------------------------------------
@@ -547,17 +562,17 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 
   rule  eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	not v = K(TRUE) &
-	print "S-WhileSkip\n"
+	alert(["S-WhileSkip\n"],[],[])
 	-----------------------------------------------------
 	step(E,S,H,C,I, WHILE(e, s)) => (E',S,H',C',I')
 
-  rule	Util.lookupScope(S,x) => xg & print "S-AsgnLocal\n" &
+  rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
 	-----------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
 
-  rule	not Util.lookupScope(S,x) => _ & print "S-AsgnNewLocal\n" &
+  rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal\n"],[],[]) &
 	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
 	list_append(S,[(x,xg)]) => S' &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
@@ -565,26 +580,26 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	-----------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H'',C',I')
 
-  rule  print "S-AsgnLValue\n" &
+  rule  alert(["S-AsgnLValue\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
 	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E''',H'')
 	---------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
 
-  rule  print "S-OnceIdentity\n" &
+  rule  alert(["S-OnceIdentity\n"],[],[]) &
 	eval(E,S,H,C,I,e0) => (E0,H,C,I,v0) & eval(E0,S,H,C,I,e1) => (E1,H,C,I,v1) & v0 = v1 &
 	inline(E1,S,H,C,I,e0) => (E2,eC0,e0') & inline(E2,S,H,C,I,e1) => (E3,eC1,e1')
 	-----------------------------------------------------------------------------
 	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E3,S,H,C,I)
 
-  rule	print "S-AlwaysIdentity\n" &
+  rule	alert(["S-AlwaysIdentity\n"],[],[]) &
 	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I) &
 	list_append(I,[(S,CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))]) => I'
 	-----------------------------------------------------------------
 	step(E,S,H,C,I, ALWAYS(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I')
 
-  rule	print "S-Once\n" &
+  rule	alert(["S-Once\n"],[],[]) &
 	inline(E,S,H,C,I,e) => (E',eC,e') &
 	welltyped(E',H, CONSTRAINT(rho,COMBINE(e',AND,eC))) &
 	identityStay(E') => CEs & identityStayH(H) => CHs &
@@ -594,9 +609,26 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	--------------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E''',S,H',C,I)
 
-  rule	print "S-Always\n" &
+  rule	alert(["S-Always\n"],[],[]) &
 	step(E,S,H,C,I, ONCE(C0)) => (E',S,H',C,I) &
 	list_append(C,[(S,C0)]) => C'
 	---------------------------------------------
 	step(E,S,H,C,I, ALWAYS(C0)) => (E',S,H',C',I)
+end
+
+
+(* debugging *)
+relation alert: (string list, Exp list, string list) => () =
+  (* axiom alert(_, _, _) => () *)
+
+  rule  string_append_list(s1) => s1' & print s1' &
+	Print.printE(e) => es & print es &
+	string_append_list(s2) => s2' & print s2'
+	-----------------------------------------
+	alert(s1,e :: _,s2)
+
+  rule  string_append_list(s1) => s1' & print s1' &
+	string_append_list(s2) => s2' & print s2'
+	-----------------------------------------
+	alert(s1,[],s2)
 end
