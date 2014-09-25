@@ -119,6 +119,16 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 						     ("y", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
 							      DIV,
 							      LVALUE(VARIABLE("scale"))))])))
+
+  (* {x: self.x + pt.x, y: self.y + pt.y} *)
+  axiom lookup(_, "ptEq") => (["other"],
+				SIMPLE(COMBINE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+						       EQUAL,
+						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"x"))),
+					       AND,
+					       COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+						       EQUAL,
+						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"y"))))))
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
@@ -385,7 +395,7 @@ end
 relation identityStayH: Heap => Constraint =
   axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule alert(["StayHeap\n"],[],[]) &
+  rule alert(["IdentityStayHeap\n"],[],[]) &
        identityStayFields(r, o) => (Cf, o') &
        identityStayH(H0) => C0
        --------------------------------
@@ -460,7 +470,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	inline(E,S,H,C,I,IDENTITY(e1,e2)) => (E'',COMBINE(eca,AND,ecb),IDENTITY(ea,eb))
 
   rule	eval(E,S,H,C,I,e) => (E',H,C,I,v) & lookup(v,l) => (argnames,METHOD(s,e)) &
-	alert(["I-Call"],[],[]) &
+	alert(["I-Call("],[l],[")"]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
 	step(E'',Sm,H,C,I,s) => (E''',S',H,C,I) &
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
@@ -469,7 +479,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 
   rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) &
 	lookup(v,l) => (argnames,SIMPLE(e)) &
-	alert(["I-SimpleCall"],[],[]) &
+	alert(["I-SimpleCall("],[l],[")"]) &
 	enter(E'',S,H,C,I,v,argnames,argexps) => (E''',Sm,H,C,I) &
 	inlineEach(E''',S,H,C,I,argexps) => (En,ecn,inlinedargexps) &
 	Util.lookupScope(Sm,"self") => xgself &
@@ -477,7 +487,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	Util.pairwiseEqualEach(xgself :: globalargnames, e0' :: inlinedargexps) => argequalities &
 	Util.combineEach(argequalities) => ec &
 	inline(En,Sm,H,C,I,e) => (En',ecm,e') &
-	Util.combineEach([ec, ecm, ecn]) => eC
+	Util.combineEach([ec0, ec, ecm, ecn]) => eC
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e0,l,argexps)) => (En',eC,e')
 end

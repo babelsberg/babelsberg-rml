@@ -12,10 +12,11 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
 
   rule parseEnvironment(rest, E, H) => (E', H') &
        printE(babelsberg.IRECORD(fields)) => vs &
+       babelsberg.eval([],[],[],[],[],babelsberg.IRECORD(fields)) => (_,_,_,_,babelsberg.O(object)) &
        int_string(r) => rs &
        print "H(#" & print rs & print ")" & print " ||= " & print vs & print " \n"
        ------------------------------------------------
-       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(babelsberg.VALUE(babelsberg.R(r))), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, fields) :: H')
+       parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(babelsberg.VALUE(babelsberg.R(r))), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, object) :: H')
 
   rule parseEnvironment(rest, E, H) => (E', H') &
        printE(babelsberg.IRECORD(fields)) => vs &
