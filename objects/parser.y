@@ -13,6 +13,7 @@ extern void* absyntree;
 %token T_SEMIC
 %token T_ASSIGN
 %token T_IDENT
+%token T_GLOBAL
 %token T_REALCONST
 %token T_STRING
 %token T_H_DEREF
@@ -117,6 +118,8 @@ expression      : value
                         { $$ = babelsberg__COMBINE($1, $2, $3); }
                 | expression T_IDENTICAL expression %prec T_EQUAL
                         { $$ = babelsberg__IDENTITY($1, $3); }
+                | T_GLOBAL T_LPAREN callargs T_RPAREN
+		        { $$ = babelsberg__CALL(babelsberg__VALUE(babelsberg__K(babelsberg__NIL)), $1, $3); }
                 | expression T_DOT label T_LPAREN callargs T_RPAREN
                         { $$ = babelsberg__CALL($1, $3, $5); }
                 | T_LBRACE objectliteral T_RBRACE

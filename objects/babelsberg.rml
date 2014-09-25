@@ -93,6 +93,10 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 					 GREATERTHAN,
 					 LVALUE(VARIABLE("min?")))))
 
+  (* {x: arg1, y: arg2} *)
+  axiom lookup(_, "Point") => (["x", "y"],
+				SIMPLE(IRECORD([("x", LVALUE(VARIABLE("x"))),
+						("y", LVALUE(VARIABLE("y")))])))
 
   (* (self.upper_left.addPt(self.lower_right).divPtScalar(2) *)
   axiom lookup(_, "center") => ([],
@@ -104,21 +108,25 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 
   (* {x: self.x + pt.x, y: self.y + pt.y} *)
   axiom lookup(_, "addPt") => (["pt"],
-				SIMPLE(IRECORD([("x", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
-							 ADD,
-							 LVALUE(FIELD(LVALUE(VARIABLE("pt")),"x")))),
-						("y", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
-							 ADD,
-							 LVALUE(FIELD(LVALUE(VARIABLE("pt")),"y"))))])))
+				SIMPLE(CALL(VALUE(K(NIL)),
+					    "Point",
+					    [OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+						ADD,
+						LVALUE(FIELD(LVALUE(VARIABLE("pt")),"x"))),
+					     OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+						ADD,
+						LVALUE(FIELD(LVALUE(VARIABLE("pt")),"y")))])))
 
   (* {x: self.x / scale, y: self.y / scale} *)
   axiom lookup(_, "divPtScalar") => (["scale"],
-				     SIMPLE(IRECORD([("x", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
-							      DIV,
-							      LVALUE(VARIABLE("scale")))),
-						     ("y", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
-							      DIV,
-							      LVALUE(VARIABLE("scale"))))])))
+				     SIMPLE(CALL(VALUE(K(NIL)),
+						 "Point",
+						 [OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+						     DIV,
+						     LVALUE(VARIABLE("scale"))),
+						  OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+						     DIV,
+						     LVALUE(VARIABLE("scale")))])))
 
   (* {x: self.x + pt.x, y: self.y + pt.y} *)
   axiom lookup(_, "ptEq") => (["other"],
@@ -470,7 +478,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	inline(E,S,H,C,I,IDENTITY(e1,e2)) => (E'',COMBINE(eca,AND,ecb),IDENTITY(ea,eb))
 
   rule	eval(E,S,H,C,I,e) => (E',H,C,I,v) & lookup(v,l) => (argnames,METHOD(s,e)) &
-	alert(["I-Call("],[l],[")"]) &
+	alert(["I-Call(", l],[],[")"]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
 	step(E'',Sm,H,C,I,s) => (E''',S',H,C,I) &
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
@@ -479,7 +487,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 
   rule	inline(E,S,H,C,I,e0) => (E',ec0,e0') & eval(E',S,H,C,I,e0) => (E'',H,C,I,v) &
 	lookup(v,l) => (argnames,SIMPLE(e)) &
-	alert(["I-SimpleCall("],[l],[")"]) &
+	alert(["I-SimpleCall(", l],[],[")"]) &
 	enter(E'',S,H,C,I,v,argnames,argexps) => (E''',Sm,H,C,I) &
 	inlineEach(E''',S,H,C,I,argexps) => (En,ecn,inlinedargexps) &
 	Util.lookupScope(Sm,"self") => xgself &

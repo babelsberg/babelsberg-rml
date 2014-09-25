@@ -12,8 +12,11 @@ int lex_rcon(void);
 
 whitespace   [ \t\n]+
 letter       [a-zA-Z_]
+lowerletter  [a-z]
+upperletter  [A-Z]
 questionmark "?"
-ident        {letter}({letter}|{digit})*{questionmark}?
+ident        {lowerletter}({letter}|{digit})*{questionmark}?
+global       {upperletter}({letter}|{digit})*
 digit        [0-9]
 digits       {digit}+
 pt           "."
@@ -77,6 +80,7 @@ reference    {amp}{digits}
 "false"      return T_FALSE;
 "nil"        return T_NIL;
 {ident}      return lex_ident(); /* T_IDENT */
+{global}     return lex_global(); /* T_GLOBAL */
 
 %%
 
@@ -90,6 +94,12 @@ int lex_ident(void)
 {
   yylval = (void*)mk_scon(yytext);
   return T_IDENT;
+}
+
+int lex_global(void)
+{
+  yylval = (void*)mk_scon(yytext);
+  return T_GLOBAL;
 }
 
 int lex_string(void)
