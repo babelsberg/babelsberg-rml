@@ -12,7 +12,8 @@ int lex_rcon(void);
 
 whitespace   [ \t\n]+
 letter       [a-zA-Z_]
-ident        {letter}({letter}|{digit})*
+questionmark "?"
+ident        {letter}({letter}|{digit})*{questionmark}?
 digit        [0-9]
 digits       {digit}+
 pt           "."

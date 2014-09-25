@@ -22,6 +22,11 @@ relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value  =
 	------------------------------
 	lookupEnv((id2,value) :: _, id) => value
 
+  rule  string_append(id2, "?") => roid &
+	roid = id
+	------------------------------
+	lookupEnv((id2,value) :: _, id) => value
+
   rule  not id=id2 &
 	lookupEnv(rest, id) => value
 	-------------------------------------
@@ -32,6 +37,12 @@ relation lookupScope: (babelsberg.Scope, babelsberg.Variable) => babelsberg.Vari
   rule  id = id2
 	------------------------------
 	lookupScope((id2,value) :: _, id) => value
+
+  rule  string_append(id2, "?") => roid &
+	roid = id &
+	string_append(value, "?") => rovalue
+	------------------------------
+	lookupScope((id2,value) :: _, id) => rovalue
 
   rule  not id=id2 &
 	lookupScope(rest, id) => value

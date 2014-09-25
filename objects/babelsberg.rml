@@ -85,20 +85,40 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
   axiom lookup(_, "require_min_balance") => (["acct","min"], (* always acct.balance > min *)
 			  METHOD(ALWAYS(CONSTRAINT(REQUIRED, COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
 								     GREATERTHAN,
-								     LVALUE(VARIABLE("min"))))),
+								     LVALUE(VARIABLE("min?"))))),
 				 LVALUE(VARIABLE("self"))))
 
   axiom lookup(_, "has_min_balance") => (["acct","min"], (* return acct.balance > min *)
 			  SIMPLE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
 					 GREATERTHAN,
-					 LVALUE(VARIABLE("min")))))
+					 LVALUE(VARIABLE("min?")))))
 
-  axiom lookup(_, "center") => ([], (* (self.upper_left + self.lower_right) / 2 *)
-			  SIMPLE(OP(OP(LVALUE(FIELD(LVALUE(VARIABLE("self")), "upper_left")),
-				       ADD,
-				       LVALUE(FIELD(LVALUE(VARIABLE("self")), "lower_right"))),
-				     DIV,
-				     VALUE(K(REAL(2.0))))))
+
+  (* (self.upper_left.addPt(self.lower_right).divPtScalar(2) *)
+  axiom lookup(_, "center") => ([],
+				SIMPLE(CALL(CALL(LVALUE(FIELD(LVALUE(VARIABLE("self")), "upper_left")),
+						 "addPt",
+						 [LVALUE(FIELD(LVALUE(VARIABLE("self")), "lower_right"))]),
+					    "divPtScalar",
+					    [VALUE(K(REAL(2.0)))])))
+
+  (* {x: self.x + pt.x, y: self.y + pt.y} *)
+  axiom lookup(_, "addPt") => (["pt"],
+				SIMPLE(IRECORD([("x", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+							 ADD,
+							 LVALUE(FIELD(LVALUE(VARIABLE("pt")),"x")))),
+						("y", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+							 ADD,
+							 LVALUE(FIELD(LVALUE(VARIABLE("pt")),"y"))))])))
+
+  (* {x: self.x / scale, y: self.y / scale} *)
+  axiom lookup(_, "divPtScalar") => (["scale"],
+				     SIMPLE(IRECORD([("x", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+							      DIV,
+							      LVALUE(VARIABLE("scale")))),
+						     ("y", OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+							      DIV,
+							      LVALUE(VARIABLE("scale"))))])))
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
@@ -194,19 +214,19 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
        eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(FALSE))
 
   rule	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
-	lookup(v,l) => (argnames, METHOD(s, e)) &
+	lookup(v,l) => (argnames, METHOD(s, returne)) &
 	print "E-Call\n" &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
 	step(E1,Sm,H1,C1,I1,s) => (E',S',H',C',I') &
-	eval(E',S',H',C',I',e) => (E'',H'',C'',I'',vr)
+	eval(E',S',H',C',I',returne) => (E'',H'',C'',I'',vr)
 	----------------------------------------------
 	eval(E,S,H,C,I,CALL(e,l,argexps)) => (E'',H'',C'',I'',vr)
 
   rule	print "E-CallSimple\n" &
 	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
-	lookup(v,l) => (argnames, SIMPLE(e)) &
+	lookup(v,l) => (argnames, SIMPLE(returne)) &
 	enter(E0,S,H0,C0,I0,v,argnames,argexps) => (E1,Sm,H1,C1,I1) &
-	eval(E1,Sm,H1,C1,I1,e) => (E',H',C',I',vr)
+	eval(E1,Sm,H1,C1,I1,returne) => (E',H',C',I',vr)
 	----------------------------------------------
 	eval(E,S,H,C,I,CALL(e,l,argexps)) => (E',H',C',I',vr)
 
