@@ -65,6 +65,8 @@ module babelsberg:
 
   relation evalprogram: Program => ()
   relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value)
+
+  relation alert: (string list, Exp list, string list) => ()
 end
 
 relation evalprogram: Program => () =
@@ -347,6 +349,7 @@ with "helper.rml"
 relation models: Constraint => (Env, Heap) =
   rule Print.printC(C) => Cs &
        Solver.solve(Cs) => El &
+       print "\n" &
        Print.parseEnvironment(El, [], []) => (E, H) &
        print "\n"
        ------------------------------
@@ -637,22 +640,24 @@ end
 
 (* debugging *)
 relation alert: (string list, Exp list, string list) => () =
-  (* axiom alert(_, _, _) => () *)
+  axiom alert(_, _, _) => ()
 
-  rule  string_append_list(s1) => s1' & print s1' &
-	Print.printE(e) => es & print es &
-	string_append_list(s2) => s2' & print s2'
-	-----------------------------------------
-	alert(s1,e :: _,s2)
-
-  rule  string_append_list(s1) => s1' & print s1' &
-        print "<unprintable>" &
-	string_append_list(s2) => s2' & print s2'
-	-----------------------------------------
-	alert(s1,e :: _,s2)
-
-  rule  string_append_list(s1) => s1' & print s1' &
-	string_append_list(s2) => s2' & print s2'
-	-----------------------------------------
-	alert(s1,[],s2)
+  (* 
+   * rule  string_append_list(s1) => s1' & print s1' &
+   * 	Print.printE(e) => es & print es &
+   * 	string_append_list(s2) => s2' & print s2'
+   * 	-----------------------------------------
+   * 	alert(s1,e :: _,s2)
+   * 
+   * rule  string_append_list(s1) => s1' & print s1' &
+   *       print "<unprintable>" &
+   * 	string_append_list(s2) => s2' & print s2'
+   * 	-----------------------------------------
+   * 	alert(s1,e :: _,s2)
+   * 
+   * rule  string_append_list(s1) => s1' & print s1' &
+   * 	string_append_list(s2) => s2' & print s2'
+   * 	-----------------------------------------
+   * 	alert(s1,[],s2)
+   *)
 end

@@ -21,12 +21,19 @@ RML_BEGIN_LABEL(Solver__solve)
     char *first_param = RML_STRINGDATA(rmlA0);
     char c;
 
-    printf("\n\n### These are the current constraints: %s\n"\
+    printf("\n\n### These are the current constraints: %s\n", first_param);
+
+    /* Call the alert relation, so we only print this in debug mode */
+    rml_state_ARGS[0]= mk_cons(mk_scon(
 	   "\n\nA terminal with your $BBBEDITOR will open. Please enter a new " \
 	   "environment satisfying the constraints as 'var := value' pairs, "\
 	   "each separated by a newline. Save and close finishes.\n"\
-	   "To fail in the solver, just write 'unsat'.\n\n", first_param);
+	   "To fail in the solver, just write 'unsat'.\n\n"), mk_nil());
+    rml_state_ARGS[1]= mk_nil();
+    rml_state_ARGS[2]= mk_nil();
+    rml_prim_once(RML_LABPTR(babelsberg__alert));
     fflush(NULL);
+
     int exitcode = system("$BBBEDITOR input");
     if (exitcode != 0) {
 	RML_TAILCALLK(rmlFC);
@@ -36,7 +43,7 @@ RML_BEGIN_LABEL(Solver__solve)
     void* list = mk_nil();
 
     while(fscanf(input, "%m[()#-{}a-zA-Z0-9.:=, \"]\n", &assignment) != EOF) {
-	printf("%s\n", assignment);
+	/* printf("%s\n", assignment); */
 	yy_scan_string(assignment);
 	if (yyparse() != 0) {
 	    fprintf(stderr, "Parsing model failed!\n");
