@@ -646,6 +646,12 @@ relation alert: (string list, Exp list, string list) => () =
 	alert(s1,e :: _,s2)
 
   rule  string_append_list(s1) => s1' & print s1' &
+        print "<unprintable>" &
+	string_append_list(s2) => s2' & print s2'
+	-----------------------------------------
+	alert(s1,e :: _,s2)
+
+  rule  string_append_list(s1) => s1' & print s1' &
 	string_append_list(s2) => s2' & print s2'
 	-----------------------------------------
 	alert(s1,[],s2)
