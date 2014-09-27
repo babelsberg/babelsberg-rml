@@ -53,7 +53,7 @@ semantics.each do |s|
             envinput = example.sub(/txt$/, "env")
             return "#{example}: No environment given" unless File.exist?(envinput)
             environments = File.read(envinput).split(";\n")
-            return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
+            return "#{example}: No CIIndex" unless lastinput =~ /^[Cc]IIndex\s*(?::=)?\s*(\d+)/m
             idx = $1.to_i
             return "#{example}: Not all environments used" unless environments.size == idx
           end
@@ -67,7 +67,7 @@ semantics.each do |s|
           return "#{example}: No environment given" unless File.exist?(envinput)
           environments = File.read(envinput).split(";\n")
 
-          return "#{example}: No CIIndex" unless lastinput =~ /^CIIndex\s*(?::=)?\s*(\d+)/m
+          return "#{example}: No CIIndex" unless lastinput =~ /^[cC]IIndex\s*(?::=)?\s*(\d+)/m
           idx = $1.to_i
           return "#{example}: Not all environments used" unless environments.size == idx
           if output =~ /Evaluation failed!/

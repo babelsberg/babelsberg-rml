@@ -18,7 +18,7 @@ rescue Exception
 end
 
 
-if File.exist?(outfile) && File.read(outfile) =~ /^CIIndex := (\d+)$/m
+if File.exist?(outfile) && File.read(outfile) =~ /^cIIndex := (\d+)$/m
   idx = $1.to_i
 else
   idx = 0
@@ -26,5 +26,5 @@ end
 
 File.open(outfile, 'w') do |f|
   f << environments[idx]
-  f << "CIIndex := #{idx + 1}\n"
+  f << "cIIndex := #{idx + 1}\n"
 end
