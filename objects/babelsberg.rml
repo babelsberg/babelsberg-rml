@@ -82,13 +82,13 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
   axiom lookup(_, "double") => ([], (* return 2*self *)
 			  SIMPLE(OP(VALUE(K(REAL(2.0))),MUL,LVALUE(VARIABLE("self")))))
 
-  axiom lookup(_, "require_min_balance") => (["acct","min"], (* always acct.balance > min *)
+  axiom lookup(_, "Require_min_balance") => (["acct","min"], (* always acct.balance > min *)
 			  METHOD(ALWAYS(CONSTRAINT(REQUIRED, COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
 								     GREATERTHAN,
 								     LVALUE(VARIABLE("min?"))))),
 				 LVALUE(VARIABLE("self"))))
 
-  axiom lookup(_, "has_min_balance") => (["acct","min"], (* return acct.balance > min *)
+  axiom lookup(_, "Has_min_balance") => (["acct","min"], (* return acct.balance > min *)
 			  SIMPLE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
 					 GREATERTHAN,
 					 LVALUE(VARIABLE("min?")))))
