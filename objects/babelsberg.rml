@@ -584,13 +584,13 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	-----------------------------------------------------
 	step(E,S,H,C,I, WHILE(e, s)) => (E',S,H',C',I')
 
-  rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal\n"],[],[]) &
+  rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal(",x,")\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
 	-----------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
 
-  rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal\n"],[],[]) &
+  rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal(",x,") := "],[e],["\n"]) &
 	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
 	list_append(S,[(x,xg)]) => S' &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
