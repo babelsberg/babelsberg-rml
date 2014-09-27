@@ -522,7 +522,7 @@ relation reinlineC: (Env, Heap, Istore, Cstore) => (Env, Constraint) =
   axiom reinlineC(E,H,I,[]) => (E,CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 
   rule	reinlineC(E,H,I,Cstore0) => (E0,C0) &
-	inline(E0,S,H,(S,CONSTRAINT(rho,e)) :: Cstore0,I,e) => (E',eC,e')
+	inline(E0,S,H,Cstore0,I,e) => (E',eC,e')
 	-----------------------------------------------------------------
 	reinlineC(E,H,I,(S,CONSTRAINT(rho,e)) :: Cstore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(rho,COMBINE(e',AND,eC))))
 end
@@ -531,7 +531,7 @@ relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
   axiom reinlineI(E,H,C,[]) => (E,CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 
   rule	reinlineI(E,H,C,Istore0) => (E0,C0) &
-	inline(E0,S,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0,e) => (E',eC,e')
+	inline(E0,S,H,C,Istore0,e) => (E',eC,e')
 	----------------------------------------------------------------------
 	reinlineI(E,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(REQUIRED,COMBINE(e',AND,eC))))
 end
