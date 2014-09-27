@@ -1,0 +1,4 @@
+a := new {balance: 0};
+m := 10;
+def := Require_min_balance(a, m);
+m := 100

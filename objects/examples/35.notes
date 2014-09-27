@@ -1,0 +1,14 @@
+self1 = r0
+self2 = H(self1).upper_left
+arg1 = H(self1).lower_right
+argP1_1 = (self2.x + arg1.x)
+argP1_2 = (self2.y + arg1.y)
+self3 = {x: argP1_1, y: argP1_2}
+arg2 = 2.0
+argP2_1 = (self3.x / arg2)
+argP2_2 = (self3.y / arg2)
+argP3_1 = 10
+argP3_2 = 20
+self4 = {x: argP2_1, y: argP2_2}
+arg3 = {x: argP3_1, y: argP3_2}
+self4.x = arg3.x and self4.y = arg3.y
