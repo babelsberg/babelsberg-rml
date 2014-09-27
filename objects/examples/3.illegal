@@ -1,0 +1,2 @@
+This program should fail, because the typechecker will reject a
+constraint on an uninitialized variable.

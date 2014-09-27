@@ -1,0 +1,5 @@
+p := new {x:0};
+q := new {x:5};
+always medium p.x = 0;
+always medium q.x = 5;
+always weak p==q

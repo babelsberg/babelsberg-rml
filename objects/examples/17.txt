@@ -1,0 +1,2 @@
+a := new {y:10};
+always b=a

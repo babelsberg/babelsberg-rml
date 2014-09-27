@@ -1,0 +1,2 @@
+This program fails as well, since constraining a record to be equal to
+a number fails the compatibility check.

@@ -1,0 +1,2 @@
+x := 0;
+always x=4 and x=5 or x != 4 and x=10
