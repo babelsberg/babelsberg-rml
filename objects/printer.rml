@@ -136,6 +136,18 @@ relation printE: babelsberg.Exp => string =
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
+       e1s = "true"
+       --------------------------------
+       printE(babelsberg.COMBINE(e1, op, e2)) => e2s
+
+  rule printE(e1) => e1s &
+       printE(e2) => e2s &
+       e2s = "true"
+       --------------------------------
+       printE(babelsberg.COMBINE(e1, op, e2)) => e1s
+
+  rule printE(e1) => e1s &
+       printE(e2) => e2s &
        printComb(op) => os &
        string_append("(", e1s) => e1s' &
        string_append(e2s, ")") => e2s' &
