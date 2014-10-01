@@ -446,7 +446,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	inline(E,S,H,C,I,e) => (E',ec,e') &
 	eval(E',S,H,C,I,e) => (E'',H,C,I,R(r))
 	---------------------------------------------
-	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',ec,LVALUE(FIELD(DEREF(e'),l)))
+	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',COMBINE(ec,AND,COMPARE(e',EQUAL,VALUE(R(r)))),LVALUE(FIELD(DEREF(e'),l)))
 
   rule	alert(["I-ValueField"],[],[]) &
 	inline(E,S,H,C,I,e) => (E',ec,e') &
@@ -541,7 +541,7 @@ end
 
 relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, Heap) =
   rule	stay(E) => CEs & stayH(H) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
-	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),
+	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),C0),
 				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2))))) => (E',H') &
 	identityStay(E') => CEs' & identityStayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(Ec,H',Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
@@ -604,7 +604,7 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
   rule  alert(["S-AsgnLValue\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
-	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E''',H'')
+	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,eC)) => (E''',H'')
 	---------------------------------------------------------------------------------------------
 	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
 
