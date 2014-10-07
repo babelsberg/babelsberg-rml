@@ -79,6 +79,11 @@ semantics.each do |s|
       ENV["BBBEDITOR"] = File.expand_path("../#{s}/cisolver.rb", __FILE__)
       Rake::Task["#{s}:test"].invoke(args[:example])
     end
+
+    task :review, [:example] => :build do |t, args|
+      ENV["BBBReview"] = "true"
+      Rake::Task["#{s}:citest"].invoke(args[:example])
+    end
   end
 end
 
