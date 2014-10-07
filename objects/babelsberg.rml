@@ -139,6 +139,11 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 					       COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
 						       EQUAL,
 						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"y"))))))
+
+  axiom lookup(_, "Test") => (["i"],
+			      METHOD(ALWAYS(CONSTRAINT(MEDIUM, COMPARE(LVALUE(VARIABLE("i")),EQUAL,VALUE(K(REAL(5.0)))))),
+				     OP(LVALUE(VARIABLE("i")),ADD,VALUE(K(REAL(1.0))))))
+
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
@@ -483,7 +488,8 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
   rule	eval(E,S,H,C,I,e) => (E',H,C,I,v) & lookup(v,l) => (argnames,METHOD(s,e)) &
 	alert(["I-Call(", l],[],[")"]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
-	step(E'',Sm,H,C,I,s) => (E''',S',H,C,I) &
+	step(E'',Sm,H,C,I,s) => (E''',S',H',C',I') &
+        H' = H & C' = C & I' = I & (* this is just written differently from the paper *)
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(K(TRUE)),VALUE(vr))

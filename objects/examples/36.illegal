@@ -1,0 +1,7 @@
+Creating a constraint is a kind of side effect, at least potentially,
+so another consequence of the prohibition on side effects in
+constraint expressions is that methods called from a constraint
+expression cannot themselves create other constraints, or call further
+methods that do so. The following program is not allowed, and
+illustrates side effects resulting from adding constraints in methods
+called from other constraints.
