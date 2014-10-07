@@ -1,0 +1,4 @@
+p := MutablePointNew(0,0);
+q := p;
+always p.x = 5;
+always q.x = 10

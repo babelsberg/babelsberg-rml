@@ -140,9 +140,33 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 						       EQUAL,
 						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"y"))))))
 
+  (* always medium i = 5; return i + 1 *)
   axiom lookup(_, "Test") => (["i"],
 			      METHOD(ALWAYS(CONSTRAINT(MEDIUM, COMPARE(LVALUE(VARIABLE("i")),EQUAL,VALUE(K(REAL(5.0)))))),
 				     OP(LVALUE(VARIABLE("i")),ADD,VALUE(K(REAL(1.0))))))
+
+  (* 
+   * axiom lookup(_, "ArrayNew2") => ([],
+   * 				   SIMPLE(IRECORD([("length", VALUE(K(REAL(2.0)))),
+   * 						   ("i0", VALUE(K(NIL))),
+   * 						   ("i1", VALUE(K(NIL)))])))
+   * 
+   * axiom lookup(_, "sum") => ([],
+   * 			     METHOD(SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0)))),
+   * 					SEQ(ASSIGN(VARIABLE("i"), VALUE(K(REAL(0.0)))),
+   * 					    WHILE(COMPARE(LVALUE(VARIABLE("i")),LESSTHAN,LVALUE(FIELD(LVALUE(VARIABLE("self")), "length"))),
+   * 						  SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0))))
+   *)
+
+  axiom lookup(_, "MutablePointNew") => (["x", "y"],
+					 SIMPLE(UIDRECORD([("x", LVALUE(VARIABLE("x"))),
+							   ("y", LVALUE(VARIABLE("y")))])))
+
+  axiom lookup(_, "WindowNew") => ([],
+				   SIMPLE(UIDRECORD([("window", VALUE(K(TRUE)))])))
+
+  axiom lookup(_, "CircleNew") => ([],
+				   SIMPLE(UIDRECORD([("circle", VALUE(K(TRUE)))])))
 
 end
 

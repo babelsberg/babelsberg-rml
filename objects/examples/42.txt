@@ -1,0 +1,4 @@
+x := WindowNew();
+y := x;
+always y == x;
+x := CircleNew()
