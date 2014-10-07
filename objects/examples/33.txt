@@ -1,4 +1,5 @@
-a := new {balance: 0};
-m := 10;
-always Has_min_balance(a, m);
-m := 100
+y := 0;
+x := 0;
+always y = x.double();
+y := 20;
+x := 7

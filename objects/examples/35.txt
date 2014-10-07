@@ -1,2 +1,4 @@
-r := new {upper_left: Point(2,2), lower_right: Point(10,10)};
-always r.center().ptEq(Point(2,2))
+a := new {balance: 0};
+m := 10;
+always Has_min_balance(a, m);
+m := 100

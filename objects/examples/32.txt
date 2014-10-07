@@ -1,5 +1,2 @@
-y := 0;
-x := 0;
-always y = x.double();
-y := 20;
-x := 7
+r := new {upper_left: Point(2,2), lower_right: Point(10,10)};
+always r.center().ptEq(Point(2,2))
