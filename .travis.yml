@@ -5,6 +5,7 @@ env:
     - IMPL=reals
     - IMPL=records
     - IMPL=uid
+    - IMPL=objects
 
 before_script:
   - cd rml
