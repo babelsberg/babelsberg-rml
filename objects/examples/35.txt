@@ -1,4 +1,4 @@
 a := new {balance: 0};
 m := 10;
-always Has_min_balance(a, m);
+always Has_min_balance(a, m?);
 m := 100

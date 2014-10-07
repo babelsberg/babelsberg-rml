@@ -93,7 +93,7 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
   axiom lookup(_, "Has_min_balance") => (["acct","min"], (* return acct.balance > min *)
 			  SIMPLE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
 					 GREATERTHAN,
-					 LVALUE(VARIABLE("min?")))))
+					 LVALUE(VARIABLE("min")))))
 
   (* {x: arg1, y: arg2} *)
   axiom lookup(_, "Point") => (["x", "y"],
