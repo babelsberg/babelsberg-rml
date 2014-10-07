@@ -1,3 +1,0 @@
-r := new {upper_left: Point(2,2), lower_right: Point(10,10)};
-always r.center().ptEq(Point(2,2));
-once r.center().x = 100
