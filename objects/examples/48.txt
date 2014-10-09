@@ -1,0 +1,2 @@
+q := MutablePointNew(0,0);
+def := Testpointxequals5(q)
