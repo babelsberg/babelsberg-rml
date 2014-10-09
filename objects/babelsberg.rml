@@ -168,6 +168,36 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
   axiom lookup(_, "CircleNew") => ([],
 				   SIMPLE(UIDRECORD([("circle", VALUE(K(TRUE)))])))
 
+
+  axiom lookup(_, "Makeeq") => (["x","y"],
+				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+							 IDENTITY(LVALUE(VARIABLE("x")),LVALUE(VARIABLE("y"))))),
+				       LVALUE(VARIABLE("self"))))
+
+  axiom lookup(_, "MakeIdentical") => (["a","b"],
+				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+							 IDENTITY(LVALUE(VARIABLE("a")),LVALUE(VARIABLE("b"))))),
+				       LVALUE(VARIABLE("self"))))
+
+  axiom lookup(_, "Testalwaysxequal5") => (["x"],
+				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+							 COMPARE(LVALUE(VARIABLE("x")),EQUAL,VALUE(K(REAL(5.0)))))),
+				       LVALUE(VARIABLE("x"))))
+
+  axiom lookup(_, "Testalwaysaequalsbplus3") => (["a", "b"],
+				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+							 COMPARE(LVALUE(VARIABLE("a")),EQUAL,OP(LVALUE(VARIABLE("b")),ADD,VALUE(K(REAL(3.0))))))),
+				       LVALUE(VARIABLE("a"))))
+
+  axiom lookup(_, "Testpointxequals5") => (["p"],
+				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+							 COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("p")),"x")),EQUAL,VALUE(K(REAL(5.0)))))),
+				       LVALUE(VARIABLE("p"))))
+
+  axiom lookup(_, "TestXGetsXPlus3ReturnX") => (["x"],
+				METHOD(ASSIGN(VARIABLE("x"),OP(LVALUE(VARIABLE("x")),ADD,VALUE(K(REAL(3.0))))),
+				       LVALUE(VARIABLE("x"))))
+
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
