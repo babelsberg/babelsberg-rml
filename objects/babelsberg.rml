@@ -406,10 +406,11 @@ with "printer.rml"
 with "helper.rml"
 
 relation models: Constraint => (Env, Heap) =
-  rule Print.pRefDom(C) => refDom &
+  rule Print.printC(C) => plainCs &
+       Print.pRefDom(C) => refDom &
        Print.pLabDom(C) => labDom &
        Print.pDefs(C) => defs &
-       Print.printC(C) => Cs &
+       Print.printZ3C(C) => Cs &
        string_append_list(["(set-option :pp.decimal true)(set-option :model.compact true)\n",
 			   refDom, "\n", labDom, "\n
 ; Next block of declarations are the same everywhere
@@ -424,7 +425,7 @@ relation models: Constraint => (Env, Heap) =
 (assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
 \n",
 			   defs, "\n", Cs, "\n(check-sat)\n(get-model)\n"]) => srr &
-       Solver.solve(srr) => El &
+       Solver.solve(plainCs, srr) => El &
        print "\n" &
        Print.parseEnvironment(El, [], []) => (E, H) &
        print "\n"
