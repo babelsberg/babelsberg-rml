@@ -19,9 +19,13 @@ RML_BEGIN_LABEL(Solver__solve)
     char *assignment;
     double rvalue = 0;
     char *first_param = RML_STRINGDATA(rmlA0);
+    char *second_param = RML_STRINGDATA(rmlA1);
     char c;
 
     printf("\n\n### These are the current constraints: %s\n", first_param);
+
+    FILE* z3 = fopen("constraints.smt", "w");
+    fwrite(second_param, sizeof(char), strlen(second_param), z3);
 
     /* Call the alert relation, so we only print this in debug mode */
     rml_state_ARGS[0]= mk_cons(mk_scon(
