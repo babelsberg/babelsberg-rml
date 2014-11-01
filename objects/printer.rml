@@ -55,13 +55,13 @@ relation printZ3C: babelsberg.Constraint => string =
 
   rule printZ3C(c1) => c1s &
        printZ3C(c2) => c2s &
-       c1s = "\n(assert true)"
+       c1s = "\n(assert (Bool true))"
        --------------
        printZ3C(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c2s
 
   rule printZ3C(c1) => c1s &
        printZ3C(c2) => c2s &
-       c2s = "\n(assert true)"
+       c2s = "\n(assert (Bool true))"
        --------------
        printZ3C(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c1s
 
@@ -123,22 +123,19 @@ relation printZ3E: babelsberg.Exp => string =
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', " == ") => es &
-       string_append(es, e2s') => es'
-       --------------------------------
+       string_append_list(["(= ", e1s, " ", e2s, ")"]) => es'
+       ------------------------------------------------------
        printZ3E(babelsberg.IDENTITY(e1, e2)) => es'
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
-       e1s = "true"
+       e1s = "(Bool true)"
        --------------------------------
        printZ3E(babelsberg.COMBINE(e1, op, e2)) => e2s
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
-       e2s = "true"
+       e2s = "(Bool true)"
        --------------------------------
        printZ3E(babelsberg.COMBINE(e1, op, e2)) => e1s
 
@@ -149,8 +146,8 @@ relation printZ3E: babelsberg.Exp => string =
        --------------------------------
        printZ3E(babelsberg.COMBINE(e1, op, e2)) => es
 
-  axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "true"
-  axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "false"
+  axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "(Bool true)"
+  axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "(Bool false)"
   axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => "(Reference nil)"
 
   rule  printZ3E(e) => es & string_append_list([es, ".", l, "(...)"]) => es'
@@ -407,7 +404,7 @@ relation pDefsE: babelsberg.Exp => string list =
   axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => [""]
 
 
-  rule printFieldVar(x) => xs & string_append_list(["(declare-const ", xs, " (Value Real Reference))\n"]) => str
+  rule printFieldVar(x) => xs & string_append_list(["(declare-const ", xs, " (Value))\n"]) => str
        -------------------------------------------------------------------------------
        pDefsE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => [str]
 
