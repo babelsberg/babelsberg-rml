@@ -80,6 +80,7 @@ semantics.each do |s|
       Rake::Task["#{s}:test"].invoke(args[:example])
     end
 
+    desc "Review the example and 'play solver'"
     task :review, [:example] => :build do |t, args|
       ENV["BBBReview"] = "true"
       Rake::Task["#{s}:citest"].invoke(args[:example])
