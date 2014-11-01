@@ -85,6 +85,12 @@ semantics.each do |s|
       ENV["BBBReview"] = "true"
       Rake::Task["#{s}:citest"].invoke(args[:example])
     end
+
+    desc "Review the example and Z3's solution"
+    task :z3, [:example] => :build do |t, args|
+      ENV["BBBZ3"] = "true"
+      Rake::Task["#{s}:citest"].invoke(args[:example])
+    end
   end
 end
 

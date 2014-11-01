@@ -30,6 +30,11 @@ File.open(outfile, 'w') do |f|
   if ENV["BBBReview"]
     puts "\nSolution:\n#{environments[idx]}"
     %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
+  elsif ENV["BBBZ3"]
+    puts "\nSolution:\n#{environments[idx]}"
+    system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt")
+    %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
   end
+
   f << "cIIndex := #{idx + 1}\n"
 end
