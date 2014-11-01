@@ -16,7 +16,7 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
   axiom parseEnvironment([], E, H) => (E, H)
 
   rule parseEnvironment(rest, E, H) => (E', H') &
-       printZ3E(babelsberg.IRECORD(fields)) => vs &
+       printE(babelsberg.IRECORD(fields)) => vs &
        babelsberg.eval([],[],[],[],[],babelsberg.IRECORD(fields)) => (_,_,_,_,babelsberg.O(object)) &
        int_string(r) => rs &
        print "H(#" & print rs & print ")" & print " ||= " & print vs & print " \n"
@@ -24,14 +24,14 @@ relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.
        parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.ASSIGNDEREF(babelsberg.VALUE(babelsberg.R(r))), babelsberg.IRECORD(fields))) :: rest, E, H) => (E', (r, object) :: H')
 
   rule parseEnvironment(rest, E, H) => (E', H') &
-       printZ3E(babelsberg.IRECORD(fields)) => vs &
+       printE(babelsberg.IRECORD(fields)) => vs &
        babelsberg.eval([],[],[],[],[],babelsberg.IRECORD(fields)) => (_,_,_,_,object) &
        print x & print " ||= " & print vs & print " \n"
        ------------------------------------------------
        parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.VARIABLE(x), babelsberg.IRECORD(fields))) :: rest, E, H) => ((x, object) :: E', H')
   
   rule parseEnvironment(rest, E, H) => (E', H') &
-       printZ3E(babelsberg.VALUE(v)) => vs &
+       printE(babelsberg.VALUE(v)) => vs &
        print x & print " ||= " & print vs & print " \n"
        ------------------------------------------------
        parseEnvironment(babelsberg.PROGRAM(babelsberg.ASSIGN(babelsberg.VARIABLE(x), babelsberg.VALUE(v))) :: rest, E, H) => ((x, v) :: E', H')
