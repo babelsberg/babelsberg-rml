@@ -5,6 +5,10 @@ module Print:
   relation printC: babelsberg.Constraint => string
   relation printE: babelsberg.Exp => string
   relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.Heap) => (babelsberg.Env, babelsberg.Heap)
+
+  relation pRefDom: babelsberg.Constraint => string
+  relation pLabDom: babelsberg.Constraint => string
+  relation pDefs: babelsberg.Constraint => string
 end
 
 relation parseEnvironment: (babelsberg.Program list, babelsberg.Env, babelsberg.Heap) => (babelsberg.Env, babelsberg.Heap) =
@@ -34,96 +38,85 @@ end
 
 relation printC: babelsberg.Constraint => string =
   rule printE(e) => es &
-       string_append("\nweak ", es) => cs
+       string_append_list(["\n(assert-soft ", es, " :weight 1)"]) => cs
        --------------
        printC(babelsberg.CONSTRAINT(babelsberg.WEAK, e)) => cs
 
   rule printE(e) => es &
-       string_append("\nmedium ", es) => cs
+       string_append_list(["\n(assert-soft ", es, " :weight 5)"]) => cs
        --------------
        printC(babelsberg.CONSTRAINT(babelsberg.MEDIUM, e)) => cs
 
   rule printE(e) => es &
-       string_append("\nrequired ", es) => cs
+       string_append_list(["\n(assert ", es, ")"]) => cs
        --------------
        printC(babelsberg.CONSTRAINT(babelsberg.REQUIRED, e)) => cs
 
   rule printC(c1) => c1s &
        printC(c2) => c2s &
-       c1s = "\nrequired true"
+       c1s = "\n(assert true)"
        --------------
        printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c2s
 
   rule printC(c1) => c1s &
        printC(c2) => c2s &
-       c2s = "\nrequired true"
+       c2s = "\n(assert true)"
        --------------
        printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => c1s
 
   rule printC(c1) => c1s &
        printC(c2) => c2s &
-       string_append(c1s, " && ") => cs &
-       string_append(cs, c2s) => cs'
-       --------------
-       printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs'
+       string_append_list([c1s, c2s]) => cs
+       ----------------------------------------------------------
+       printC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
 end
 
 relation printE: babelsberg.Exp => string =
   axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => c
 
-  rule real_string(c) => cs
-       --------------------
-       printE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => cs
+  rule real_string(c) => cs &
+       string_append_list(["(Real ", cs, ")"]) => cs'
+       ---------------------------------------
+       printE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => cs'
 
   axiom printE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => x
 
   rule int_string(r) => rs &
-       string_append("#", rs) => rs'
-       -----------------------------
+       string_append_list(["(Reference ref", rs, ")"]) => rs'
+       ------------------------------------------------------
        printE(babelsberg.VALUE(babelsberg.R(r))) => rs'
 
   rule printE(e) => es &
-       string_append("H(", es) => es' & string_append(es', ")") => es''
+       string_append("(H ", es) => es' & string_append(es', ")") => es''
        ----------------------------------------------------------------
        printE(babelsberg.DEREF(e)) => es''
 
-  rule printRContents(ary) => s &
-       string_append("{", s) => s' &
-       string_append(s', "}") => s''
+  rule printRContents(ary) => s
        -----------------------------
-       printE(babelsberg.VALUE(babelsberg.O(ary))) => s''
+       printE(babelsberg.VALUE(babelsberg.O(ary))) => s
 
-  rule printRContents(ary) => s &
-       string_append("{", s) => s' &
-       string_append(s', "}") => s''
+  rule printRContents(ary) => s
        -----------------------------
-       printE(babelsberg.IRECORD(ary)) => s''
+       printE(babelsberg.IRECORD(ary)) => s
 
   rule printE(e) => es &
-       string_append(es, ".") => es' &
-       string_append(es', l) => es''
-       -----------------------------
-       printE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es''
+       string_append_list(["(select ", es, " ", l, ")"]) => es'
+       --------------------------------------------------------
+       printE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es'
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
        printOp(op) => os &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', os) => es &
-       string_append(es, e2s') => es'
-       --------------------------------
-       printE(babelsberg.OP(e1, op, e2)) => es'
+       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
+       ----------------------------------------------------------
+       printE(babelsberg.OP(e1, op, e2)) => es
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
        printComp(op) => os &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', os) => es &
-       string_append(es, e2s') => es'
+       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
        --------------------------------
-       printE(babelsberg.COMPARE(e1, op, e2)) => es'
+       printE(babelsberg.COMPARE(e1, op, e2)) => es
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
@@ -149,16 +142,13 @@ relation printE: babelsberg.Exp => string =
   rule printE(e1) => e1s &
        printE(e2) => e2s &
        printComb(op) => os &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', os) => es &
-       string_append(es, e2s') => es'
+       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
        --------------------------------
-       printE(babelsberg.COMBINE(e1, op, e2)) => es'
+       printE(babelsberg.COMBINE(e1, op, e2)) => es
 
   axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "true"
   axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "false"
-  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => "nil"
+  axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => "(Reference nil)"
 
   rule  printE(e) => es & string_append_list([es, ".", l, "(...)"]) => es'
 	--------------------------------------------------------------
@@ -166,35 +156,318 @@ relation printE: babelsberg.Exp => string =
 end
 
 relation printRContents: babelsberg.ObjectLiteral => string =
-  axiom printRContents([]) => ""
+  axiom printRContents([]) => "iRec"
 
   rule printE(e) => es &
-       string_append(l, ": ") => ls &
-       string_append(ls, es) => es' &
-       string_append(es', ", ") => es'' &
        printRContents(rest) => rests &
-       string_append(es'', rests) => str
+       string_append_list(["(store ", rests, " ", l, " ", es, ")"]) => str
        ----------------------------------------------------------
        printRContents((l, e) :: rest) => str
 end
 
 relation printOp: babelsberg.Op => string =
-  axiom printOp(babelsberg.ADD) => " + "
-  axiom printOp(babelsberg.SUB) => " - "
-  axiom printOp(babelsberg.DIV) => " / "
-  axiom printOp(babelsberg.MUL) => " * "
+  axiom printOp(babelsberg.ADD) => "+"
+  axiom printOp(babelsberg.SUB) => "-"
+  axiom printOp(babelsberg.DIV) => "/"
+  axiom printOp(babelsberg.MUL) => "*"
 end
 
 relation printComp: babelsberg.Comp => string =
-  axiom printComp(babelsberg.LESSTHAN) => " < "
-  axiom printComp(babelsberg.LEQUAL) => " <= "
-  axiom printComp(babelsberg.EQUAL) => " = "
-  axiom printComp(babelsberg.NEQUAL) => " != "
-  axiom printComp(babelsberg.GEQUAL) => " >= "
-  axiom printComp(babelsberg.GREATERTHAN) => " > "
+  axiom printComp(babelsberg.LESSTHAN) =>"<"
+  axiom printComp(babelsberg.LEQUAL) =>"<="
+  axiom printComp(babelsberg.EQUAL) =>"="
+  axiom printComp(babelsberg.NEQUAL) =>"!="
+  axiom printComp(babelsberg.GEQUAL) =>">="
+  axiom printComp(babelsberg.GREATERTHAN) =>">"
 end
 
 relation printComb: babelsberg.Comb => string =
-  axiom printComb(babelsberg.AND) => " and "
-  axiom printComb(babelsberg.OR) => " or "
+  axiom printComb(babelsberg.AND) =>"and"
+  axiom printComb(babelsberg.OR) =>"or"
+end
+
+relation pRefDom: babelsberg.Constraint => string =
+  rule pRefDomE(e) => el &
+       list_union(el, []) => cl &
+       string_append_list(cl) => es &
+       string_append_list(["(declare-datatypes () ((Reference invalid nil", es, ")))"]) => cs
+       ---------------------------------------------------------------------------------------
+       pRefDom(babelsberg.CONSTRAINT(_, e)) => cs
+
+  rule pRefDomC(c1) => c1s &
+       pRefDomC(c2) => c2s &
+       list_union(c1s, c2s) => cl &
+       string_append_list(cl) => cls &
+       string_append_list(["(declare-datatypes () ((Reference invalid nil", cls, ")))"]) => cs
+       ---------------------------------------------------------------------------------------------
+       pRefDom(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
+end
+
+relation pRefDomC: babelsberg.Constraint => string list =
+  rule pRefDomE(e) => es
+       ---------------
+       pRefDomC(babelsberg.CONSTRAINT(_, e)) => es
+
+  rule pRefDomC(c1) => c1s &
+       pRefDomC(c2) => c2s &
+       list_union(c1s, c2s) => cl
+       ----------------------------------------------------------
+       pRefDomC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cl
+end
+
+relation pRefDomE: babelsberg.Exp => string list =
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => [""]
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => [""]
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => [""]
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => [""]
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => [""]
+  axiom pRefDomE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => [""]
+
+  rule int_string(r) => rs &
+       string_append(" ref", rs) => rs'
+       -----------------------------
+       pRefDomE(babelsberg.VALUE(babelsberg.R(r))) => [rs']
+
+  rule pRefDomE(e) => es
+       ---------------
+       pRefDomE(babelsberg.DEREF(e)) => es
+
+  axiom pRefDomE(babelsberg.VALUE(babelsberg.O(ary))) => [""]
+  axiom pRefDomE(babelsberg.IRECORD(ary)) => [""]
+
+  rule pRefDomE(e) => es
+       -------------------------------------------------------
+       pRefDomE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es
+
+  rule pRefDomE(e1) => e1s &
+       pRefDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       -----------------------------------------
+       pRefDomE(babelsberg.OP(e1, op, e2)) => es
+
+  rule pRefDomE(e1) => e1s &
+       pRefDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pRefDomE(babelsberg.COMPARE(e1, op, e2)) => es
+
+  rule pRefDomE(e1) => e1s &
+       pRefDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pRefDomE(babelsberg.IDENTITY(e1, e2)) => es
+
+  rule pRefDomE(e1) => e1s &
+       pRefDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pRefDomE(babelsberg.COMBINE(e1, op, e2)) => es
+end
+
+relation pLabDom: babelsberg.Constraint => string =
+  rule pLabDomE(e) => el &
+       list_union(el, []) => cl &
+       string_append_list(cl) => es &
+       string_append_list(["(declare-datatypes () ((Label", es, ")))"]) => cs
+       ---------------------------------------------------------------------------------------
+       pLabDom(babelsberg.CONSTRAINT(_, e)) => cs
+
+  rule pLabDomC(c1) => c1s &
+       pLabDomC(c2) => c2s &
+       list_union(c1s, c2s) => cl &
+       string_append_list(cl) => cls &
+       string_append_list(["(declare-datatypes () ((Label", cls, ")))"]) => cs
+       ---------------------------------------------------------------------------------------------
+       pLabDom(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
+end
+
+relation pLabDomC: babelsberg.Constraint => string list =
+  rule pLabDomE(e) => es
+       ---------------
+       pLabDomC(babelsberg.CONSTRAINT(_, e)) => es
+
+  rule pLabDomC(c1) => c1s &
+       pLabDomC(c2) => c2s &
+       list_union(c1s, c2s) => cs
+       ----------------------------------------------------------
+       pLabDomC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
+end
+
+relation pLabDomE: babelsberg.Exp => string list =
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => [""]
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => [""]
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => [""]
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => [""]
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => [""]
+  axiom pLabDomE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => [""]
+  axiom pLabDomE(babelsberg.VALUE(babelsberg.R(r))) => [""]
+  axiom pLabDomE(babelsberg.DEREF(e)) => [""]
+
+
+  rule printLabContents(ary) => str
+       ----------------------------
+       pLabDomE(babelsberg.VALUE(babelsberg.O(ary))) => str
+
+  rule printLabContents(ary) => str
+       ----------------------------
+       pLabDomE(babelsberg.IRECORD(ary)) => str
+
+  rule pLabDomE(e) => es &
+       string_append(" ", l) => ls &
+       list_union(es, [ls]) => es'
+       -------------------------------------------------------
+       pLabDomE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es'
+
+  rule pLabDomE(e1) => e1s &
+       pLabDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       -----------------------------------------
+       pLabDomE(babelsberg.OP(e1, op, e2)) => es
+
+  rule pLabDomE(e1) => e1s &
+       pLabDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pLabDomE(babelsberg.COMPARE(e1, op, e2)) => es
+
+  rule pLabDomE(e1) => e1s &
+       pLabDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pLabDomE(babelsberg.IDENTITY(e1, e2)) => es
+
+  rule pLabDomE(e1) => e1s &
+       pLabDomE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pLabDomE(babelsberg.COMBINE(e1, op, e2)) => es
+end
+
+relation printLabContents: babelsberg.ObjectLiteral => string list =
+  axiom printLabContents([]) => []
+
+  rule pLabDomE(e) => es &
+       printLabContents(rest) => rests &
+       string_append(" ", l) => ls &
+       list_union(es, [ls]) => fl &
+       list_union(fl, rests) => str
+       ----------------------------------------------------------
+       printLabContents((l, e) :: rest) => str
+end
+
+relation pDefs: babelsberg.Constraint => string =
+  rule pDefsE(e) => el &
+       list_union(el, []) => cl &
+       string_append_list(cl) => es
+       ---------------
+       pDefs(babelsberg.CONSTRAINT(_, e)) => es
+
+  rule pDefsC(c1) => c1s &
+       pDefsC(c2) => c2s &
+       list_union(c1s, c2s) => cl &
+       string_append_list(cl) => cls
+       ------------------------------------
+       pDefs(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cls
+end
+
+relation pDefsC: babelsberg.Constraint => string list =
+  rule pDefsE(e) => el &
+       list_union(el, []) => cl
+       ---------------
+       pDefsC(babelsberg.CONSTRAINT(_, e)) => cl
+
+  rule pDefsC(c1) => c1s &
+       pDefsC(c2) => c2s &
+       list_union(c1s, c2s) => cl
+       ------------------------------------
+       pDefsC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cl
+end
+
+relation pDefsE: babelsberg.Exp => string list =
+  axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => [""]
+  axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => [""]
+  axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => [""]
+  axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => [""]
+  axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => [""]
+
+  rule string_append_list(["(declare-const ", x, " (Value Real Reference))\n"]) => str
+       -------------------------------------------------------------------------------
+       pDefsE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => [str]
+
+  axiom pDefsE(babelsberg.VALUE(babelsberg.R(r))) => [""]
+  axiom pDefsE(babelsberg.DEREF(e)) => [""]
+
+  rule printDefsContents(ary) => str
+       ----------------------------
+       pDefsE(babelsberg.VALUE(babelsberg.O(ary))) => str
+
+  rule printDefsContents(ary) => str
+       ----------------------------
+       pDefsE(babelsberg.IRECORD(ary)) => str
+
+  rule pDefsE(e) => es
+       -------------------------------------------------------
+       pDefsE(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es
+
+  rule pDefsE(e1) => e1s &
+       pDefsE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       -----------------------------------------
+       pDefsE(babelsberg.OP(e1, op, e2)) => es
+
+  rule pDefsE(e1) => e1s &
+       pDefsE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pDefsE(babelsberg.COMPARE(e1, op, e2)) => es
+
+  rule pDefsE(e1) => e1s &
+       pDefsE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pDefsE(babelsberg.IDENTITY(e1, e2)) => es
+
+  rule pDefsE(e1) => e1s &
+       pDefsE(e2) => e2s &
+       list_union(e1s, e2s) => es
+       --------------------------------
+       pDefsE(babelsberg.COMBINE(e1, op, e2)) => es
+end
+
+relation printDefsContents: babelsberg.ObjectLiteral => string list =
+  axiom printDefsContents([]) => []
+
+  rule pDefsE(e) => es &
+       printDefsContents(rest) => rests &
+       list_union(es, rests) => str
+       ----------------------------------------------------------
+       printDefsContents((l, e) :: rest) => str
+end
+
+relation list_union: (''a list, ''a list) => ''a list =
+  axiom list_union([],res) => res
+  rule list_union_elt(x,lst2) => r1 &
+	list_union(xs,r1) => res
+	-----------------------
+	list_union(x::xs,lst2) => res
+end
+
+relation list_union_elt: (''a , ''a list) => ''a list =
+  rule list_getmember(x,lst) => _
+	--------------------------
+	list_union_elt(x,lst) => lst
+  rule not list_getmember(x,lst) => _
+	--------------------------
+	list_union_elt(x,lst) => x::lst
+end
+
+relation list_getmember: (''a, ''a list) => ''a =
+  axiom list_getmember(_,[]) => fail
+  rule x = y
+	-----
+	list_getmember(x,y::ys) => y
+  rule not x = y &
+	list_getmember(x,ys) => res
+	----------------------
+	list_getmember(x,y::ys) => res
 end

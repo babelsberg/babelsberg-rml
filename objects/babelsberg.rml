@@ -406,8 +406,25 @@ with "printer.rml"
 with "helper.rml"
 
 relation models: Constraint => (Env, Heap) =
-  rule Print.printC(C) => Cs &
-       Solver.solve(Cs) => El &
+  rule Print.pRefDom(C) => refDom &
+       Print.pLabDom(C) => labDom &
+       Print.pDefs(C) => defs &
+       Print.printC(C) => Cs &
+       string_append_list(["(set-option :pp.decimal true)(set-option :model.compact true)\n",
+			   refDom, "\n", labDom, "\n
+; Next block of declarations are the same everywhere
+; We use a Union type for values
+(declare-datatypes (U T) ((Value (Real (real U))
+                                 (Reference (ref T)))))
+; A default record has 'invalid' for all fields
+(declare-const iRec (Array Label (Value Real Reference)))
+(assert (= iRec ((as const (Array Label (Value Real Reference))) (Reference invalid))))
+; Records are (Array Label (Value Real Reference))
+(declare-fun H ((Value Real Reference)) (Array Label (Value Real Reference)))
+(assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
+\n",
+			   defs, "\n", Cs, "\n(check-sat)\n(get-model)\n"]) => srr &
+       Solver.solve(srr) => El &
        print "\n" &
        Print.parseEnvironment(El, [], []) => (E, H) &
        print "\n"
@@ -439,7 +456,7 @@ relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
   axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
 
   rule stayFields(r, rest) => (C, o) &
-       int_string(r) => is &string_append(is, "_") => is' & string_append(is', l) => x
+       int_string(r) => is & string_append_list(["ref", is, "_", l]) => x
        -------------------------------------------------------------------------------
        stayFields(r, (l, e) :: rest) => (COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, e)), C),
 					 (l, LVALUE(VARIABLE(x))) :: o)
