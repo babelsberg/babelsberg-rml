@@ -80,7 +80,9 @@ relation printZ3E: babelsberg.Exp => string =
        ---------------------------------------
        printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => cs'
 
-  axiom printZ3E(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => x
+  rule printFieldVar(x) => xs
+       -----------------------
+       printZ3E(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => xs
 
   rule int_string(r) => rs &
        string_append_list(["(Reference ref", rs, ")"]) => rs'
@@ -384,6 +386,19 @@ relation pDefsC: babelsberg.Constraint => string list =
        pDefsC(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cl
 end
 
+relation printFieldVar: string => string =
+    (* workaround, so i don't have to update all solutions *)
+  rule string_nth(x, 0) => fst &
+       not fst = #"r" &
+       string_list(x) => chars &
+       list_getmember(#"_", chars) => _ &
+       string_append("ref", x) => xs
+       -----------------------
+       printFieldVar(x) => xs
+
+  axiom printFieldVar(x) => x
+end
+
 relation pDefsE: babelsberg.Exp => string list =
   axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => [""]
   axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(c)))) => [""]
@@ -391,7 +406,8 @@ relation pDefsE: babelsberg.Exp => string list =
   axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => [""]
   axiom pDefsE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL))) => [""]
 
-  rule string_append_list(["(declare-const ", x, " (Value Real Reference))\n"]) => str
+
+  rule printFieldVar(x) => xs & string_append_list(["(declare-const ", xs, " (Value Real Reference))\n"]) => str
        -------------------------------------------------------------------------------
        pDefsE(babelsberg.LVALUE(babelsberg.VARIABLE(x))) => [str]
 

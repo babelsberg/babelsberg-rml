@@ -14,8 +14,8 @@
 (declare-const iRec (Array Label (Value Real Reference)))
 (assert (= iRec ((as const (Array Label (Value Real Reference))) (Reference invalid))))
 ; Records are (Array Label (Value Real Reference))
-(declare-fun H (Reference) (Array Label (Value Real Reference)))
-(assert (and (= (H invalid) iRec) (= (H nil) iRec)))
+(declare-fun H ((Value Real Reference)) (Array Label (Value Real Reference)))
+(assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
 
 
 ; We declare each variable as a value type
@@ -35,7 +35,7 @@
 
 ; The heap constraints. Each heap location maps to a record that is
 ; invalid in all but the defined fields
-(assert (= (H four) (store (store iRec x four_x) y four_y)))
+(assert (= (H (Reference four)) (store (store iRec x four_x) y four_y)))
 (assert-soft (= four_x (Real 10.0)) :weight 3)
 (assert-soft (= four_y (Real 10.0)) :weight 3)
 
