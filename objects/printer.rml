@@ -111,7 +111,7 @@ relation printZ3E: babelsberg.Exp => string =
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
        printZ3Op(op) => os &
-       string_append_list(["(", os, " (real ", e1s, ") (real ", e2s, "))"]) => es
+       string_append_list(["(Real (", os, " (real ", e1s, ") (real ", e2s, ")))"]) => es
        ----------------------------------------------------------
        printZ3E(babelsberg.OP(e1, op, e2)) => es
 
@@ -120,6 +120,14 @@ relation printZ3E: babelsberg.Exp => string =
        printZ3Comp(op) => os &
        os = "=" &
        string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
+       --------------------------------
+       printZ3E(babelsberg.COMPARE(e1, op, e2)) => es
+
+  rule printZ3E(e1) => e1s &
+       printZ3E(e2) => e2s &
+       printZ3Comp(op) => os &
+       os = "!=" &
+       string_append_list(["(not (= ", e1s, " ", e2s, "))"]) => es
        --------------------------------
        printZ3E(babelsberg.COMPARE(e1, op, e2)) => es
 
@@ -278,7 +286,7 @@ relation pLabDom: babelsberg.Constraint => string =
   rule pLabDomE(e) => el &
        list_union(el, []) => cl &
        string_append_list(cl) => es &
-       string_append_list(["(declare-datatypes () ((Label", es, ")))"]) => cs
+       string_append_list(["(declare-datatypes () ((Label undef", es, ")))"]) => cs
        ---------------------------------------------------------------------------------------
        pLabDom(babelsberg.CONSTRAINT(_, e)) => cs
 
@@ -286,7 +294,7 @@ relation pLabDom: babelsberg.Constraint => string =
        pLabDomC(c2) => c2s &
        list_union(c1s, c2s) => cl &
        string_append_list(cl) => cls &
-       string_append_list(["(declare-datatypes () ((Label", cls, ")))"]) => cs
+       string_append_list(["(declare-datatypes () ((Label undef", cls, ")))"]) => cs
        ---------------------------------------------------------------------------------------------
        pLabDom(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
 end

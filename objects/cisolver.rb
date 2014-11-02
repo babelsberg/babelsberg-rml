@@ -27,12 +27,12 @@ end
 
 File.open(outfile, 'w') do |f|
   f << environments[idx]
-  if ENV["BBBReview"]
-    puts "\nSolution:\n#{environments[idx]}"
-    %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
-  elsif ENV["BBBZ3"]
-    puts "\nSolution:\n#{environments[idx]}"
-    system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt")
+  if ENV["BBBReview"] || ENV["BBBZ3"]
+    puts "\n### This is the expected solution:\n#{environments[idx]}"
+    if ENV["BBBZ3"]
+      puts "\n### This is what Z3 produces:"
+      system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt")
+    end
     %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
   end
 
