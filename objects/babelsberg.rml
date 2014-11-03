@@ -470,47 +470,31 @@ end
 relation stay: Env => Constraint =
   axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
-  rule alert(["StayiRecord\n"],[],[]) &
-       stayiRecordFields(x, o) => C &
-       stay(E0) => C0
-       --------------------------------
-       stay((x, O(o)) :: E0) => COMPOUNDCONSTRAINT(C0, C)
-
   rule alert(["StayOne\n"],[],[]) &
        stay(E0) => C0
        --------------------------------
        stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(v))))
 end
 
-relation stayiRecordFields: (Variable, ObjectLiteral) => Constraint =
-  axiom stayiRecordFields(_, []) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
-
-  rule stayiRecordFields(x, rest) => C0
-       --------------------------------
-       stayiRecordFields(x, (l, e) :: rest) => 
-            COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(LVALUE(FIELD(LVALUE(VARIABLE(x)), l)), EQUAL, e)))
-end
-
 relation stayH: Heap => Constraint =
   axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule alert(["StayHeap\n"],[],[]) &
-       stayFields(r, o) => Cf &
+       stayFields(r, o) => (Cf, o') &
        stayH(H0) => C0
        --------------------------------
-       stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, Cf)
+       stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
+				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
 end
 
-relation stayFields: (Reference, ObjectLiteral) => Constraint =
-  axiom stayFields(_, []) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
+  axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
 
-  rule stayFields(r, rest) => C &
+  rule stayFields(r, rest) => (C, o) &
        int_string(r) => is & string_append_list(["ref", is, "_", l]) => x
        -------------------------------------------------------------------------------
-       stayFields(r, (l, e) :: rest) => COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(
-					  CONSTRAINT(REQUIRED, COMPARE(LVALUE(FIELD(DEREF(VALUE(R(r))), l)), EQUAL, LVALUE(VARIABLE(x)))),
-                                          CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, e))),
-					  C)
+       stayFields(r, (l, e) :: rest) => (COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, e)), C),
+					 (l, LVALUE(VARIABLE(x))) :: o)
 end
 
 relation identityStay: Env => Constraint =
@@ -521,15 +505,11 @@ relation identityStay: Env => Constraint =
        --------------------------------
        identityStay((x, R(r)) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(REQUIRED, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r)))))
 
-  rule alert(["StayObj\n"],[],[]) &
-       identityStay(E0) => C0 &
-       stay([(x, O(o))]) => C1
+  rule alert(["StayObj\n"],[],[]) & identityStay(E0) => C0 & stay([(x, O(o))]) => C1
        --------------------------------------------------------------------
        identityStay((x, O(o)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
 
-  rule alert(["StayConst\n"],[],[]) &
-       identityStay(E0) => C0 &
-       stay([(x, K(c))]) => C1
+  rule alert(["StayConst\n"],[],[]) & identityStay(E0) => C0 & stay([(x, K(c))]) => C1
        ----------------------------------------------------------------------
        identityStay((x, K(c)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
 end
@@ -538,21 +518,21 @@ relation identityStayH: Heap => Constraint =
   axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule alert(["IdentityStayHeap\n"],[],[]) &
-       identityStayFields(r, o) => Cf &
+       identityStayFields(r, o) => (Cf, o') &
        identityStayH(H0) => C0
        --------------------------------
-       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, Cf)
+       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
+				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
 end
 
-relation identityStayFields: (Reference, ObjectLiteral) => Constraint =
-  axiom identityStayFields(_, []) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+relation identityStayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
+  axiom identityStayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
 
-  rule identityStayFields(r, rest) => C &
-       int_string(r) => is & string_append(is, "_") => is' & string_append(is', l) => x &
+  rule identityStayFields(r, rest) => (C, o) &
+       int_string(r) => is &string_append(is, "_") => is' & string_append(is', l) => x &
        identityStay([(x, v)]) => C0
        ---------------------------------------------------------------------------------
-       identityStayFields(r, (l, VALUE(v)) :: rest) => (COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(C0, C),
-							CONSTRAINT(REQUIRED, COMPARE(LVALUE(FIELD(DEREF(VALUE(R(r))), l)), EQUAL, LVALUE(VARIABLE(x))))))
+       identityStayFields(r, (l, VALUE(v)) :: rest) => (COMPOUNDCONSTRAINT(C0, C), (l, LVALUE(VARIABLE(x))) :: o)
 end
 
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
