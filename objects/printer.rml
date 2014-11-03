@@ -95,16 +95,18 @@ relation printZ3E: babelsberg.Exp => string =
        ----------------------------------------------------------------
        printZ3E(babelsberg.DEREF(e)) => es''
 
-  rule printZ3RContents(ary) => s
+  rule printZ3iRContents(ary) => s &
+       string_append_list(["(Record ", s, ")"]) => s'
        -----------------------------
-       printZ3E(babelsberg.VALUE(babelsberg.O(ary))) => s
+       printZ3E(babelsberg.VALUE(babelsberg.O(ary))) => s'
 
-  rule printZ3RContents(ary) => s
-       -----------------------------
-       printZ3E(babelsberg.IRECORD(ary)) => s
-
-  rule printZ3E(e) => es &
+  rule printZ3E(babelsberg.DEREF(e)) => es &
        string_append_list(["(select ", es, " ", l, ")"]) => es'
+       --------------------------------------------------------
+       printZ3E(babelsberg.LVALUE(babelsberg.FIELD(babelsberg.DEREF(e), l))) => es'
+  
+  rule printZ3E(e) => es &
+       string_append_list(["(Real (select (rec ", es, ") ", l, "))"]) => es'
        --------------------------------------------------------
        printZ3E(babelsberg.LVALUE(babelsberg.FIELD(e, l))) => es'
 
@@ -114,6 +116,15 @@ relation printZ3E: babelsberg.Exp => string =
        string_append_list(["(Real (", os, " (real ", e1s, ") (real ", e2s, ")))"]) => es
        ----------------------------------------------------------
        printZ3E(babelsberg.OP(e1, op, e2)) => es
+
+
+  rule printZ3E(babelsberg.DEREF(e1)) => e1s &
+       printZ3RContents(ary) => e2s &
+       printZ3Comp(op) => os &
+       os = "=" &
+       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
+       --------------------------------
+       printZ3E(babelsberg.COMPARE(babelsberg.DEREF(e1), op, babelsberg.VALUE(babelsberg.O(ary)))) => es
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
@@ -181,6 +192,16 @@ relation printZ3RContents: babelsberg.ObjectLiteral => string =
        string_append_list(["(store ", rests, " ", l, " ", es, ")"]) => str
        ----------------------------------------------------------
        printZ3RContents((l, e) :: rest) => str
+end
+
+relation printZ3iRContents: babelsberg.ObjectLiteral => string =
+  axiom printZ3iRContents([]) => "vRec"
+
+  rule printZ3E(e) => es &
+       printZ3iRContents(rest) => rests &
+       string_append_list(["(store ", rests, " ", l, " (real ", es, "))"]) => str
+       ----------------------------------------------------------
+       printZ3iRContents((l, e) :: rest) => str
 end
 
 relation printZ3Op: babelsberg.Op => string =

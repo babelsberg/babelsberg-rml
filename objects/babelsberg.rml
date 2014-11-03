@@ -416,11 +416,15 @@ relation models: Constraint => (Env, Heap) =
 ; Next block of declarations are the same everywhere
 ; We use a Union type for values
 (declare-datatypes () ((Value (Real (real Real))
-                              (Bool (bool Bool))
+			      (Bool (bool Bool))
+                              (Record (rec (Array Label (Real))))
                               (Reference (ref Reference)))))
 ; A default record has 'invalid' for all fields
 (declare-const iRec (Array Label (Value)))
 (assert (= iRec ((as const (Array Label (Value))) (Reference invalid))))
+(declare-const invalidR Real) (assert (= invalidR 1334))
+(declare-const vRec (Array Label (Real)))
+(assert (= vRec ((as const (Array Label (Real))) invalidR)))
 ; Records are (Array Label (Value))
 (declare-fun H ((Value)) (Array Label (Value)))
 (assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
