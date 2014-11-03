@@ -428,7 +428,36 @@ relation models: Constraint => (Env, Heap) =
 ; Records are (Array Label (Value))
 (declare-fun H ((Value)) (Array Label (Value)))
 (assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
-\n",
+
+(define-fun plus ((x (Value)) (y (Value))) (Value)
+                 (Real (+ (real x) (real y))))
+(define-fun minus ((x (Value)) (y (Value))) (Value)
+                 (Real (- (real x) (real y))))
+(define-fun times ((x (Value)) (y (Value))) (Value)
+                 (Real (* (real x) (real y))))
+(define-fun divide ((x (Value)) (y (Value))) (Value)
+                 (Real (/ (real x) (real y))))
+
+(define-fun lessthan ((x (Value)) (y (Value))) (Value)
+                 (Bool (< (real x) (real y))))
+(define-fun leq ((x (Value)) (y (Value))) (Value)
+                 (Bool (<= (real x) (real y))))
+(define-fun greaterthan ((x (Value)) (y (Value))) (Value)
+                 (Bool (> (real x) (real y))))
+(define-fun geq ((x (Value)) (y (Value))) (Value)
+                 (Bool (>= (real x) (real y))))
+
+(define-fun equal ((x (Value)) (y (Value))) (Value)
+                 (Bool (= x y)))
+(define-fun notequal ((x (Value)) (y (Value))) (Value)
+                 (Bool (not (= x y))))
+
+(define-fun bbband ((x (Value)) (y (Value))) (Value)
+                 (Bool (and (bool x) (bool y))))
+(define-fun bbbor ((x (Value)) (y (Value))) (Value)
+                 (Bool (or (bool x) (bool y))))
+
+",
 			   defs, "\n", Cs, "\n(check-sat)\n(get-model)\n"]) => srr &
        Solver.solve(plainCs, srr) => El &
        print "\n" &
