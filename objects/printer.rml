@@ -120,8 +120,8 @@ relation printZ3E: babelsberg.Exp => string =
   rule printZ3E(babelsberg.DEREF(e1)) => e1s &
        printZ3RContents(ary) => e2s &
        printZ3Comp(op) => os &
-       os = "=" &
-       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
+       os = "equal" &
+       string_append_list(["(Bool (= ", e1s, " ", e2s, "))"]) => es
        --------------------------------
        printZ3E(babelsberg.COMPARE(babelsberg.DEREF(e1), op, babelsberg.VALUE(babelsberg.O(ary)))) => es
 
