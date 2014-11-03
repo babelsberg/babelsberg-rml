@@ -415,9 +415,9 @@ relation models: Constraint => (Env, Heap) =
 			   refDom, "\n", labDom, "\n
 ; Next block of declarations are the same everywhere
 ; We use a Union type for values
-(declare-datatypes () ((Value (Real (real Real))
+(declare-datatypes () ((Value (Record (rec (Array Label Real)))
+                              (Real (real Real))
 			      (Bool (bool Bool))
-                              (Record (rec (Array Label (Real))))
                               (Reference (ref Reference)))))
 ; A default record has 'invalid' for all fields
 (declare-const iRec (Array Label (Value)))
