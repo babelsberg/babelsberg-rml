@@ -9,7 +9,7 @@ bbbid = tree[shid]
 catid = tree[bbbid]
 rakeid = tree[catid]
 commandline = `ps -o cmd -fp #{catid}`.lines.to_a.last
-example = /cat\s+(.*\d+\.txt)\s+/.match(commandline)[1]
+example = /cat\s+(.*\d+[a-z]?\.txt)\s+/.match(commandline)[1]
 solution = example.sub(/\.txt$/, ".env")
 
 begin
