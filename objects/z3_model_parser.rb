@@ -19,7 +19,7 @@ module Z3ModelParser
           key = value_to_rml(object[1])
           heapacc + ["H(#{ref}) := #{key}"]
         end.join("\n")]
-      elsif k =~ /^[vi]Rec$/
+      elsif k =~ /^(?:[vi]Rec|invalidR)$/
         acc
       else
         v = value_to_rml(kv[1])
@@ -67,15 +67,29 @@ module Z3ModelParser
       "nil"
     elsif value =~ /^\s*\(Bool (\w+)\)\s*$/
       $1
-    elsif value =~ /^\s*\(Record \(_ as-array (k!\d)\)\)\s*$/
+    elsif value =~ /^\s*\(Record \(_ as-array (k!\d+)\)\)\s*$/
       transform_ite(env, env[$1])
-    elsif value =~ /^\s*\(_ as-array (k!\d)\)\s*$/
+    elsif value =~ /^\s*\(_ as-array (k!\d+)\)\s*$/
       transform_ite(env, env[$1])
     elsif value =~ /ite/
       transform_ite(env, value)
+    elsif value =~ /^\s*\(Record \(store/
+      transform_store(env, value)
     else
       value
     end
+  end
+
+  def transform_store(env, str)
+    record = {}
+    regexp = /([\w]+) (\d+\.\d+)/
+    s = str
+    while md = regexp.match(s)
+      s = md.post_match
+      next if md[1] == "undef"
+      record[simplify_value(env, md[1])] = simplify_value(env, md[2])
+    end
+    record
   end
 
   def transform_ite(env, str)
@@ -122,91 +136,3 @@ module Z3ModelParser
   end
 
 end
-
-hash = Z3ModelParser.parse("(model
-  (define-fun y129 () Value
-    (Real 2.0))
-  (define-fun self24 () Value
-    (Reference ref7))
-  (define-fun vRec () (Array Label Real)
-    (_ as-array k!1))
-  (define-fun scale102 () Value
-    (Real 2.0))
-  (define-fun self127 () Value
-    (Reference nil))
-  (define-fun self103 () Value
-    (Reference nil))
-  (define-fun self91 () Value
-    (Record (_ as-array k!4)))
-  (define-fun pt92 () Value
-    (Record (_ as-array k!2)))
-  (define-fun self101 () Value
-    (Record (_ as-array k!7)))
-  (define-fun iRec () (Array Label Value)
-    (_ as-array k!0))
-  (define-fun x104 () Value
-    (Real 2.0))
-  (define-fun y105 () Value
-    (Real 2.0))
-  (define-fun r0 () Value
-    (Reference ref7))
-  (define-fun self93 () Value
-    (Reference nil))
-  (define-fun x128 () Value
-    (Real 2.0))
-  (define-fun ref7_lower_right () Value
-    (Record (_ as-array k!2)))
-  (define-fun ref7_upper_left () Value
-    (Record (_ as-array k!4)))
-  (define-fun y95 () Value
-    (Real 4.0))
-  (define-fun self85 () Value
-    (Reference ref7))
-  (define-fun x94 () Value
-    (Real 4.0))
-  (define-fun invalidR () Real
-    1334.0)
-  (define-fun self125 () Value
-    (Record (_ as-array k!9)))
-  (define-fun other126 () Value
-    (Record (_ as-array k!9)))
-  (define-fun k!6 ((x!1 Label)) Real
-    (ite (= x!1 y) 4.0
-      1334.0))
-  (define-fun k!3 ((x!1 Label)) Value
-    (ite (= x!1 lower_right) (Record (_ as-array k!2))
-      (Reference invalid)))
-  (define-fun k!0 ((x!1 Label)) Value
-    (Reference invalid))
-  (define-fun k!8 ((x!1 Label)) Real
-    (ite (= x!1 y) 2.0
-      1334.0))
-  (define-fun k!5 ((x!1 Label)) Value
-    (ite (= x!1 upper_left) (Record (_ as-array k!4))
-    (ite (= x!1 lower_right) (Record (_ as-array k!2))
-      (Reference invalid))))
-  (define-fun k!2 ((x!1 Label)) Real
-    (ite (= x!1 y) (- 7715.0)
-    (ite (= x!1 undef) 7.0
-    (ite (= x!1 x) (- 96.0)
-      6.0))))
-  (define-fun k!7 ((x!1 Label)) Real
-    (ite (= x!1 y) 4.0
-    (ite (= x!1 x) 4.0
-      1334.0)))
-  (define-fun H ((x!1 Value)) (Array Label Value)
-    (ite (= x!1 (Reference ref7)) (_ as-array k!5)
-      (_ as-array k!0)))
-  (define-fun k!4 ((x!1 Label)) Real
-    (ite (= x!1 y) 7719.0
-    (ite (= x!1 undef) 8.0
-    (ite (= x!1 x) 100.0
-      1.0))))
-  (define-fun k!1 ((x!1 Label)) Real
-    1334.0)
-  (define-fun k!9 ((x!1 Label)) Real
-    (ite (= x!1 y) 2.0
-    (ite (= x!1 x) 2.0
-      1334.0)))
-)")
-puts Z3ModelParser.hash_to_rml_env(hash)

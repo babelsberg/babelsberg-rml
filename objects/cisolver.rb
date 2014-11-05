@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require File.expand_path("../z3_model_parser.rb", __FILE__)
+
 outfile = ARGV[0]
 
 
@@ -26,15 +28,24 @@ else
 end
 
 File.open(outfile, 'w') do |f|
-  f << environments[idx]
   if ENV["BBBReview"] || ENV["BBBZ3"]
+    f << "cIIndex := #{idx + 1}\n"
     puts "\n### This is the expected solution:\n#{environments[idx]}"
     if ENV["BBBZ3"]
       puts "\n### This is what Z3 produces:"
-      system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt")
+      system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt > constraints.model")
+      output = File.read("constraints.model")
+      if midx = output.index("(model")
+        hash = Z3ModelParser.parse(output[midx..-1])
+        model = Z3ModelParser.hash_to_rml_env(hash)
+        puts model
+        f << model + "\n"
+      else
+        puts output
+      end
+    else
+      f << environments[idx]
     end
     %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
   end
-
-  f << "cIIndex := #{idx + 1}\n"
 end
