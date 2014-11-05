@@ -56,6 +56,7 @@ File.open(outfile, 'w') do |f|
         l.gsub(".0", "") # use ints
       end
       environments[idx].lines.each do |line|
+        next if line.strip.empty?
         unless shortmodel.include? line.gsub(" ", "").strip
           e = "ERROR: Z3 model does not check out! #{line.gsub(" ", "")} not found in #{shortmodel}"
           puts e
