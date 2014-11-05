@@ -29,8 +29,8 @@ else
 end
 
 File.open(outfile, 'w') do |f|
+  f << "cIIndex := #{idx + 1}\n"
   if ENV["BBBReview"] || ENV["BBBZ3"]
-    f << "cIIndex := #{idx + 1}\n"
     puts "\n# #{number} # This is the expected solution:\n#{environments[idx]}"
     if ENV["BBBZ3"]
       puts "\n# #{number} # This is what Z3 produces:"
