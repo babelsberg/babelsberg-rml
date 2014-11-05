@@ -13,6 +13,7 @@ rakeid = tree[catid]
 commandline = `ps -o cmd -fp #{catid}`.lines.to_a.last
 example = /cat\s+(.*\d+[a-z]?\.txt)\s+/.match(commandline)[1]
 solution = example.sub(/\.txt$/, ".env")
+number = solution.split("/").last.sub(/\..*$/,"")
 
 begin
   environments = File.read(solution).split(";\n")
@@ -30,9 +31,9 @@ end
 File.open(outfile, 'w') do |f|
   if ENV["BBBReview"] || ENV["BBBZ3"]
     f << "cIIndex := #{idx + 1}\n"
-    puts "\n### This is the expected solution:\n#{environments[idx]}"
+    puts "\n# #{number} # This is the expected solution:\n#{environments[idx]}"
     if ENV["BBBZ3"]
-      puts "\n### This is what Z3 produces:"
+      puts "\n# #{number} # This is what Z3 produces:"
       system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt > constraints.model")
       output = File.read("constraints.model")
       if midx = output.index("(model")
