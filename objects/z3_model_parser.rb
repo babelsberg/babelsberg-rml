@@ -25,7 +25,7 @@ module Z3ModelParser
         v = value_to_rml(kv[1])
         acc + ["#{k} := #{v}"]
       end
-    end.sort_by {|a| a =~ /(\d+)/; $1.to_i }.join("\n")
+    end.sort_by {|a| a =~ /(\d+)/; $1.to_i }.reject(&:empty?).join("\n")
   end
 
   def value_to_rml(v)
