@@ -92,6 +92,18 @@ semantics.each do |s|
         ENV["BBBZ3"] = "true"
         Rake::Task["#{s}:citest"].invoke(args[:example])
       end
+
+      desc "Run an example completely with Z3"
+      task :z3run, [:example] => :build do |t, args|
+        ENV["BBBZ3Auto"] = "true"
+        Rake::Task["#{s}:z3"].invoke(args[:example])
+      end
+
+      desc "Run and compare an example completely automatically with Z3"
+      task :z3ci, [:example] => :build do |t, args|
+        ENV["BBBZ3AutoCompare"] = "true"
+        Rake::Task["#{s}:z3run"].invoke(args[:example])
+      end
     end
   end
 end

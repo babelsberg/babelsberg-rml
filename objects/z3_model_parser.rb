@@ -25,14 +25,14 @@ module Z3ModelParser
         v = value_to_rml(kv[1])
         acc + ["#{k} := #{v}"]
       end
-    end.join("\n")
+    end.sort_by {|a| a =~ /(\d+)/; $1.to_i }.join("\n")
   end
 
   def value_to_rml(v)
     if Hash === v
       "{" + v.inject([]) do |acc2,kv2|
         acc2 + ["#{kv2[0]}: #{value_to_rml(kv2[1])}"]
-      end.join(", ") + "}"
+      end.sort.join(", ") + "}"
     else
       v
     end

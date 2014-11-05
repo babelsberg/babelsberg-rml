@@ -47,6 +47,21 @@ File.open(outfile, 'w') do |f|
     else
       f << environments[idx]
     end
-    %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
+    unless ENV["BBBZ3Auto"]
+      %x{xterm -e "read -p 'Please review the constraints and solution. Are they ok? (Y/n)' -n 1 -r; echo; if [[ \\$REPLY =~ ^[Nn]$ ]]; then kill #{rakeid}; fi"}
+    end
+    if ENV["BBBZ3AutoCompare"]
+      shortmodel = model.lines.map { |l| l.gsub(" ", "").strip }
+      shortmodel += shortmodel.map do |l|
+        l.gsub(".0", "") # use ints
+      end
+      environments[idx].lines.each do |line|
+        unless shortmodel.include? line.gsub(" ", "").strip
+          e = "ERROR: Z3 model does not check out! #{line.gsub(" ", "")} not found in #{shortmodel}"
+          puts e
+          f << e
+        end
+      end
+    end
   end
 end
