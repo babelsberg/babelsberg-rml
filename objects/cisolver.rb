@@ -63,5 +63,7 @@ File.open(outfile, 'w') do |f|
         end
       end
     end
+  else
+    f << environments[idx]
   end
 end
