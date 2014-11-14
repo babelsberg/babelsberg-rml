@@ -1,17 +1,10 @@
 #!/usr/bin/env ruby
 
+require File.expand_path("../find_example", __FILE__)
+
 outfile = ARGV[0]
 index = ARGV[1].to_i
-
-tree = Hash[*`ps -eo pid,ppid`.scan(/\d+/).map{|x|x.to_i}]
-shid = Process.ppid
-bbbid = tree[shid]
-catid = tree[bbbid]
-rakeid = tree[catid]
-commandline = `ps -o cmd -fp #{catid}`.lines.to_a.last
-example = /cat\s+(.*\d+[a-z]?\.txt)\s+/.match(commandline)[1]
-solution = example.sub(/\.txt$/, ".env")
-number = solution.split("/").last.sub(/\..*$/,"")
+solution = FindExample.solution
 
 begin
   environments = File.read(solution).split(";\n")

@@ -8,25 +8,26 @@ end
 
 relation printprogram: babelsberg.Program => () =
   rule	printPreamble() &
-	printS(statement)
+	printS(statement, "    ") &
+	printPostscript()
 	-----------------
 	printprogram(babelsberg.PROGRAM(statement))
 end
 
 relation printassert: babelsberg.Program => () =
-  rule	print "assert(" &
+  rule	print "    assert(" &
 	printE(babelsberg.LVALUE(l)) & print " === " & printE(e) &
 	print ");\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
 
-  rule	print "assert(" &
+  rule	print "    assert(" &
 	printE(babelsberg.LVALUE(l)) & print ".fieldEquals(" & printE(babelsberg.IRECORD(fieldexps)) &
 	print "));\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.IRECORD(fieldexps))))
 
-  rule	print "assert(" &
+  rule	print "    assert(" &
 	printE(babelsberg.LVALUE(l)) & print " == " & printE(e) &
 	print ");\n"
 	----------------------------------------
@@ -34,57 +35,77 @@ relation printassert: babelsberg.Program => () =
 end
 
 relation printPreamble: () => () =
-  rule	print "bbb.defaultSolver = new CommandLineZ3();\n" &
-	print "var ctx = {};\n" &
-	print "function assert(v) { if (!v) { throw 'Assertion failed' } }\n\n"
+  rule	print "function test" &
+	Assertions.exampleId() => s & print s &
+	print "() {\n" &
+	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
+	print "    var ctx = {};\n" &
+	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n\n"
 	--------------------------------------------------
 	printPreamble()
 end
 
-relation printS: babelsberg.Statement => () =
-  axiom printS(babelsberg.SKIP) => ()
+relation printPostscript: () => () =
+  rule	print "},\n"
+	--------------------------------------------------
+	printPostscript()
+end
 
-  rule  printS(s1) & printS(s2)
+relation printS: (babelsberg.Statement, string) => () =
+  axiom printS(babelsberg.SKIP, i) => ()
+
+  rule  printS(s1, i) & printS(s2, i)
 	-----------------------
-	printS(babelsberg.SEQ(s1,s2))
+	printS(babelsberg.SEQ(s1,s2), i)
 
-  rule  print "if (" & printE(e) & print ") {\n" &
-	printS(s1) & print "\n} else {\n" &
-	printS(s2) & print "\n}\n"
+  rule	string_append(i, "    ") => i' &
+	print i & print "if (" & printE(e) & print ") {\n" &
+	printS(s1, i') &
+	print i & print "} else {\n" &
+	printS(s2, i') &
+	print i & print "}\n"
 	----------------------------------------------
-	printS(babelsberg.IF(e, s1, s2))
+	printS(babelsberg.IF(e, s1, s2), i)
 
-  rule  print "while (" & printE(e) & print ") {\n" &
-	printS(s) & print "\n}\n"
+  rule	string_append(i, "    ") => i' &
+	print i & print "while (" & printE(e) & print ") {\n" &
+	printS(s, i') &
+	print i & print "}\n"
 	-----------------------
-	printS(babelsberg.WHILE(e, s))
+	printS(babelsberg.WHILE(e, s), i)
 
-  rule	printE(babelsberg.LVALUE(l)) & print " = " & printE(e) & print ";\n" &
+  rule	print i & printE(babelsberg.LVALUE(l)) & print " = " & printE(e) & print ";\n" &
 	Assertions.assert(2)
 	---------------------------------------------------------
-	printS(babelsberg.ASSIGN(l,e))
+	printS(babelsberg.ASSIGN(l,e), i)
 
-  rule  print "once: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
+  rule  print i & print "once: {\n" &
+	print i & print "    " & printE(babelsberg.IDENTITY(e0, e1)) & print "\n" &
+	print i & print "}\n"
 	------------------------------------------------------------
-	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
+	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))), i)
 
-  rule  print "always: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
+  rule  print i & print "always: {\n" &
+	print i & print "    " & printE(babelsberg.IDENTITY(e0, e1)) & print "\n" &
+	print i & print "}\n"
 	--------------------------------------------------------------
-	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
+	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))), i)
 
-  rule	print "once: {\n" &
-	print "priority: '" & printRho(rho) & print "';\n" &
-	printE(e) & print "\n}\n" &
+  rule	print i & print "once: {\n" &
+	print i & print "    " & print "priority: '" & printRho(rho) & print "';\n" &
+	print i & print "    " & printE(e) & print "\n" &
+	print i & print "}\n" &
 	Assertions.assert(1)
 	-------------------------
-	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(rho,e)))
+	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(rho,e)), i)
 
-  rule	print "always: {\n" &
-	print "priority: '" & printRho(rho) & print "';\n" &
-	printE(e) & print "\n}\n" &
+  rule	print i & print "always: {\n" &
+	print i & print "    " & print "priority: '" & printRho(rho) & print "';\n" &
+	print i & print "    " & printE(e) & print "\n" &
+	print i & print "}\n" &
 	Assertions.assert(1)
 	-------------------------
-	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(rho,e)))
+	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(rho,e)), i)
 end
 
 relation printE: babelsberg.Exp => () =

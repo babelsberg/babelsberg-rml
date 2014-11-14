@@ -22,7 +22,7 @@ RML_BEGIN_LABEL(Assertions__assert)
     char *assignment;
     char cmd[255];
     ciindex += first_param;
-    snprintf(cmd, 255, "$BBBASSERTRB input %d", ciindex);
+    snprintf(cmd, 255, "$BBBPATH/assert.rb input %d", ciindex);
     int exitcode = system(cmd);
     if (exitcode != 0) {
 	RML_TAILCALLK(rmlFC);
@@ -41,6 +41,18 @@ RML_BEGIN_LABEL(Assertions__assert)
 	free(assignment);
     }
     rmlA0 = mk_nil();
+    RML_TAILCALLK(rmlSC);
+}
+RML_END_LABEL
+
+RML_BEGIN_LABEL(Assertions__exampleId)
+{
+    FILE* stream = popen("$BBBPATH/find_example.rb id", "r");
+    char* id[5] = {'\0'};
+    int read = fread((void*)id, 4, sizeof(char), stream);
+    pclose(stream);
+
+    rmlA0 = mk_scon((const char*)id);
     RML_TAILCALLK(rmlSC);
 }
 RML_END_LABEL
