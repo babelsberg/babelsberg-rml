@@ -35,11 +35,11 @@ relation printassert: babelsberg.Program => () =
 end
 
 relation printPreamble: () => () =
-  rule	print "function test" &
+  rule	print "test" &
 	Assertions.exampleId() => s & print s &
-	print "() {\n" &
+	print ": function() {\n" &
 	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
-	print "    var ctx = {};\n" &
+	print "    var ctx = {unsat: true};\n" &
 	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n" &
 	print "    function fieldEquals(o1, o2) {
 	for (var key in o1) {
@@ -50,7 +50,7 @@ relation printPreamble: () => () =
 	}
 	return true;
     }\n\n" &
-	print "    ------------ End Preamble -------------\n\n"
+	print "    //------------ End Preamble -------------\n\n"
 	--------------------------------------------------
 	printPreamble()
 end
