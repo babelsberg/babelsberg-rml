@@ -19,7 +19,7 @@ module FindExample
   end
 
   def id
-    example.sub(/.*(\d+[a-z]*)\.txt$/, "\\1")
+    example.sub(/(?:.*?)(\d+[a-z]*)\.txt$/, "\\1")
   end
 end
 
