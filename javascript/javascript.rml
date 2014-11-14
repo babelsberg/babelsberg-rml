@@ -13,7 +13,7 @@ end
 
 relation printPreamble: () => () =
   rule	print "bbb.defaultSolver = new CommandlineZ3();\n" &
-	print "ctx = {}\n"
+	print "var ctx = {};\n"
 	--------------------------------------------------
 	printPreamble()
 end
