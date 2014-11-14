@@ -74,7 +74,7 @@ relation printE: babelsberg.Exp => () =
 	------------
 	printE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL)))
 
-  rule	print "'" & print s & print "'"
+  rule	print s
 	-------------------------------
 	printE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(s))))
 
@@ -107,6 +107,11 @@ relation printE: babelsberg.Exp => () =
   rule	printE(e1) & print " === " & printE(e2)
 	---------------------------------------
 	printE(babelsberg.IDENTITY(e1, e2))
+
+  rule	e = babelsberg.VALUE(babelsberg.K(babelsberg.NIL)) & print l &
+	print "(" & printEachArg(argexps) & print ")"
+	-------------------------------------------
+	printE(babelsberg.CALL(e,l,argexps))
 
   rule	printE(e) & print "." & print l &
 	print "(" & printEachArg(argexps) & print ")"
