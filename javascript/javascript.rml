@@ -140,6 +140,17 @@ relation printE: babelsberg.Exp => () =
 	-------
 	printE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(r))))
 
+  rule	string_length(x) => i &
+	i - 1 => li &
+	string_nth(x, li) => lst &
+	lst = #"?" &
+	string_list(x) => chars &
+	list_delete(chars, li) => chars' &
+	list_string(chars') => xs &
+	print "ro(ctx." & print xs & print ")"
+	-------------------------------------
+	printE(babelsberg.LVALUE(babelsberg.VARIABLE(x)))
+
   rule	print "ctx." & print x
 	----------------------
 	printE(babelsberg.LVALUE(babelsberg.VARIABLE(x)))
