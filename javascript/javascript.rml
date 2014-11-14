@@ -21,8 +21,8 @@ relation printassert: babelsberg.Program => () =
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
 
-  rule	print "    assert(" &
-	printE(babelsberg.LVALUE(l)) & print ".fieldEquals(" & printE(babelsberg.IRECORD(fieldexps)) &
+  rule	print "    assert(fieldEquals(" &
+	printE(babelsberg.LVALUE(l)) & print ", " & printE(babelsberg.IRECORD(fieldexps)) &
 	print "));\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.IRECORD(fieldexps))))
@@ -40,7 +40,17 @@ relation printPreamble: () => () =
 	print "() {\n" &
 	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
 	print "    var ctx = {};\n" &
-	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n\n"
+	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n" &
+	print "    function fieldEquals(o1, o2) {
+	for (var key in o1) {
+	    if (o1[key] !== o2[key]) return false;
+	}
+	for (var key in o2) {
+	    if (o1[key] !== o2[key]) return false;
+	}
+	return true;
+    }\n\n" &
+	print "    ------------ End Preamble -------------\n\n"
 	--------------------------------------------------
 	printPreamble()
 end
