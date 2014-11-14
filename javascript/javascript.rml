@@ -1,0 +1,217 @@
+module javascript:
+  with "../objects/babelsberg.rml"
+
+  relation printprogram: babelsberg.Program => ()
+end
+
+relation printprogram: babelsberg.Program => () =
+  rule	printPreamble() &
+	printS(statement)
+	-----------------
+	printprogram(babelsberg.PROGRAM(statement))
+end
+
+relation printPreamble: () => () =
+  rule	print "bbb.defaultSolver = new CommandlineZ3();\n" &
+	print "ctx = {}\n"
+	--------------------------------------------------
+	printPreamble()
+end
+
+relation printS: babelsberg.Statement => () =
+  axiom printS(babelsberg.SKIP) => ()
+
+  rule  printS(s1) & printS(s2)
+	-----------------------
+	printS(babelsberg.SEQ(s1,s2))
+
+  rule  print "if (" & printE(e) & print ") {\n" &
+	printS(s1) & print "\n} else {\n" &
+	printS(s2) & print "\n}\n"
+	----------------------------------------------
+	printS(babelsberg.IF(e, s1, s2))
+
+  rule  print "while (" & printE(e) & print ") {\n" &
+	printS(s) & print "\n}\n"
+	-----------------------
+	printS(babelsberg.WHILE(e, s))
+
+  rule	printE(babelsberg.LVALUE(l)) & print " = " & printE(e) & print ";\n"
+	---------------------------------------------------------
+	printS(babelsberg.ASSIGN(l,e))
+
+  rule  print "once: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
+	------------------------------------------------------------
+	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
+
+  rule  print "always: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
+	--------------------------------------------------------------
+	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
+
+  rule	print "once: {\n" &
+	print "priority: '" & printRho(rho) & print "';\n" &
+	printE(e) & print "\n}\n"
+	-------------------------
+	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(rho,e)))
+
+  rule	print "always: {\n" &
+	print "priority: '" & printRho(rho) & print "';\n" &
+	printE(e) & print "\n}\n"
+	-------------------------
+	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(rho,e)))
+end
+
+relation printE: babelsberg.Exp => () =
+  rule	print "true"
+	------------
+	printE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE)))
+
+  rule	print "false"
+	------------
+	printE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE)))
+
+  rule	print "null"
+	------------
+	printE(babelsberg.VALUE(babelsberg.K(babelsberg.NIL)))
+
+  rule	print "'" & print s & print "'"
+	-------------------------------
+	printE(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(s))))
+
+  rule	real_string(r) => s &
+	print s
+	-------
+	printE(babelsberg.VALUE(babelsberg.K(babelsberg.REAL(r))))
+
+  rule	print "ctx." & print x
+	----------------------
+	printE(babelsberg.LVALUE(babelsberg.VARIABLE(x)))
+
+  rule	print "(" & printE(e) & print ")" &
+	print "." & print l
+	-------------------
+	printE(babelsberg.LVALUE(babelsberg.FIELD(e, l)))
+
+  rule	printE(e1) & printOp(op) & printE(e2)
+	-------------------------------------
+	printE(babelsberg.OP(e1, op, e2))
+
+  rule	printE(e1) & printComp(op) & printE(e2)
+	-------------------------------------
+	printE(babelsberg.COMPARE(e1, op, e2))
+
+  rule	printE(e1) & printComb(op) & printE(e2)
+	-------------------------------------
+	printE(babelsberg.COMBINE(e1, op, e2))
+
+  rule	printE(e1) & print " === " & printE(e2)
+	---------------------------------------
+	printE(babelsberg.IDENTITY(e1, e2))
+
+  rule	printE(e) & print "." & print l &
+	print "(" & printEachArg(argexps) & print ")"
+	-------------------------------------------
+	printE(babelsberg.CALL(e,l,argexps))
+
+  rule	print "new Object({" & printFields(fieldexps) & print "})"
+	---------------------------------------------------------
+	printE(babelsberg.UIDRECORD(fieldexps))
+
+  rule	print "{valueClass: true, " & printFields(fieldexps) & print "}"
+	---------------------------------------------------------------
+	printE(babelsberg.IRECORD(fieldexps))
+end
+
+relation printEachArg: babelsberg.Exp list => () =
+  axiom	printEachArg([]) => ()
+
+  rule	printE(e)
+	---------
+	printEachArg(e :: [])
+
+  rule	printE(e) & print ", " &
+	printEachArg(rest)
+	------------------
+	printEachArg(e :: rest)
+end
+
+relation printFields: babelsberg.ObjectLiteral => () =
+  axiom	printFields([]) => ()
+
+  rule	print l & print ": " & printE(e)
+	--------------------------------
+	printFields((l,e) :: [])
+
+  rule  print l & print ": " & printE(e) &
+	print ", " & printFields(rest)
+	------------------------------
+	printFields((l,e) :: rest)
+end
+
+relation printOp: babelsberg.Op => () =
+  rule	print " + "
+	-----------
+	printOp(babelsberg.ADD)
+
+  rule	print " - "
+	-----------
+	printOp(babelsberg.SUB)
+
+  rule	print " / "
+	-----------
+	printOp(babelsberg.DIV)
+
+  rule	print " * "
+	-----------
+	printOp(babelsberg.MUL)
+end
+
+relation printComp: babelsberg.Comp => () =
+  rule	print " < "
+	-----------
+	printComp(babelsberg.LESSTHAN)
+
+  rule	print " <= "
+	-----------
+	printComp(babelsberg.LEQUAL)
+
+  rule	print " == "
+	-----------
+	printComp(babelsberg.EQUAL)
+
+  rule	print " != "
+	-----------
+	printComp(babelsberg.NEQUAL)
+
+  rule	print " >= "
+	-----------
+	printComp(babelsberg.GEQUAL)
+
+  rule	print " > "
+	-----------
+	printComp(babelsberg.GREATERTHAN)
+end
+
+relation printComb: babelsberg.Comb => () =
+  rule	print " && "
+	-----------
+	printComb(babelsberg.AND)
+
+  rule	print " || "
+	-----------
+	printComb(babelsberg.OR)
+end
+
+relation printRho: babelsberg.Rho => () =
+  rule	print "weak"
+	--------------
+	printRho(babelsberg.WEAK)
+
+  rule	print "medium"
+	--------------
+	printRho(babelsberg.MEDIUM)
+
+  rule	print "required"
+	--------------
+	printRho(babelsberg.REQUIRED)
+end	
