@@ -11,7 +11,7 @@
 extern int yy_scan_string(char *yy_str);
 extern void* absyntree;
 
-int ciindex = 0;
+int ciindex = -1;
 
 /* No init for this module */
 void Assertions_5finit(void) {}
@@ -21,12 +21,12 @@ RML_BEGIN_LABEL(Assertions__assert)
     int first_param = RML_UNTAGFIXNUM(rmlA0);
     char *assignment;
     char cmd[255];
-    snprintf(cmd, 255, "$BBBASSERTRB input %d", ciindex - 1 + first_param);
+    ciindex += first_param;
+    snprintf(cmd, 255, "$BBBASSERTRB input %d", ciindex);
     int exitcode = system(cmd);
     if (exitcode != 0) {
 	RML_TAILCALLK(rmlFC);
     }
-    ciindex += first_param;
 
     FILE* input = fopen("input", "r");
     while(fscanf(input, "%m[()#-{}a-zA-Z0-9.:=, \"]\n", &assignment) != EOF) {

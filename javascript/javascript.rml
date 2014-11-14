@@ -15,6 +15,18 @@ end
 
 relation printassert: babelsberg.Program => () =
   rule	print "assert(" &
+	printE(babelsberg.LVALUE(l)) & print " === " & printE(e) &
+	print ");\n"
+	----------------------------------------
+	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
+
+  rule	print "assert(" &
+	printE(babelsberg.LVALUE(l)) & print ".fieldEquals(" & printE(babelsberg.IRECORD(fieldexps)) &
+	print "));\n"
+	----------------------------------------
+	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.IRECORD(fieldexps))))
+
+  rule	print "assert(" &
 	printE(babelsberg.LVALUE(l)) & print " == " & printE(e) &
 	print ");\n"
 	----------------------------------------
@@ -22,8 +34,9 @@ relation printassert: babelsberg.Program => () =
 end
 
 relation printPreamble: () => () =
-  rule	print "bbb.defaultSolver = new CommandlineZ3();\n" &
-	print "var ctx = {};\n"
+  rule	print "bbb.defaultSolver = new CommandLineZ3();\n" &
+	print "var ctx = {};\n" &
+	print "function assert(v) { if (!v) { throw 'Assertion failed' } }\n\n"
 	--------------------------------------------------
 	printPreamble()
 end
@@ -51,13 +64,11 @@ relation printS: babelsberg.Statement => () =
 	---------------------------------------------------------
 	printS(babelsberg.ASSIGN(l,e))
 
-  rule  print "once: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n" &
-	Assertions.assert(2)
+  rule  print "once: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
 	------------------------------------------------------------
 	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
 
-  rule  print "always: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n" &
-	Assertions.assert(2)
+  rule  print "always: {\n" & printE(babelsberg.IDENTITY(e0, e1)) & print "\n}\n"
 	--------------------------------------------------------------
 	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))))
 
@@ -137,7 +148,7 @@ relation printE: babelsberg.Exp => () =
 	---------------------------------------------------------
 	printE(babelsberg.UIDRECORD(fieldexps))
 
-  rule	print "{valueClass: true, " & printFields(fieldexps) & print "}"
+  rule	print "{" & printFields(fieldexps) & print "}"
 	---------------------------------------------------------------
 	printE(babelsberg.IRECORD(fieldexps))
 end
