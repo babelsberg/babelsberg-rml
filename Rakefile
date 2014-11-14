@@ -142,7 +142,9 @@ languages = [:javascript]
 languages.each do |l|
   desc "Generate tests for Babelsberg/#{l.to_s.capitalize}"
   task l, [:example] do |t, args|
-    Dir.chdir File.expand_path("../#{l}", __FILE__) do
+    lpath = File.expand_path("../#{l}", __FILE__)
+    ENV["BBBASSERTRB"] = File.join(lpath, "assert.rb")
+    Dir.chdir lpath do
       exitcode = system("make babelsberg-#{l} > /dev/null")
       fail unless exitcode
 

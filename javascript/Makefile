@@ -18,7 +18,7 @@ all: $(BIN)
 
 # MAIN PROGRAM
 
-CALCOBJS= main.o javascript.o $(OBJECTOBJS)
+CALCOBJS= main.o javascript.o assertions.o $(OBJECTOBJS)
 CLEAN=$(BIN) $(BIN).exe $(CALCOBJS) javascript.c javascript.h
 
 $(BIN): OBJECTOBJS=$(subst ../objects/main.o, , $(shell ls ../objects/*.o))
@@ -33,8 +33,12 @@ main.o:	 main.c javascript.h
 	cd ../objects/; $(MAKE)
 
 javascript.o:  javascript.c ../objects/babelsberg.h
-javascript.c javascript.h: javascript.rml
+javascript.c javascript.h: javascript.rml assertions.rml
 	$(COMPILE.rml) javascript.rml
+
+assertions.o: assertions.c assertions.rml
+assertions.c:
+	touch assertions.c
 
 .c.o:
 	$(COMPILE.rml) $<

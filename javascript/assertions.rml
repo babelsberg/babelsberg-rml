@@ -1,0 +1,3 @@
+module Assertions:
+  relation assert: int => ()
+end
