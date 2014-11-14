@@ -115,6 +115,12 @@ end
 def run_example(s, example, errors)
   puts "Program #{example}:"
   puts File.read example
+  output = run_example_quiet(s, example)
+  error = $Errortest[example, output]
+  errors << "\t#{error}\n" if error
+end
+
+def run_example_quiet(s, example)
   output = ""
   Open3.popen3("cat #{example} | ./babelsberg-#{s}") do |stdin, stdout, stderr|
     ios = [stdout, stderr]
@@ -128,6 +134,27 @@ def run_example(s, example, errors)
       end
     end
   end
-  error = $Errortest[example, output]
-  errors << "\t#{error}\n" if error
+  output
+end
+
+languages = [:javascript]
+
+languages.each do |l|
+  desc "Generate tests for Babelsberg/#{l.to_s.capitalize}"
+  task l, [:example] do |t, args|
+    Dir.chdir File.expand_path("../#{l}", __FILE__) do
+      exitcode = system("make babelsberg-#{l} > /dev/null")
+      fail unless exitcode
+
+      if args[:example]
+        puts "// Example #{args[:example]}"
+        run_example_quiet(l, "../objects/examples/#{args[:example]}.txt")
+      else
+        Dir["../objects/examples/*.txt"].sort_by {|a| a.split("/").last.to_i }.each do |example|
+          puts "// #{example}"
+          run_example_quiet(l, example)
+        end
+      end
+    end
+  end
 end
