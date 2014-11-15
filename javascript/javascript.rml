@@ -15,19 +15,19 @@ relation printprogram: babelsberg.Program => () =
 end
 
 relation printassert: babelsberg.Program => () =
-  rule	print "    assert(" &
+  rule	print "    this.assert(" &
 	printE(babelsberg.LVALUE(l)) & print " === " & printE(e) &
 	print ");\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
 
-  rule	print "    assert(fieldEquals(" &
+  rule	print "    this.assert(this.fieldEquals(" &
 	printE(babelsberg.LVALUE(l)) & print ", " & printE(babelsberg.IRECORD(fieldexps)) &
 	print "));\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.IRECORD(fieldexps))))
 
-  rule	print "    assert(" &
+  rule	print "    this.assert(" &
 	printE(babelsberg.LVALUE(l)) & print " == " & printE(e) &
 	print ");\n"
 	----------------------------------------
@@ -167,7 +167,8 @@ relation printE: babelsberg.Exp => () =
 	---------------------------------------
 	printE(babelsberg.IDENTITY(e1, e2))
 
-  rule	e = babelsberg.VALUE(babelsberg.K(babelsberg.NIL)) & print l &
+  rule	e = babelsberg.VALUE(babelsberg.K(babelsberg.NIL)) &
+	print "this." & print l &
 	print "(" & printEachArg(argexps) & print ")"
 	-------------------------------------------
 	printE(babelsberg.CALL(e,l,argexps))
@@ -181,7 +182,7 @@ relation printE: babelsberg.Exp => () =
 	---------------------------------------------------------
 	printE(babelsberg.UIDRECORD(fieldexps))
 
-  rule	print "{" & printFields(fieldexps) & print "}"
+  rule	print "Object({" & printFields(fieldexps) & print "})"
 	---------------------------------------------------------------
 	printE(babelsberg.IRECORD(fieldexps))
 end
