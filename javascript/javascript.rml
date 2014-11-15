@@ -39,7 +39,7 @@ relation printPreamble: () => () =
 	Assertions.exampleId() => s & print s &
 	print ": function() {\n" &
 	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
-	print "    var ctx = {unsat: true};\n" &
+	print "    var ctx = {unsat: false};\n" &
 	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n" &
 	print "    function fieldEquals(o1, o2) {
 	for (var key in o1) {
@@ -84,35 +84,37 @@ relation printS: (babelsberg.Statement, string) => () =
 	-----------------------
 	printS(babelsberg.WHILE(e, s), i)
 
-  rule	print i & printE(babelsberg.LVALUE(l)) & print " = " & printE(e) & print ";\n" &
+  rule	print i & print "try {\n" &
+	print i & print "    " & printE(babelsberg.LVALUE(l)) & print " = " & printE(e) & print ";\n" &
+	print i & print "} catch (e) { ctx.unsat = true }\n" &
 	Assertions.assert(2)
 	---------------------------------------------------------
 	printS(babelsberg.ASSIGN(l,e), i)
 
-  rule  print i & print "once: {\n" &
+  rule  print i & print "try { once: {\n" &
 	print i & print "    " & printE(babelsberg.IDENTITY(e0, e1)) & print "\n" &
-	print i & print "}\n"
+	print i & print "} } catch (e) { ctx.unsat = true }\n"
 	------------------------------------------------------------
 	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))), i)
 
-  rule  print i & print "always: {\n" &
+  rule  print i & print "try { always: {\n" &
 	print i & print "    " & printE(babelsberg.IDENTITY(e0, e1)) & print "\n" &
-	print i & print "}\n"
+	print i & print "} } catch (e) { ctx.unsat = true }\n"
 	--------------------------------------------------------------
 	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(babelsberg.REQUIRED, babelsberg.IDENTITY(e0, e1))), i)
 
-  rule	print i & print "once: {\n" &
+  rule	print i & print "try { once: {\n" &
 	print i & print "    " & print "priority: '" & printRho(rho) & print "';\n" &
 	print i & print "    " & printE(e) & print "\n" &
-	print i & print "}\n" &
+	print i & print "} } catch (e) { ctx.unsat = true }\n" &
 	Assertions.assert(1)
 	-------------------------
 	printS(babelsberg.ONCE(babelsberg.CONSTRAINT(rho,e)), i)
 
-  rule	print i & print "always: {\n" &
+  rule	print i & print "try { always: {\n" &
 	print i & print "    " & print "priority: '" & printRho(rho) & print "';\n" &
 	print i & print "    " & printE(e) & print "\n" &
-	print i & print "}\n" &
+	print i & print "} } catch (e) { ctx.unsat = true }\n" &
 	Assertions.assert(1)
 	-------------------------
 	printS(babelsberg.ALWAYS(babelsberg.CONSTRAINT(rho,e)), i)
