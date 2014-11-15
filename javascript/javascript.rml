@@ -39,18 +39,7 @@ relation printPreamble: () => () =
 	Assertions.exampleId() => s & print s &
 	print ": function() {\n" &
 	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
-	print "    var ctx = {unsat: false};\n" &
-	print "    function assert(v) { if (!v) { throw 'Assertion failed' } }\n" &
-	print "    function fieldEquals(o1, o2) {
-	for (var key in o1) {
-	    if (o1[key] !== o2[key]) return false;
-	}
-	for (var key in o2) {
-	    if (o1[key] !== o2[key]) return false;
-	}
-	return true;
-    }\n\n" &
-	print "    //------------ End Preamble -------------\n\n"
+	print "    var ctx = {unsat: false};\n\n"
 	--------------------------------------------------
 	printPreamble()
 end
