@@ -17,7 +17,7 @@ File.open(outfile, 'w') do |f|
     identities = {}
     objects = {}
     # remove trailing numbers
-    env.gsub!(/^([^ ])\d+ :=/, "\\1 :=")
+    env.gsub!(/([^ 0-9]+)\d+ :=/, "\\1 :=")
     env = env.lines.map do |line|
       if line =~ /^H\(#(\d+)\) := (.*)$/
         objects[$1] = $2
