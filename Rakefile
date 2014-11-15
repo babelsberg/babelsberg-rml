@@ -116,6 +116,7 @@ def run_example(s, example, errors)
   puts "Program #{example}:"
   puts File.read example
   output = run_example_quiet(s, example)
+  print output
   error = $Errortest[example, output]
   errors << "\t#{error}\n" if error
 end
@@ -129,7 +130,6 @@ def run_example_quiet(s, example)
       ready[0].each do |io|
         (ios.delete(io); next) if io.eof?
         result = io.read_nonblock(1024)
-        print result
         output << result
       end
     end
@@ -149,14 +149,15 @@ languages.each do |l|
       fail unless exitcode
 
       if args[:example]
-        puts "// Example #{args[:example]}"
-        run_example_quiet(l, "../objects/examples/#{args[:example]}.txt")
+        output = run_example_quiet(l, "../objects/examples/#{args[:example]}.txt")
       else
-        Dir["../objects/examples/*.txt"].sort_by {|a| a.split("/").last.to_i }.each do |example|
-          puts "// #{example}"
+        output = Dir["../objects/examples/*.txt"].sort_by {|a| a.split("/").last.to_i }.map do |example|
           run_example_quiet(l, example)
-        end
+        end.join("\n")
       end
+
+      scaffold = File.read(Dir["scaffold.*"][0])
+      puts scaffold.sub("INSERTHERE", output)
     end
   end
 end
