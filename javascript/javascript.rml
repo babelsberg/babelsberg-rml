@@ -38,7 +38,7 @@ relation printPreamble: () => () =
   rule	print "test" &
 	Assertions.exampleId() => s & print s &
 	print ": function() {\n" &
-	print "    bbb.defaultSolver = new CommandLineZ3();\n" &
+	print "    bbb.defaultSolvers = [new CommandLineZ3(), new DBPlanner()];\n" &
 	print "    var ctx = {unsat: false};\n\n"
 	--------------------------------------------------
 	printPreamble()
