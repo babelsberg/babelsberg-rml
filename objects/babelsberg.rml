@@ -595,7 +595,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	alert(["I-Call(", l],[],[")"]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
 	step(E'',Sm,H,C,I,s) => (E''',S',H',C',I') &
-        H' = H & C' = C & I' = I & (* this is just written differently from the paper *)
+        H' = H & C' = C & I' = I & (* this is just explicit unification *)
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(K(TRUE)),VALUE(vr))
