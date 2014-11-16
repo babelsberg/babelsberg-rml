@@ -167,14 +167,8 @@ relation printE: babelsberg.Exp => () =
 	---------------------------------------
 	printE(babelsberg.IDENTITY(e1, e2))
 
-  rule	e = babelsberg.VALUE(babelsberg.K(babelsberg.NIL)) &
-	print "this." & print l &
-	print "(" & printEachArg(argexps) & print ")"
-	-------------------------------------------
-	printE(babelsberg.CALL(e,l,argexps))
-
-  rule	printE(e) & print "." & print l &
-	print "(" & printEachArg(argexps) & print ")"
+  rule	print "this." & print l &
+	print "(" & printEachArg(e :: argexps) & print ")"
 	-------------------------------------------
 	printE(babelsberg.CALL(e,l,argexps))
 
