@@ -149,9 +149,9 @@ languages.each do |l|
       fail unless exitcode
 
       if args[:example]
-        output = run_example_quiet(l, "../objects/examples/#{args[:example]}.txt")
+        output = run_example_quiet(l, "../spec/examples/#{args[:example]}.txt")
       else
-        output = Dir["../objects/examples/*.txt"].sort_by {|a| a.split("/").last.to_i }.map do |example|
+        output = Dir["../spec/examples/*.txt"].sort_by {|a| a.split("/").last.to_i }.map do |example|
           run_example_quiet(l, example)
         end.join("\n")
       end
