@@ -168,6 +168,13 @@ relation printE: babelsberg.Exp => () =
 	---------------------------------------
 	printE(babelsberg.IDENTITY(e1, e2))
 
+  rule	l = "Testpointxequals5" & (* special treatment, value class *)
+	Assertions.exampleId => id & id = "47" &
+	print "this.Testipointxequals5" &
+	print "(" & printEachArg(e :: argexps) & print ")"
+	-------------------------------------------
+	printE(babelsberg.CALL(e,l,argexps))
+
   rule	print "this." & print l &
 	print "(" & printEachArg(e :: argexps) & print ")"
 	-------------------------------------------
