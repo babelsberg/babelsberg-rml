@@ -130,7 +130,7 @@ def run_example_quiet(s, example)
       ready[0].each do |io|
         (ios.delete(io); next) if io.eof?
         result = io.read_nonblock(1024)
-        print result if caller.detect { |c| c =~ /run_example/ }
+        print result if caller.detect { |c| c =~ /`run_example'/ }
         output << result
       end
     end
@@ -157,7 +157,7 @@ languages.each do |l|
         end.join("\n")
       end
 
-      scaffold = File.read(Dir["scaffold.*"][0])
+      scaffold = File.read(Dir["#{lpath}/scaffold.*"][0])
       puts scaffold.sub("INSERTHERE", output)
     end
   end
