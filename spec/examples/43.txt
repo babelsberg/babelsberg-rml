@@ -1,0 +1,4 @@
+x := WindowNew();
+y := x;
+def := MakeIdentical(x, y);
+x := CircleNew()

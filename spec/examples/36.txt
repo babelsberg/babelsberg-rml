@@ -1,0 +1,4 @@
+x := 0;
+y := Test(x);
+always medium x = 10;
+always y = Test(x)

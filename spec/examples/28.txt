@@ -1,0 +1,3 @@
+p := new {x:2};
+q := new {y:5};
+always q==p

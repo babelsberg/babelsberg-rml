@@ -1,0 +1,5 @@
+x := 0;
+y := 0;
+def := Testalwaysaequalsbplus3(x,y);
+x := 10;
+y := 10

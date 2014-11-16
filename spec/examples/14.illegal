@@ -1,0 +1,2 @@
+The program fails the structural compatibility check — only an
+assignment can change the type of a variable.
