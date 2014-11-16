@@ -130,6 +130,7 @@ def run_example_quiet(s, example)
       ready[0].each do |io|
         (ios.delete(io); next) if io.eof?
         result = io.read_nonblock(1024)
+        print result if caller.detect { |c| c =~ /run_example/ }
         output << result
       end
     end
