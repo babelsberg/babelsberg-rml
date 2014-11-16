@@ -40,6 +40,7 @@ relation printPreamble: () => () =
 	print ": function() {\n" &
 	print "    delete bbb.defaultSolver;\n" &
 	print "    bbb.defaultSolvers = [new CommandLineZ3(), new DBPlanner()];\n" &
+	print "    bbb.defaultSolvers[1].$$identity = true;\n" &
 	print "    var ctx = {unsat: false};\n\n"
 	--------------------------------------------------
 	printPreamble()
