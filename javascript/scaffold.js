@@ -75,7 +75,33 @@ TestCase.subclass('users.timfelgentreff.babelsberg.testsuite.SemanticsTests', {
     CircleNew: function(self) {
         return new Object({circle: true});
     },
-    // TODO: others
+    MakeIdentical: function(self, a, b) {
+        var ctx = {a: a, b: b};
+        always: { ctx.a === ctx.b }
+    },
+    Testalwaysxequal5: function(self, x) {
+        var ctx = {x: x};
+        always: { ctx.x == 5 }
+        return ctx.x;
+    },
+    Testalwaysaequalsbplus3: function(self, a, b) {
+        var ctx = {a: a, b: b};
+        always: { ctx.a == ctx.b + 3 }
+        return ctx.a
+    },
+    Testipointxequals5: function(self, p) {
+        var myp = {x: p.x, y: p.y};
+        always: { myp.x == 5 }
+        return myp;
+    },
+    Testpointxequals5: function(self, p) {
+        always: { p.x == 5 }
+        return p;
+    },
+    TestXGetsXPlus3ReturnX: function(self, x) {
+        x = x + 3;
+        return x;
+    },
 
 
 INSERTHERE
