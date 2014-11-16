@@ -130,7 +130,7 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 						     DIV,
 						     LVALUE(VARIABLE("scale")))])))
 
-  (* {x: self.x + pt.x, y: self.y + pt.y} *)
+  (* self.x == other.x && self.y == other.y *)
   axiom lookup(_, "ptEq") => (["other"],
 				SIMPLE(COMBINE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
 						       EQUAL,
