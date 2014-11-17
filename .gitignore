@@ -39,4 +39,10 @@ printer.c
 printer.h
 babelsberg.c
 babelsberg.h
+javascript.c
+javascript.h
+input
+constraints.smt
+constraints.model
 Gemfile.lock
+babelsberg-*
