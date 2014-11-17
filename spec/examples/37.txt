@@ -1,6 +1,0 @@
-a := ArrayNew2();
-a.i0 := 10;
-a.i1 := 20;
-s := 30;
-always s = a.sum();
-a.i0 := 100
