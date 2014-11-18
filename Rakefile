@@ -138,7 +138,7 @@ def run_example_quiet(s, example)
   output
 end
 
-languages = [:javascript]
+languages = [:javascript, :ruby]
 
 languages.each do |l|
   desc "Generate tests for Babelsberg/#{l.to_s.capitalize}"

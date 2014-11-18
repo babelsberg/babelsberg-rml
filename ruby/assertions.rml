@@ -1,0 +1,4 @@
+module Assertions:
+  relation assert: int => ()
+  relation exampleId: () => string
+end
