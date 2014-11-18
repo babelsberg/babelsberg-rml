@@ -15,20 +15,22 @@ relation printprogram: babelsberg.Program => () =
 end
 
 relation printassert: babelsberg.Program => () =
-  rule	print "  self assert: " &
+  rule	print "  self" &
+        print "\n    assert: " &
 	printE(babelsberg.LVALUE(l)) & print " == " & printE(e) &
-	print " value: " &
+	print "\n    value: " &
 	print " '" & printE(babelsberg.LVALUE(l)) & print "'" &
-	print " identicalTo: '" & printE(e) & print "'" &
+	print "\n    identicalTo: '" & printE(e) & print "'" &
 	print ".\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
 
-  rule	print "  self assert:" &
+  rule	print "  self" &
+	print "\n    assert:" &
 	printE(babelsberg.LVALUE(l)) & print " = " & printE(e) &
-	print " variable: '" & printE(babelsberg.LVALUE(l)) & print "'" &
-	print " equals: "  & printE(e) &
-	print " butIs: "  & printE(babelsberg.LVALUE(l)) &
+	print "\n    variable: '" & printE(babelsberg.LVALUE(l)) & print "'" &
+	print "\n    equals: "  & printE(e) &
+	print "\n    butIs: "  & printE(babelsberg.LVALUE(l)) &
 	print ".\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,e)))
