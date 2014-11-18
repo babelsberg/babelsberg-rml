@@ -41,6 +41,10 @@ babelsberg.c
 babelsberg.h
 javascript.c
 javascript.h
+ruby.c
+ruby.h
+squeak.c
+squeak.h
 input
 constraints.smt
 constraints.model
