@@ -93,6 +93,12 @@ semantics.each do |s|
         Rake::Task["#{s}:citest"].invoke(args[:example])
       end
 
+      desc "Review the example and Z3's solution, but use the fallback env"
+      task :z3fb, [:example] => :build do |t, args|
+        ENV["BBBZ3FB"] = "true"
+        Rake::Task["#{s}:z3"].invoke(args[:example])
+      end
+
       desc "Run an example completely with Z3"
       task :z3run, [:example] => :build do |t, args|
         ENV["BBBZ3Auto"] = "true"

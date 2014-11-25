@@ -480,11 +480,9 @@ relation stayH: Heap => Constraint =
   axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule alert(["StayHeap\n"],[],[]) &
-       stayFields(r, o) => (Cf, o') &
        stayH(H0) => C0
        --------------------------------
-       stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
-				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
+       stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o)))))
 end
 
 relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
@@ -518,11 +516,9 @@ relation identityStayH: Heap => Constraint =
   axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
 
   rule alert(["IdentityStayHeap\n"],[],[]) &
-       identityStayFields(r, o) => (Cf, o') &
        identityStayH(H0) => C0
        --------------------------------
-       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0,
-				 COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o')))), Cf))
+       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o)))))
 end
 
 relation identityStayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =

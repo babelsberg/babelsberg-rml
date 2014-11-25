@@ -40,7 +40,11 @@ File.open(outfile, 'w') do |f|
         hash = Z3ModelParser.parse(output[midx..-1])
         model = Z3ModelParser.hash_to_rml_env(hash)
         puts model
-        f << model + "\n"
+        if ENV["BBBZ3FB"]
+          f << environments[idx]
+        else
+          f << model + "\n"
+        end
       else
         puts output
       end
