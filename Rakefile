@@ -104,6 +104,18 @@ semantics.each do |s|
         ENV["BBBZ3AutoCompare"] = "true"
         Rake::Task["#{s}:z3run"].invoke(args[:example])
       end
+
+      desc "Swap order of definitions for Reals and Records to work around Z3 bug when running #{s}:z3ci"
+      task :z3swap do |t, args|
+        c = File.read("#{s}/babelsberg.rml")
+        File.open("#{s}/babelsberg.rml", "w") do |f|
+          if c =~ /\(\(Value \(Record \(rec \(Array Label Real\)\)\)/
+            f << c.gsub(/\(\(Value (\(Record \(rec \(Array Label Real\)\)\))\n(\s+)(\(Real \(real Real\)\))/m, "((Value \\3\n\\2\\1")
+          else
+            f << c.gsub(/\(\(Value (\(Real \(real Real\)\))\n(\s+)(\(Record \(rec \(Array Label Real\)\)\))/m, "((Value \\3\n\\2\\1")
+          end
+        end
+      end
     end
   end
 end
