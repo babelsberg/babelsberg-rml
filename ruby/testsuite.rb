@@ -1015,33 +1015,6 @@ def test31
   assert(unsat == true, 'unsat', true, unsat)
 end
 
-def test32c
-  Z3.const_set(:Instance, Z3.new)
-  $last_exception = nil
-  unsat = false
-
-  begin
-    r = Helper.new.hRecord(upper_left: nil.Point(2.0, 2.0), lower_right: nil.Point(10.0, 10.0))
-  rescue Exception => e
-    unsat = true; $last_exception = e
-  end
-  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 10.0, y: 10.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 10.0, y: 10.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), r)
-  begin
-    always(priority: :required) do
-      r.center().ptEq(nil.Point(2.0, 2.0))
-    end
-  rescue Exception => e
-    unsat = true; $last_exception = e
-  end
-  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 2.0, y: 2.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 2.0, y: 2.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), r)
-  begin
-    ((r).upper_left).x = 100.0
-  rescue Exception => e
-    unsat = true; $last_exception = e
-  end
-  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: -96.0, y: 4.0), upper_left: Helper.new.iRecord(x: 100.0, y: 0.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: -96.0, y: 4.0), upper_left: Helper.new.iRecord(x: 100.0, y: 0.0)), r)
-end
-
 def test32
   Z3.const_set(:Instance, Z3.new)
   $last_exception = nil
@@ -1067,6 +1040,33 @@ def test32
     unsat = true; $last_exception = e
   end
   assert(unsat == true, 'unsat', true, unsat)
+end
+
+def test32c
+  Z3.const_set(:Instance, Z3.new)
+  $last_exception = nil
+  unsat = false
+
+  begin
+    r = Helper.new.hRecord(upper_left: nil.Point(2.0, 2.0), lower_right: nil.Point(10.0, 10.0))
+  rescue Exception => e
+    unsat = true; $last_exception = e
+  end
+  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 10.0, y: 10.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 10.0, y: 10.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), r)
+  begin
+    always(priority: :required) do
+      r.center().ptEq(nil.Point(2.0, 2.0))
+    end
+  rescue Exception => e
+    unsat = true; $last_exception = e
+  end
+  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 2.0, y: 2.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: 2.0, y: 2.0), upper_left: Helper.new.iRecord(x: 2.0, y: 2.0)), r)
+  begin
+    ((r).upper_left).x = 100.0
+  rescue Exception => e
+    unsat = true; $last_exception = e
+  end
+  assert(r == Helper.new.iRecord(lower_right: Helper.new.iRecord(x: -96.0, y: 4.0), upper_left: Helper.new.iRecord(x: 100.0, y: 0.0)), 'r', Helper.new.iRecord(lower_right: Helper.new.iRecord(x: -96.0, y: 4.0), upper_left: Helper.new.iRecord(x: 100.0, y: 0.0)), r)
 end
 
 def test32b
@@ -1195,7 +1195,7 @@ def test35
   assert(m == 10.0, 'm', 10.0, m)
   begin
     always(priority: :required) do
-      nil.Has_min_balance(a, m.?)
+      nil.Has_min_balance(a, m.? )
     end
   rescue Exception => e
     unsat = true; $last_exception = e
@@ -1498,10 +1498,8 @@ end
 
 
 errors = []
-methods.
-  select { |m| m.to_s.start_with? "test" }.
-  sort_by { |e| e.to_s.sub("test", "").to_i }.
-  each do |m|
+tests = methods.select { |m| m.to_s.start_with? "test" }
+tests.sort_by { |e| e.to_s.sub("test", "").to_i }.each do |m|
   begin
     send(m)
   rescue Exception => e
@@ -1509,4 +1507,5 @@ methods.
   end
 end
 
-print "#{errors.size} Errors:\n#{errors.join("\n  ")}\n"
+print "#{errors.join("\n  ")}\n"
+print "Run: #{tests.size}.\nPassed: #{tests.size-errors.size}\nErrors: #{errors.size}\n"

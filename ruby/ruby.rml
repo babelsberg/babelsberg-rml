@@ -159,7 +159,7 @@ relation printE: babelsberg.Exp => () =
 	string_list(x) => chars &
 	list_delete(chars, li) => chars' &
 	list_string(chars') => xs &
-	print xs & print ".?"
+	print xs & print ".? "
 	-------------------------------------
 	printE(babelsberg.LVALUE(babelsberg.VARIABLE(x)))
 

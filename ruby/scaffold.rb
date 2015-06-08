@@ -126,10 +126,8 @@ INSERTHERE
 
 
 errors = []
-methods.
-  select { |m| m.to_s.start_with? "test" }.
-  sort_by { |e| e.to_s.sub("test", "").to_i }.
-  each do |m|
+tests = methods.select { |m| m.to_s.start_with? "test" }
+tests.sort_by { |e| e.to_s.sub("test", "").to_i }.each do |m|
   begin
     send(m)
   rescue Exception => e
@@ -137,4 +135,5 @@ methods.
   end
 end
 
-print "#{errors.size} Errors:\n#{errors.join("\n  ")}\n"
+print "#{errors.join("\n  ")}\n"
+print "Run: #{tests.size}.\nPassed: #{tests.size-errors.size}\nErrors: #{errors.size}\n"
