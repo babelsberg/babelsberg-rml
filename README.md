@@ -14,3 +14,8 @@ This project uses Ruby's `rake` build tool to build and run the
 examples, but you can also just go into the subdirectories for the
 various implementations directly to build and run them from there
 using ordinary Makefiles.
+
+
+This work is licensed under [3-clause BSD](https://github.com/babelsberg/babelsberg-js/blob/master/LICENSE)
+
+Created under a grant from Hasso Plattner Institute <img src="http://upload.wikimedia.org/wikipedia/de/c/c9/Hpi_logo.png" alt="HPI Logo" width="50" height="50"/>
