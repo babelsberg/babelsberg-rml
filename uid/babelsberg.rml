@@ -240,13 +240,7 @@ end
 relation translate: (Env, Heap, Constraint) => Constraint =	
   axiom	translate(e, h, CONSTRAINT(rho, VALUE(v))) => CONSTRAINT(rho, VALUE(v))
 
-  rule	eval(e, h, LVALUE(VARIABLE(x))) => R(r) &
-	-----------------------------------------------------------------------------------
-	translate(e, h, CONSTRAINT(rho, LVALUE(VARIABLE(x)))) => CONSTRAINT(rho, LVALUE(ASSIGNDEREF(LVALUE(VARIABLE(x)))))
-
-  rule	eval(e, h, LVALUE(VARIABLE(x))) => C(c)
-	-----------------------------------------------------------------------------------
-	translate(e, h, CONSTRAINT(rho, LVALUE(VARIABLE(x)))) => CONSTRAINT(rho, LVALUE(VARIABLE(x)))
+  axiom translate(e, h, CONSTRAINT(rho, LVALUE(VARIABLE(x)))) => CONSTRAINT(rho, LVALUE(VARIABLE(x)))
 
   rule	eval(e, h, LVALUE(VARIABLE(x))) => R(r)
 	-----------------------------------------------------------------------------------
@@ -273,8 +267,6 @@ relation translate: (Env, Heap, Constraint) => Constraint =
 	translate(e, h, C1) => C1'
 	-------------------------
 	translate(e, h, COMPOUNDCONSTRAINT(C0, C1)) => COMPOUNDCONSTRAINT(C0', C1')
-
-  (* axiom translate(e, h, Constraint) => Constraint *)
 end	
 
 relation solve: (Env, Heap, Constraint, Rho) => (Env, Heap) =
