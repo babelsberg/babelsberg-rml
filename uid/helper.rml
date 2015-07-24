@@ -1,6 +1,11 @@
 module Util:
   with "babelsberg.rml"
 
+  relation assign: (babelsberg.Env, babelsberg.Heap, babelsberg.Accessor, babelsberg.Value) => (babelsberg.Env, babelsberg.Heap)
+  relation assignEnv: (babelsberg.Env, babelsberg.Variable, babelsberg.Value) => babelsberg.Env
+  relation assignHeap: (babelsberg.Heap, babelsberg.Reference, babelsberg.Label, babelsberg.Value) => babelsberg.Heap
+  relation assignRecord: (babelsberg.Fieldexpression list, babelsberg.Label, babelsberg.Value) => babelsberg.Fieldexpression list
+
   relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value
   relation lookupHeap: (babelsberg.Heap, babelsberg.Reference) => babelsberg.Value
   relation lookupRecord: (babelsberg.Fieldexpression list, babelsberg.Label) => babelsberg.Value
@@ -9,6 +14,59 @@ module Util:
   relation apply_bincomp: (babelsberg.Comp,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation apply_bincomb: (babelsberg.Comb,babelsberg.Value,babelsberg.Value) => babelsberg.Value
   relation shortcircuit_bincomb: (babelsberg.Comb,babelsberg.Value) => (bool, babelsberg.Value)
+end
+
+relation assign: (babelsberg.Env, babelsberg.Heap, babelsberg.Accessor, babelsberg.Value) => (babelsberg.Env, babelsberg.Heap) =
+  rule	assignEnv(E, x, v) => E'
+	--------------------------
+	assign(E, H, babelsberg.VARIABLE(x), v) => (E', H)
+
+  rule  babelsberg.eval(E, H, babelsberg.ACCESSOR(a)) => babelsberg.REF(r) &
+	assignHeap(H, r, l, v) => H'	
+	---------------------------
+	assign(E, H, babelsberg.FIELD(a, l), v) => (E, H')
+end
+
+relation assignEnv: (babelsberg.Env, babelsberg.Variable, babelsberg.Value) => babelsberg.Env =
+  rule  id = id2
+	------------------------------
+	assignEnv((id2,value) :: rest, id, v) => ((id,v) :: rest)
+
+  rule  not id=id2 &
+	list_length(rest) => rl & rl = 0
+	------------------------------------------------
+	assignEnv((id2,value) :: rest, id, v)  => ((id2,value) :: rest)
+
+  axiom assignEnv([], id, v)  => []
+
+  rule  not id=id2 &
+	assignEnv(rest, id, v) => E
+	------------------------------------------------
+	assignEnv((id2,value) :: rest, id, v)  => ((id2,value) :: E)
+end
+
+relation assignHeap: (babelsberg.Heap, babelsberg.Reference, babelsberg.Label, babelsberg.Value) => babelsberg.Heap =
+  rule  id = id2 &
+	assignRecord(flist, l, v) => flist'
+	-----------------------------------
+	assignHeap((id2,babelsberg.IRECORD(flist)) :: rest, id, l, v) => ((id,babelsberg.IRECORD(flist')) :: rest)
+
+  rule  not id=id2 &
+	assignHeap(rest, id, l, v) => H
+	------------------------------------------------
+	assignHeap((id2,value) :: rest, id, l, v)  => ((id2,value) :: H)
+end
+
+relation assignRecord: (babelsberg.Fieldexpression list, babelsberg.Label, babelsberg.Value) => babelsberg.Fieldexpression list =
+  rule  id = id2
+	------------------------------
+	assignRecord(babelsberg.LABELEXPRESSION(id2, babelsberg.VALUE(value)) :: rest, id, v) => (babelsberg.LABELEXPRESSION(id, babelsberg.VALUE(v)) :: rest)
+
+  rule  not id=id2 &
+	list_append(rest, [babelsberg.LABELEXPRESSION(id2, e)]) => rest' &
+  	assignRecord(rest', id, v) => flist
+  	------------------------------------------------------------------------
+  	assignRecord(babelsberg.LABELEXPRESSION(id2, e) :: rest, id, v)  => flist
 end
 
 relation lookupEnv: (babelsberg.Env, babelsberg.Variable) => babelsberg.Value  =
