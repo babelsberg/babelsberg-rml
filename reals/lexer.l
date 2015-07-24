@@ -52,6 +52,7 @@ string       {quote}({letter}|{digit}|{whitespace})+{quote}
 "always"     return T_ALWAYS;
 "once"       return T_ONCE;
 "weak"       return T_WEAK;
+"medium"     return T_MEDIUM;
 "required"   return T_REQUIRED;
 "if"         return T_IF;
 "then"       return T_THEN;

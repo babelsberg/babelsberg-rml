@@ -110,4 +110,3 @@ relation should_short_circuit: (babelsberg.Op, babelsberg.Value) => (bool, babel
   axiom should_short_circuit(babelsberg.OR,babelsberg.FALSE) => (false, babelsberg.FALSE)
   axiom should_short_circuit(_,_) => (false, babelsberg.FALSE)
 end
-

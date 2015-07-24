@@ -16,7 +16,7 @@ module babelsberg:
   datatype Constraint = CONSTRAINT of Rho * Exp
 		      | COMPOUNDCONSTRAINT of Constraint * Constraint
 
-  datatype Rho = WEAK | REQUIRED
+  datatype Rho = WEAK | MEDIUM | REQUIRED
 
   datatype Exp = VALUE of Value
 	       | VARIABLE of Variable

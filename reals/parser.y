@@ -33,6 +33,7 @@ extern void* absyntree;
 %token T_ALWAYS
 %token T_ONCE
 %token T_WEAK
+%token T_MEDIUM
 %token T_REQUIRED
 %token T_IF
 %token T_THEN
@@ -83,6 +84,8 @@ constraint      : rho expression
 
 rho             : T_WEAK
                         { $$ = babelsberg__WEAK; }
+                | T_MEDIUM
+                        { $$ = babelsberg__MEDIUM; }
                 | T_REQUIRED
                         { $$ = babelsberg__REQUIRED; }
 
