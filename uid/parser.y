@@ -76,7 +76,7 @@ statement       : statement T_SEMIC statement
                         { $$ = babelsberg__SEQ($1, $3); }
                 | T_SKIP
                         { $$ = babelsberg__SKIP; }
-                | accessor T_ASSIGN T_NEW record
+                | accessor T_ASSIGN T_NEW objectliteral
                         { $$ = babelsberg__NEWASSIGN($1, $4); }
                 | accessor T_ASSIGN expression
                         { $$ = babelsberg__ASSIGN($1, $3); }
@@ -108,17 +108,17 @@ expression      : expression woperation expression %prec T_MUL
                 | expression soperation expression %prec T_ADD
                         { $$ = babelsberg__OP($1, $2, $3); }
                 | expression comparison expression %prec T_EQUAL
-                        { $$ = babelsberg__COMPARE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | accessor T_IDENTICAL accessor %prec T_EQUAL
-		        { $$ = babelsberg__IDENTITY(babelsberg__ID($1, $3)); }
+		        { $$ = babelsberg__IDENTITY($1, $3); }
                 | expression combination expression %prec T_AND
-                        { $$ = babelsberg__COMBINE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | expression disjunction expression %prec T_OR
-                        { $$ = babelsberg__COMBINE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | value
                         { $$ = babelsberg__VALUE($1); }
                 | accessor
-                        { $$ = babelsberg__ACCESSOR($1); }
+                        { $$ = babelsberg__LVALUE($1); }
                 | dereference
 		        { $$ = babelsberg__DEREF($1); }
 
@@ -129,27 +129,27 @@ accessor        : variable
                 | dereference
                         { $$ = babelsberg__ASSIGNDEREF($1); }
 
-record          : T_LBRACE fieldexpressions T_RBRACE
-                        { $$ = babelsberg__RECORD($2); }
+objectliteral   : T_LBRACE fieldexpressions T_RBRACE
+                        { $$ = babelsberg__O($2); }
 
-dereference     : T_H_DEREF T_LPAREN reference T_RPAREN
+dereference     : T_H_DEREF T_LPAREN expression T_RPAREN
                         { $$ = $3; }
 
 reference       : T_REF
                         { $$ = $1; }
 
 constant        : T_REALCONST
-                        { $$ = babelsberg__REAL($1);}
+                        { $$ = babelsberg__C(babelsberg__REAL($1));}
                 | T_TRUE
-                        { $$ = babelsberg__TRUE; }
+                        { $$ = babelsberg__C(babelsberg__TRUE); }
                 | T_FALSE
-                        { $$ = babelsberg__FALSE; }
+                        { $$ = babelsberg__C(babelsberg__FALSE); }
                 | T_NIL
-                        { $$ = babelsberg__NIL; }
+                        { $$ = babelsberg__C(babelsberg__NIL); }
                 | T_STRING
-                        { $$ = babelsberg__STRING($1);}
+		        { $$ = babelsberg__C(babelsberg__STRING($1));}
                 | reference
-		        { $$ = babelsberg__REF($1); }
+		        { $$ = babelsberg__R($1); }
 
 variable        : T_IDENT
                         { $$ = $1; }
@@ -169,7 +169,7 @@ fieldexpressions : /* empty */
                         { $$ = mk_cons($1, $3); }
 
 fieldexpression : label T_COLON expression
-                        { $$ = babelsberg__LABELEXPRESSION($1, $3); }
+                        { $$ = mk_box2(0, $1, $3); }
 
 soperation      : T_ADD
                         { $$ = babelsberg__ADD;}
