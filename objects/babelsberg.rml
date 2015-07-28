@@ -155,7 +155,7 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
    * 			     METHOD(SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0)))),
    * 					SEQ(ASSIGN(VARIABLE("i"), VALUE(K(REAL(0.0)))),
    * 					    WHILE(COMPARE(LVALUE(VARIABLE("i")),LESSTHAN,LVALUE(FIELD(LVALUE(VARIABLE("self")), "length"))),
-   * 						  SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0))))
+   * 						  SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0))))))))))
    *)
 
   axiom lookup(_, "MutablePointNew") => (["x", "y"],
