@@ -1,6 +1,6 @@
 p := new {x:2, y:5};
 q := p;
 p.x := 100;
-fresh1 := new {z:10};
-q := fresh1;
+tmp := new {z:10};
+q := tmp;
 p.x := 200

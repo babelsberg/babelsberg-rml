@@ -1,3 +1,4 @@
 p := new {x:0, y:0};
 always p.x = 100;
-p := new {x:2, y:5}
+tmp := new {x:2, y:5};
+p := tmp

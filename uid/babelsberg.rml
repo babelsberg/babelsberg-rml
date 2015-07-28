@@ -234,7 +234,7 @@ relation stayPrefixIdent: (Env, Heap, Istore) => Constraint =
 	stayPrefix(Env, Heap, L2) => C2 &
 	stayPrefixIdent(Env, Heap, Ci) => C3
 	------------------------------------
-	stayPrefixIdent(Env, Heap, COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, IDENTITY(L1, L2)), Ci)) => COMPOUNDCONSTRAINT(C1, COMPOUNDCONSTRAINT(C2, C3))
+	stayPrefixIdent(Env, Heap, COMPOUNDCONSTRAINT(Ci, CONSTRAINT(REQUIRED, IDENTITY(L1, L2)))) => COMPOUNDCONSTRAINT(C1, COMPOUNDCONSTRAINT(C2, C3))
 end
 
 relation translate: (Env, Heap, Constraint) => Constraint =	
