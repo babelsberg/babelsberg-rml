@@ -100,6 +100,12 @@ relation printZ3E: babelsberg.Exp => string =
        -----------------------------
        printZ3E(babelsberg.VALUE(babelsberg.O(ary))) => s'
 
+  rule printZ3iRContents(ary) => s &
+       string_append("{", s) => s' &
+       string_append(s', "}") => s''
+       -----------------------------
+       printZ3E(babelsberg.IRECORD(ary)) => s''
+
   rule printZ3E(babelsberg.DEREF(e)) => es &
        string_append_list(["(select ", es, " ", l, ")"]) => es'
        --------------------------------------------------------
