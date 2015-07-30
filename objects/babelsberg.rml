@@ -1,7 +1,7 @@
 (* file assignment.rml *)
 
 module babelsberg:
-(* Abstract syntax for the BabelsbergP language *)
+  (* Abstract syntax for the BabelsbergP language *)
 
   datatype Program = PROGRAM of Statement
 
@@ -21,8 +21,6 @@ module babelsberg:
   datatype Exp = VALUE of Value
 	       | LVALUE of LValue
 	       | OP of Exp * Op * Exp
-	       | COMPARE of Exp * Comp * Exp
-	       | COMBINE of Exp * Comb * Exp
 	       | IDENTITY of Exp * Exp
 	       | CALL of Exp * Label * Exp list
 	       | IRECORD of ObjectLiteral
@@ -31,7 +29,8 @@ module babelsberg:
 
   type ObjectLiteral = (Label * Exp) list
 
-  datatype LValue = VARIABLE of Variable | FIELD of Exp * Label
+  datatype LValue = VARIABLE of Variable
+		  | FIELD of Exp * Label
 		  | ASSIGNDEREF of Dereference (* just for the parsing *)
 
   datatype Constant = TRUE | FALSE | NIL | REAL of real | STRING of string
@@ -44,63 +43,64 @@ module babelsberg:
 
   type Dereference = Exp
 
-  datatype MethodBody = METHOD of Statement * Exp | SIMPLE of Exp
+  datatype MethodBody = METHOD of Statement * Exp
+		      | SIMPLE of Exp
 
-  datatype Value = K of Constant | O of ObjectLiteral | R of Reference
+  datatype Value = K of Constant
+		 | R of Reference
+		 | O of ObjectLiteral
 
 (* Helper types *)
-  datatype Op =  ADD | SUB | MUL | DIV
-  datatype Comp = LESSTHAN | LEQUAL | EQUAL | NEQUAL | GEQUAL | GREATERTHAN
-  datatype Comb = AND | OR
+  datatype Op =  ADD | SUB | MUL | DIV | LESSTHAN | LEQUAL | EQUAL | NEQUAL | GEQUAL | GREATERTHAN | AND | OR
 
 (* Type syntax *)
   datatype Type = PRIMITIVE | TRECORD of (Label * Type) list
 
 (* Bindings and environments *)
-  type Env         = (Variable * Value) list
-  type Scope       = (Variable * Variable) list
-  type Heap        = (Reference * ObjectLiteral) list
-  type Cstore      = (Scope * Constraint) list
-  type Istore      = (Scope * Constraint) list
+type Env         = (Variable * Value) list
+type Scope       = (Variable * Variable) list
+type Heap        = (Reference * ObjectLiteral) list
+type Cstore      = (Scope * Constraint) list
+type Istore      = (Scope * Constraint) list
 
-  relation evalprogram: Program => ()
-  relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value)
+relation evalprogram: Program => ()
+relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Istore, Value)
 
-  relation alert: (string list, Exp list, string list) => ()
+relation alert: (string list, Exp list, string list) => ()
 end
 
 relation evalprogram: Program => () =
-  rule print "starting to evaluate\n" &
-       step([], [], [], [], [], statement) => (E,S,H,C,I)
-       --------------------------------------------------
-       evalprogram(PROGRAM(statement))
+  rule  print "starting to evaluate\n" &
+	step([], [], [], [], [], statement) => (E,S,H,C,I)
+	--------------------------------------------------
+	evalprogram(PROGRAM(statement))
 end
 
 relation lookup: (Value, Label) => (Variable list, MethodBody) =
-  (* hard coded methods *)
+	(* hard coded methods *)
   axiom lookup(_, "one") => ([], (* return 1.0 *)
-			  SIMPLE(VALUE(K(REAL(1.0)))))
+			     SIMPLE(VALUE(K(REAL(1.0)))))
 
   axiom lookup(_, "double") => ([], (* return 2*self *)
-			  SIMPLE(OP(VALUE(K(REAL(2.0))),MUL,LVALUE(VARIABLE("self")))))
+				SIMPLE(OP(VALUE(K(REAL(2.0))),MUL,LVALUE(VARIABLE("self")))))
 
   axiom lookup(_, "Require_min_balance") => (["acct","min"], (* always acct.balance > min *)
-			  METHOD(ALWAYS(CONSTRAINT(REQUIRED, COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
-								     GREATERTHAN,
-								     LVALUE(VARIABLE("min?"))))),
-				 LVALUE(VARIABLE("self"))))
+					     METHOD(ALWAYS(CONSTRAINT(REQUIRED, OP(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
+											GREATERTHAN,
+											LVALUE(VARIABLE("min?"))))),
+						    LVALUE(VARIABLE("self"))))
 
   axiom lookup(_, "Has_min_balance") => (["acct","min"], (* return acct.balance > min *)
-			  SIMPLE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
-					 GREATERTHAN,
-					 LVALUE(VARIABLE("min")))))
+					 SIMPLE(OP(LVALUE(FIELD(LVALUE(VARIABLE("acct")),"balance")),
+							GREATERTHAN,
+							LVALUE(VARIABLE("min")))))
 
-  (* {x: arg1, y: arg2} *)
+	(* {x: arg1, y: arg2} *)
   axiom lookup(_, "Point") => (["x", "y"],
-				SIMPLE(IRECORD([("x", LVALUE(VARIABLE("x"))),
-						("y", LVALUE(VARIABLE("y")))])))
+			       SIMPLE(IRECORD([("x", LVALUE(VARIABLE("x"))),
+					       ("y", LVALUE(VARIABLE("y")))])))
 
-  (* (self.upper_left.addPt(self.lower_right).divPtScalar(2) *)
+	(* (self.upper_left.addPt(self.lower_right).divPtScalar(2)) *)
   axiom lookup(_, "center") => ([],
 				SIMPLE(CALL(CALL(LVALUE(FIELD(LVALUE(VARIABLE("self")), "upper_left")),
 						 "addPt",
@@ -108,18 +108,18 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 					    "divPtScalar",
 					    [VALUE(K(REAL(2.0)))])))
 
-  (* {x: self.x + pt.x, y: self.y + pt.y} *)
+	(* {x: self.x + pt.x, y: self.y + pt.y} *)
   axiom lookup(_, "addPt") => (["pt"],
-				SIMPLE(CALL(VALUE(K(NIL)),
-					    "Point",
-					    [OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
-						ADD,
-						LVALUE(FIELD(LVALUE(VARIABLE("pt")),"x"))),
-					     OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
-						ADD,
-						LVALUE(FIELD(LVALUE(VARIABLE("pt")),"y")))])))
+			       SIMPLE(CALL(VALUE(K(NIL)),
+					   "Point",
+					   [OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+					       ADD,
+					       LVALUE(FIELD(LVALUE(VARIABLE("pt")),"x"))),
+					    OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+					       ADD,
+					       LVALUE(FIELD(LVALUE(VARIABLE("pt")),"y")))])))
 
-  (* {x: self.x / scale, y: self.y / scale} *)
+	(* {x: self.x / scale, y: self.y / scale} *)
   axiom lookup(_, "divPtScalar") => (["scale"],
 				     SIMPLE(CALL(VALUE(K(NIL)),
 						 "Point",
@@ -130,33 +130,33 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 						     DIV,
 						     LVALUE(VARIABLE("scale")))])))
 
-  (* self.x == other.x && self.y == other.y *)
+	(* self.x == other.x && self.y == other.y *)
   axiom lookup(_, "ptEq") => (["other"],
-				SIMPLE(COMBINE(COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
-						       EQUAL,
-						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"x"))),
-					       AND,
-					       COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
-						       EQUAL,
-						       LVALUE(FIELD(LVALUE(VARIABLE("other")),"y"))))))
+			      SIMPLE(OP(OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"x")),
+						     EQUAL,
+						     LVALUE(FIELD(LVALUE(VARIABLE("other")),"x"))),
+					     AND,
+					     OP(LVALUE(FIELD(LVALUE(VARIABLE("self")),"y")),
+						     EQUAL,
+						     LVALUE(FIELD(LVALUE(VARIABLE("other")),"y"))))))
 
-  (* always medium i = 5; return i + 1 *)
+	(* always medium i = 5; return i + 1 *)
   axiom lookup(_, "Test") => (["i"],
-			      METHOD(ALWAYS(CONSTRAINT(MEDIUM, COMPARE(LVALUE(VARIABLE("i")),EQUAL,VALUE(K(REAL(5.0)))))),
+			      METHOD(ALWAYS(CONSTRAINT(MEDIUM, OP(LVALUE(VARIABLE("i")),EQUAL,VALUE(K(REAL(5.0)))))),
 				     OP(LVALUE(VARIABLE("i")),ADD,VALUE(K(REAL(1.0))))))
 
-  (* 
-   * axiom lookup(_, "ArrayNew2") => ([],
-   * 				   SIMPLE(IRECORD([("length", VALUE(K(REAL(2.0)))),
-   * 						   ("i0", VALUE(K(NIL))),
-   * 						   ("i1", VALUE(K(NIL)))])))
-   * 
-   * axiom lookup(_, "sum") => ([],
-   * 			     METHOD(SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0)))),
-   * 					SEQ(ASSIGN(VARIABLE("i"), VALUE(K(REAL(0.0)))),
-   * 					    WHILE(COMPARE(LVALUE(VARIABLE("i")),LESSTHAN,LVALUE(FIELD(LVALUE(VARIABLE("self")), "length"))),
-   * 						  SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0))))))))))
-   *)
+	(* 
+	 * axiom lookup(_, "ArrayNew2") => ([],
+					    * 				   SIMPLE(IRECORD([("length", VALUE(K(REAL(2.0)))),
+											   * 						   ("i0", VALUE(K(NIL))),
+											   * 						   ("i1", VALUE(K(NIL)))])))
+	 * 
+	 * axiom lookup(_, "sum") => ([],
+				      * 			     METHOD(SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0)))),
+										* 					SEQ(ASSIGN(VARIABLE("i"), VALUE(K(REAL(0.0)))),
+															    * 					    WHILE(OP(LVALUE(VARIABLE("i")),LESSTHAN,LVALUE(FIELD(LVALUE(VARIABLE("self")), "length"))),
+																					  * 						  SEQ(ASSIGN(VARIABLE("ans"), VALUE(K(REAL(0.0))))))))))
+	 *)
 
   axiom lookup(_, "MutablePointNew") => (["x", "y"],
 					 SIMPLE(UIDRECORD([("x", LVALUE(VARIABLE("x"))),
@@ -175,36 +175,36 @@ relation lookup: (Value, Label) => (Variable list, MethodBody) =
 				       LVALUE(VARIABLE("self"))))
 
   axiom lookup(_, "MakeIdentical") => (["a","b"],
-				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
-							 IDENTITY(LVALUE(VARIABLE("a")),LVALUE(VARIABLE("b"))))),
-				       LVALUE(VARIABLE("self"))))
+				       METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+								IDENTITY(LVALUE(VARIABLE("a")),LVALUE(VARIABLE("b"))))),
+					      LVALUE(VARIABLE("self"))))
 
   axiom lookup(_, "Testalwaysxequal5") => (["x"],
-				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
-							 COMPARE(LVALUE(VARIABLE("x")),EQUAL,VALUE(K(REAL(5.0)))))),
-				       LVALUE(VARIABLE("x"))))
+					   METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+								    OP(LVALUE(VARIABLE("x")),EQUAL,VALUE(K(REAL(5.0)))))),
+						  LVALUE(VARIABLE("x"))))
 
   axiom lookup(_, "Testalwaysaequalsbplus3") => (["a", "b"],
-				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
-							 COMPARE(LVALUE(VARIABLE("a")),EQUAL,OP(LVALUE(VARIABLE("b")),ADD,VALUE(K(REAL(3.0))))))),
-				       LVALUE(VARIABLE("a"))))
+						 METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+									  OP(LVALUE(VARIABLE("a")),EQUAL,OP(LVALUE(VARIABLE("b")),ADD,VALUE(K(REAL(3.0))))))),
+							LVALUE(VARIABLE("a"))))
 
   axiom lookup(_, "Testpointxequals5") => (["p"],
-				METHOD(ALWAYS(CONSTRAINT(REQUIRED,
-							 COMPARE(LVALUE(FIELD(LVALUE(VARIABLE("p")),"x")),EQUAL,VALUE(K(REAL(5.0)))))),
-				       LVALUE(VARIABLE("p"))))
+					   METHOD(ALWAYS(CONSTRAINT(REQUIRED,
+								    OP(LVALUE(FIELD(LVALUE(VARIABLE("p")),"x")),EQUAL,VALUE(K(REAL(5.0)))))),
+						  LVALUE(VARIABLE("p"))))
 
   axiom lookup(_, "TestXGetsXPlus3ReturnX") => (["x"],
-				METHOD(ASSIGN(VARIABLE("x"),OP(LVALUE(VARIABLE("x")),ADD,VALUE(K(REAL(3.0))))),
-				       LVALUE(VARIABLE("x"))))
+						METHOD(ASSIGN(VARIABLE("x"),OP(LVALUE(VARIABLE("x")),ADD,VALUE(K(REAL(3.0))))),
+						       LVALUE(VARIABLE("x"))))
 
 end
 
 relation enter: (Env, Scope, Heap, Cstore, Istore, Value, Variable list, Exp list) => (Env, Scope, Heap, Cstore, Istore) =
-  rule evalEach(E, S, H, C, I, argexps) => (En, Hn, Cn, In, argvals) &
-       assignEachFresh(En, [], Hn, Cn, In, "self" :: argnames, v :: argvals) => (E2n, Sn, Hn, Cn, In)
-       ----------------------------------------------------------------------------------------------
-       enter(E, S, H, C, I, v, argnames, argexps) => (E2n, Sn, Hn, Cn, In)
+  rule  evalEach(E, S, H, C, I, argexps) => (En, Hn, Cn, In, argvals) &
+	assignEachFresh(En, [], Hn, Cn, In, "self" :: argnames, v :: argvals) => (E2n, Sn, Hn, Cn, In)
+	----------------------------------------------------------------------------------------------
+	enter(E, S, H, C, I, v, argnames, argexps) => (E2n, Sn, Hn, Cn, In)
 end
 
 relation evalEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Heap, Cstore, Istore, Value list) =
@@ -250,47 +250,32 @@ relation eval: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Heap, Cstore, Is
 
   axiom	eval(E,S,H,C,I, VALUE(R(r))) => (E,H,C,I, R(r))
 
-  rule alert(["E-Op\n"],[],[]) &
-       eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
-       Util.apply_binop(op,v1,v2) => v
-       -------------------------------
-       eval(E,S,H,C,I, OP(e1, op, e2)) => (E'',H'',C'',I'',v)
+  rule	eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
+	Util.should_short_circuit(op, v1) => (true, v) &
+	print "E-Op (short circuit)\n"
+	------------------------------
+	eval(E,S,H,C,I, OP(e1, op, e2)) => (E',H',C',I',v)
 
-  rule alert(["E-Compare\n"],[],[]) &
-       eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
-       Util.apply_bincomp(op,v1,v2) => v
-       ---------------------------------
-       eval(E,S,H,C,I, COMPARE(e1, op, e2)) => (E'',H'',C'',I'',v)
+  rule  alert(["E-Op\n"],[],[]) &
+	eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
+	eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
+	Util.apply_binop(op,v1,v2) => v
+	-------------------------------
+	eval(E,S,H,C,I, OP(e1, op, e2)) => (E'',H'',C'',I'',v)
 
-  rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       Util.shortcircuit_bincomb(op,v1) => (true, v) &
-       alert(["E-CombineShortCircuit\n"],[],[])
-       -------------------------------
-       eval(E,S,H,C,I, COMBINE(e1, op, e2)) => (E',H',C',I',v1)
+  rule  eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
+	eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
+	v1 = v2 &
+	alert(["E-IdentityTrue\n"],[],[])
+	------------------------
+	eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(TRUE))
 
-  rule alert(["E-Combine\n"],[],[]) &
-       eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       Util.shortcircuit_bincomb(op,v1) => (false, v) &
-       eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
-       Util.apply_bincomb(op,v1,v2) => v
-       ---------------------------------
-       eval(E,S,H,C,I, COMBINE(e1, op, e2)) => (E'',H'',C'',I'',v1)
-
-  rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
-       v1 = v2 &
-       alert(["E-IdentityTrue\n"],[],[])
-       ------------------------
-       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(TRUE))
-
-  rule eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
-       eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
-       not v1 = v2 &
-       alert(["E-IdentityFalse\n"],[],[])
-       ------------------------
-       eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(FALSE))
+  rule  eval(E,S,H,C,I,e1) => (E',H',C',I',v1) &
+	eval(E',S,H',C',I',e2) => (E'',H'',C'',I'',v2) &
+	not v1 = v2 &
+	alert(["E-IdentityFalse\n"],[],[])
+	------------------------
+	eval(E,S,H,C,I, IDENTITY(e1, e2)) => (E'',H'',C'',I'',K(FALSE))
 
   rule	eval(E,S,H,C,I,e) => (E0,H0,C0,I0,v) &
 	lookup(v,l) => (argnames, METHOD(s, returne)) &
@@ -331,74 +316,62 @@ relation evalEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (En
 	evalEachField(E,S,H,C,I,(l,e) :: rest) => (E'',H'',C'',I'',(l,VALUE(v)) :: values)
 end
 
-relation tC: (Env, Heap, Exp) => Type =
-  axiom tC(E, H, VALUE(K(c))) => PRIMITIVE
-
-  rule	alert(["T-Var\n"],[],[]) &
-	Util.lookupEnv(E, x) => v &
-	tC(E,H,VALUE(v)) => T
-	---------------------------------
-	tC(E,H, LVALUE(VARIABLE(x))) => T
-
-  rule alert(["T-Field\n"],[],[]) &
-       tC(E,H,e) => TRECORD(ftypes) &
-       Util.lookupRecordType(ftypes, l) => T
-       -------------------------------------
-       tC(E,H, LVALUE(FIELD(e, l))) => T
+relation typeExp: (Env, Heap, Exp) => Type =
+  axiom typeExp(E, H, VALUE(K(c))) => PRIMITIVE
 
   rule	alert(["T-Ref\n"],[],[]) &
 	Util.lookupHeap(H, r) => fvalues &
-	tC(E,H,VALUE(O(fvalues))) => T
+	typeObject(E,H,fvalues) => T
 	------------------------------
-	tC(E,H,VALUE(R(r))) => T
+	typeExp(E,H,VALUE(R(r))) => TRECORD(T)
+
+  rule	alert(["T-Var\n"],[],[]) &
+	Util.lookupEnv(E, x) => v &
+	typeExp(E,H,VALUE(v)) => T
+	---------------------------------
+	typeExp(E,H, LVALUE(VARIABLE(x))) => T
+
+  rule  alert(["T-Field\n"],[],[]) &
+	typeExp(E,H,e) => TRECORD(ftypes) &
+	Util.lookupRecordType(ftypes, l) => T
+	-------------------------------------
+	typeExp(E,H, LVALUE(FIELD(e, l))) => T
 
   rule	alert(["T-Op\n"],[],[]) &
-	tC(E,H,e1) => PRIMITIVE &
-	tC(E,H,e2) => PRIMITIVE
+	typeExp(E,H,e1) => T &
+	typeExp(E,H,e2) => T
 	--------------------------
-	tC(E,H, OP(e1, op, e2)) => PRIMITIVE
+	typeExp(E,H, OP(e1, op, e2)) => PRIMITIVE
 
-  rule alert(["T-Compare\n"],[],[]) &
-       tC(E,H,e1) => T1 &
-       tC(E,H,e2) => T2 &
-       T1 = T2
-       --------------------------
-       tC(E,H, COMPARE(e1, op, e2)) => PRIMITIVE
+  rule  alert(["T-ValueObject\n"],[],[]) &
+	typeObject(E,H, fvalues) => ftypes
+	---------------------------------------
+	typeExp(E,H, VALUE(O(fvalues))) => TRECORD(ftypes)
 
-  rule alert(["T-Combine\n"],[],[]) &
-       tC(E,H,e1) => PRIMITIVE &
-       tC(E,H,e2) => PRIMITIVE
-       --------------------------
-       tC(E,H, COMBINE(e1, op, e2)) => PRIMITIVE
-
-  rule alert(["T-ValueObject\n"],[],[]) &
-       tCFields(E,H, fvalues) => ftypes
-       ---------------------------------------
-       tC(E,H, VALUE(O(fvalues))) => TRECORD(ftypes)
-
-  rule alert(["T-Deref\n"],[],[]) &
-       tC(E,H, e) => T
-       ---------------------------------------
-       tC(E,H, DEREF(e)) => T
+  (* helper? *)
+  rule	alert(["T-Deref\n"],[],[]) &
+	typeExp(E,H, e) => T
+	---------------------------------------
+	typeExp(E,H, DEREF(e)) => T
 end
 
-relation tCFields: (Env, Heap, ObjectLiteral) => (Label * Type) list =
-  axiom tCFields(E,H,[]) => []
+relation typeObject: (Env, Heap, ObjectLiteral) => (Label * Type) list =
+  axiom typeObject(E,H,[]) => []
 
-  rule tC(E,H,e) => T &
-       tCFields(E,H,rest) => ftypes
-       ----------------------------
-       tCFields(E,H, (l,e) :: rest) => ((l,T) :: ftypes)
+  rule  typeExp(E,H,e) => T &
+	typeObject(E,H,rest) => ftypes
+	----------------------------
+	typeObject(E,H, (l,e) :: rest) => ((l,T) :: ftypes)
 end
 
-relation welltyped: (Env, Heap, Constraint) => () =
-  rule tC(E,H,e) => T
-       ---------------------------
-       welltyped(E,H, CONSTRAINT(rho, e))
+relation typeConstraint: (Env, Heap, Constraint) => () =
+  rule  typeExp(E,H,e) => T
+	---------------------------
+	typeConstraint(E,H, CONSTRAINT(rho, e))
 
-  rule welltyped(E,H,C1) & welltyped(E,H,C2)
-       -------------------------------------
-       welltyped(E,H, COMPOUNDCONSTRAINT(C1, C2))
+  rule  typeConstraint(E,H,C1) & typeConstraint(E,H,C2)
+	-------------------------------------
+	typeConstraint(E,H, COMPOUNDCONSTRAINT(C1, C2))
 end
 
 with "solver.rml"
@@ -406,129 +379,109 @@ with "printer.rml"
 with "helper.rml"
 
 relation models: Constraint => (Env, Heap) =
-  rule Print.printC(C) => plainCs &
-       Print.pRefDom(C) => refDom &
-       Print.pLabDom(C) => labDom &
-       Print.pDefs(C) => defs &
-       Print.printZ3C(C) => Cs &
-       string_append_list(["(set-option :pp.decimal true)(set-option :model.compact true)\n",
-			   refDom, "\n", labDom, "\n
-; Next block of declarations are the same everywhere
-; We use a Union type for values
-(declare-datatypes () ((Value (Record (rec (Array Label Real)))
-                              (Real (real Real))
-			      (Bool (bool Bool))
-                              (Reference (ref Reference)))))
-; A default record has 'invalid' for all fields
-(declare-const iRec (Array Label (Value)))
-(assert (= iRec ((as const (Array Label (Value))) (Reference invalid))))
-(declare-const invalidR Real) (assert (= invalidR 1334))
-(declare-const vRec (Array Label (Real)))
-(assert (= vRec ((as const (Array Label (Real))) invalidR)))
-; Records are (Array Label (Value))
-(declare-fun H ((Value)) (Array Label (Value)))
-(assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
+  rule  Print.printC(C) => plainCs &
+	Print.pRefDom(C) => refDom &
+	Print.pLabDom(C) => labDom &
+	Print.pDefs(C) => defs &
+	Print.printZ3C(C) => Cs &
+	string_append_list(["(set-option :pp.decimal true)(set-option :model.compact true)\n",
+			    refDom, "\n", labDom, "\n
+	; Next block of declarations are the same everywhere
+	; We use a Union type for values
+	(declare-datatypes () ((Value (Record (rec (Array Label Real)))
+				(Real (real Real))
+				(Bool (bool Bool))
+				(Reference (ref Reference)))))
+	; A default record has 'invalid' for all fields
+	(declare-const iRec (Array Label (Value)))
+	(assert (= iRec ((as const (Array Label (Value))) (Reference invalid))))
+	(declare-const invalidR Real) (assert (= invalidR 1334))
+	(declare-const vRec (Array Label (Real)))
+	(assert (= vRec ((as const (Array Label (Real))) invalidR)))
+	; Records are (Array Label (Value))
+	(declare-fun H ((Value)) (Array Label (Value)))
+	(assert (and (= (H (Reference invalid)) iRec) (= (H (Reference nil)) iRec)))
 
-(define-fun plus ((x (Value)) (y (Value))) (Value)
-                 (Real (+ (real x) (real y))))
-(define-fun minus ((x (Value)) (y (Value))) (Value)
-                 (Real (- (real x) (real y))))
-(define-fun times ((x (Value)) (y (Value))) (Value)
-                 (Real (* (real x) (real y))))
-(define-fun divide ((x (Value)) (y (Value))) (Value)
-                 (Real (/ (real x) (real y))))
+	(define-fun plus ((x (Value)) (y (Value))) (Value)
+         (Real (+ (real x) (real y))))
+	(define-fun minus ((x (Value)) (y (Value))) (Value)
+         (Real (- (real x) (real y))))
+	(define-fun times ((x (Value)) (y (Value))) (Value)
+         (Real (* (real x) (real y))))
+	(define-fun divide ((x (Value)) (y (Value))) (Value)
+         (Real (/ (real x) (real y))))
 
-(define-fun lessthan ((x (Value)) (y (Value))) (Value)
-                 (Bool (< (real x) (real y))))
-(define-fun leq ((x (Value)) (y (Value))) (Value)
-                 (Bool (<= (real x) (real y))))
-(define-fun greaterthan ((x (Value)) (y (Value))) (Value)
-                 (Bool (> (real x) (real y))))
-(define-fun geq ((x (Value)) (y (Value))) (Value)
-                 (Bool (>= (real x) (real y))))
+	(define-fun lessthan ((x (Value)) (y (Value))) (Value)
+         (Bool (< (real x) (real y))))
+	(define-fun leq ((x (Value)) (y (Value))) (Value)
+         (Bool (<= (real x) (real y))))
+	(define-fun greaterthan ((x (Value)) (y (Value))) (Value)
+         (Bool (> (real x) (real y))))
+	(define-fun geq ((x (Value)) (y (Value))) (Value)
+         (Bool (>= (real x) (real y))))
 
-(define-fun equal ((x (Value)) (y (Value))) (Value)
-                 (Bool (= x y)))
-(define-fun notequal ((x (Value)) (y (Value))) (Value)
-                 (Bool (not (= x y))))
+	(define-fun equal ((x (Value)) (y (Value))) (Value)
+         (Bool (= x y)))
+	(define-fun notequal ((x (Value)) (y (Value))) (Value)
+         (Bool (not (= x y))))
 
-(define-fun bbband ((x (Value)) (y (Value))) (Value)
-                 (Bool (and (bool x) (bool y))))
-(define-fun bbbor ((x (Value)) (y (Value))) (Value)
-                 (Bool (or (bool x) (bool y))))
+	(define-fun bbband ((x (Value)) (y (Value))) (Value)
+         (Bool (and (bool x) (bool y))))
+	(define-fun bbbor ((x (Value)) (y (Value))) (Value)
+         (Bool (or (bool x) (bool y))))
 
-",
-			   defs, "\n", Cs, "\n(check-sat)\n(get-model)\n"]) => srr &
-       Solver.solve(plainCs, srr) => El &
-       print "\n" &
-       Print.parseEnvironment(El, [], []) => (E, H) &
-       print "\n"
-       ------------------------------
-       models(C) => (E, H)
+	", defs, "\n", Cs, "\n(check-sat)\n(get-model)\n"]) => srr &
+	Solver.solve(plainCs, srr) => El &
+	print "\n" &
+	Print.parseEnvironment(El, [], []) => (E, H) &
+	print "\n"
+	------------------------------
+	models(C) => (E, H)
 end
 
-relation stay: Env => Constraint =
-  axiom stay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+relation stayVariable: (Variable, Value, Rho) => Constraint =
+  axiom	stayVariable(x, K(c), rho) => CONSTRAINT(WEAK, OP(LVALUE(VARIABLE(x)), EQUAL, VALUE(K(c))))
 
-  rule alert(["StayOne\n"],[],[]) &
-       stay(E0) => C0
-       --------------------------------
-       stay((x, v) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(v))))
+  axiom	stayVariable(x, R(r), rho) => CONSTRAINT(rho, OP(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r))))
+
+  axiom stayVariable(x, O([]), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD([]))), CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
+			   
+  rule	tick() => i & int_string(i) => i' & string_append("_x", i') => freshx &
+	stayVariable(freshx, v, rho) => C &
+	stayVariable(x, O(rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(frest))), Crest) &
+	list_append([(l,LVALUE(VARIABLE(freshx)))], frest) => fields
+	----------------------------------------------------------------------------------------------------------------------------------------------------
+	stayVariable(x, O((l,VALUE(v)) :: rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(fields))), COMPOUNDCONSTRAINT(C, Crest))
 end
 
-relation stayH: Heap => Constraint =
-  axiom stayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+relation stayReference: (Reference, ObjectLiteral, Rho) => Constraint =
+  axiom stayReference(r, [], rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(DEREF(VALUE(R(r))), EQUAL, VALUE(O([])))), CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 
-  rule alert(["StayHeap\n"],[],[]) &
-       stayH(H0) => C0
-       --------------------------------
-       stayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o)))))
+  rule	print "StayObject\n" &
+	tick() => i & int_string(i) => i' & string_append("_x", i') => freshx &
+	stayVariable(freshx, v, rho) => Cs &
+	stayReference(r, rest, rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(DEREF(VALUE(R(r))), EQUAL, VALUE(O((frest))))), Crest) &
+	list_append([(l,LVALUE(VARIABLE(freshx)))], frest) => fields
+	------------------------------------------------------------------------------------------------------------------------
+	stayReference(r, (l,VALUE(v)) :: rest, rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(DEREF(VALUE(R(r))), EQUAL, VALUE(O((fields))))), COMPOUNDCONSTRAINT(Cs, Crest))
 end
 
-relation stayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
-  axiom stayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
-
-  rule stayFields(r, rest) => (C, o) &
-       int_string(r) => is & string_append_list(["ref", is, "_", l]) => x
-       -------------------------------------------------------------------------------
-       stayFields(r, (l, e) :: rest) => (COMPOUNDCONSTRAINT(CONSTRAINT(WEAK, COMPARE(LVALUE(VARIABLE(x)), EQUAL, e)), C),
-					 (l, LVALUE(VARIABLE(x))) :: o)
+relation stayEnv: (Env, Rho) => Constraint =
+  axiom stayEnv([], rho) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+  rule	print "StayEnv\n" &
+	stayEnv(E0, rho) => C0 &
+	stayVariable(x, v, rho) => C1
+	-------------------------------------------------
+	stayEnv((x, v) :: E0, rho) => COMPOUNDCONSTRAINT(C0, C1)
 end
 
-relation identityStay: Env => Constraint =
-  axiom identityStay([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
-
-  rule alert(["StayRef\n"],[],[]) &
-       identityStay(E0) => C0
-       --------------------------------
-       identityStay((x, R(r)) :: E0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(REQUIRED, COMPARE(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r)))))
-
-  rule alert(["StayObj\n"],[],[]) & identityStay(E0) => C0 & stay([(x, O(o))]) => C1
-       --------------------------------------------------------------------
-       identityStay((x, O(o)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
-
-  rule alert(["StayConst\n"],[],[]) & identityStay(E0) => C0 & stay([(x, K(c))]) => C1
-       ----------------------------------------------------------------------
-       identityStay((x, K(c)) :: E0) => COMPOUNDCONSTRAINT(C0, C1)
-end
-
-relation identityStayH: Heap => Constraint =
-  axiom identityStayH([]) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
-
-  rule alert(["IdentityStayHeap\n"],[],[]) &
-       identityStayH(H0) => C0
-       --------------------------------
-       identityStayH((r, o) :: H0) => COMPOUNDCONSTRAINT(C0, CONSTRAINT(WEAK, COMPARE(DEREF(VALUE(R(r))), EQUAL, VALUE(O(o)))))
-end
-
-relation identityStayFields: (Reference, ObjectLiteral) => (Constraint, ObjectLiteral) =
-  axiom identityStayFields(_, []) => (CONSTRAINT(REQUIRED, VALUE(K(TRUE))), [])
-
-  rule identityStayFields(r, rest) => (C, o) &
-       int_string(r) => is &string_append(is, "_") => is' & string_append(is', l) => x &
-       identityStay([(x, v)]) => C0
-       ---------------------------------------------------------------------------------
-       identityStayFields(r, (l, VALUE(v)) :: rest) => (COMPOUNDCONSTRAINT(C0, C), (l, LVALUE(VARIABLE(x))) :: o)
+relation stayHeap: (Heap, Rho) => Constraint =
+  axiom stayHeap([], rho) => CONSTRAINT(REQUIRED, VALUE(K(TRUE)))
+  rule	print "StayHeap\n" &
+	stayHeap(H0, rho) => C0 &
+	stayReference(r, o, rho) => C1
+	-------------------------------------------------
+	stayHeap((r, o) :: H0, rho) => COMPOUNDCONSTRAINT(C0, C1)
 end
 
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
@@ -553,7 +506,7 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	inline(E,S,H,C,I,e) => (E',ec,e') &
 	eval(E',S,H,C,I,e) => (E'',H,C,I,R(r))
 	---------------------------------------------
-	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',COMBINE(ec,AND,COMPARE(e',EQUAL,VALUE(R(r)))),LVALUE(FIELD(DEREF(e'),l)))
+	inline(E,S,H,C,I,LVALUE(FIELD(e,l))) => (E',OP(ec,AND,OP(e',EQUAL,VALUE(R(r)))),LVALUE(FIELD(DEREF(e'),l)))
 
   rule	alert(["I-ValueField"],[],[]) &
 	inline(E,S,H,C,I,e) => (E',ec,e') &
@@ -567,31 +520,19 @@ relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
 	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-------------------------------------
-	inline(E,S,H,C,I,OP(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),OP(ea,op,eb))
-
-  rule	alert(["I-Compare"],[],[]) &
-	inline(E,S,H,C,I,e1) => (E',eca,ea) &
-	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
-	-------------------------------------
-	inline(E,S,H,C,I,COMPARE(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),COMPARE(ea,op,eb))
-
-  rule	alert(["I-Combine"],[],[]) &
-	inline(E,S,H,C,I,e1) => (E',eca,ea) &
-	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
-	-------------------------------------
-	inline(E,S,H,C,I,COMBINE(e1,op,e2)) => (E'',COMBINE(eca,AND,ecb),COMBINE(ea,op,eb))
+	inline(E,S,H,C,I,OP(e1,op,e2)) => (E'',OP(eca,AND,ecb),OP(ea,op,eb))
 
   rule	alert(["I-Identity"],[],[]) &
 	inline(E,S,H,C,I,e1) => (E',eca,ea) &
 	inline(E',S,H,C,I,e2) => (E'',ecb,eb)
 	-----------------------------------------------------
-	inline(E,S,H,C,I,IDENTITY(e1,e2)) => (E'',COMBINE(eca,AND,ecb),IDENTITY(ea,eb))
+	inline(E,S,H,C,I,IDENTITY(e1,e2)) => (E'',OP(eca,AND,ecb),IDENTITY(ea,eb))
 
   rule	eval(E,S,H,C,I,e) => (E',H,C,I,v) & lookup(v,l) => (argnames,METHOD(s,e)) &
 	alert(["I-Call(", l],[],[")"]) &
 	enter(E',S,H,C,I,v,argnames,argexps) => (E'',Sm,H,C,I) &
 	step(E'',Sm,H,C,I,s) => (E''',S',H',C',I') &
-        H' = H & C' = C & I' = I & (* this is just explicit unification *)
+	H' = H & C' = C & I' = I & (* this is just explicit unification *)
 	eval(E''',S',H,C,I,e) => (E'''',H,C,I,vr)
 	-----------------------------------------
 	inline(E,S,H,C,I,CALL(e,l,argexps)) => (E'''',VALUE(K(TRUE)),VALUE(vr))
@@ -617,7 +558,7 @@ relation inlineEach: (Env, Scope, Heap, Cstore, Istore, Exp list) => (Env, Exp, 
   rule	inline(E,S,H,C,I,e) => (E',eC,e') &
 	inlineEach(E',S,H,C,I,rest) => (E'',restC,rest')
 	------------------------------------------------
-	inlineEach(E,S,H,C,I,e :: rest) => (E'',COMBINE(eC,AND,restC),e' :: rest')
+	inlineEach(E,S,H,C,I,e :: rest) => (E'',OP(eC,AND,restC),e' :: rest')
 end
 
 relation inlineEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (Env, Exp, ObjectLiteral) =
@@ -626,7 +567,7 @@ relation inlineEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (
   rule	inline(E,S,H,C,I,e) => (E',eC,e') &
 	inlineEachField(E',S,H,C,I,rest) => (E'',restC,rest')
 	------------------------------------------------
-	inlineEachField(E,S,H,C,I,(l,e) :: rest) => (E'',COMBINE(eC,AND,restC),(l,e') :: rest')
+	inlineEachField(E,S,H,C,I,(l,e) :: rest) => (E'',OP(eC,AND,restC),(l,e') :: rest')
 end
 
 relation reinlineC: (Env, Heap, Istore, Cstore) => (Env, Constraint) =
@@ -635,7 +576,7 @@ relation reinlineC: (Env, Heap, Istore, Cstore) => (Env, Constraint) =
   rule	reinlineC(E,H,I,Cstore0) => (E0,C0) &
 	inline(E0,S,H,Cstore0,I,e) => (E',eC,e')
 	-----------------------------------------------------------------
-	reinlineC(E,H,I,(S,CONSTRAINT(rho,e)) :: Cstore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(rho,COMBINE(e',AND,eC))))
+	reinlineC(E,H,I,(S,CONSTRAINT(rho,e)) :: Cstore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(rho,OP(e',AND,eC))))
 end
 
 relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
@@ -644,22 +585,70 @@ relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
   rule	reinlineI(E,H,C,Istore0) => (E0,C0) &
 	inline(E0,S,H,C,Istore0,e) => (E',eC,e')
 	----------------------------------------------------------------------
-	reinlineI(E,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(REQUIRED,COMBINE(e',AND,eC))))
+	reinlineI(E,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(REQUIRED,OP(e',AND,eC))))
 end
 
 relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, Heap) =
-  rule	stay(E) => CEs & stayH(H) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
+  rule	stayEnv(E, WEAK) => CEs & stayHeap(H, WEAK) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),C0),
-				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2))))) => (E',H') &
-	identityStay(E') => CEs' & identityStayH(H') => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & welltyped(Ec,H',Cc) &
+				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,OP(e1,EQUAL,e2))))) => (E',H') &
+	stayEnv(E', REQUIRED) => CEs' & stayHeap(H', REQUIRED) => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & typeConstraint(Ec,H',Cc) &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
 						     COMPOUNDCONSTRAINT(CEs',CHs')),
-				  CONSTRAINT(REQUIRED,COMPARE(e1,EQUAL,e2)))) => (E'',H'')
+				  CONSTRAINT(REQUIRED,OP(e1,EQUAL,e2)))) => (E'',H'')
 	----------------------------------------------------------------------------------
 	twoPhaseUpdate(E,H,C,I,IDENTITY(e1,e2),C0) => (E'',H'')
 end
 
 relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Heap, Cstore, Istore) =
+  rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal(",x,") := "],[e],["\n"]) &
+	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
+	list_append(S,[(x,xg)]) => S' &
+	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
+	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
+	-----------------------------------------------------------------------------------------------
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H'',C',I')
+
+  rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal(",x,")\n"],[],[]) &
+	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
+	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
+	-----------------------------------------------------------------------------------------------
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
+
+  rule  alert(["S-AsgnLValue\n"],[],[]) &
+	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
+	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
+	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,eC)) => (E''',H'')
+	---------------------------------------------------------------------------------------------
+	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
+
+  rule  alert(["S-OnceIdentity\n"],[],[]) &
+	eval(E,S,H,C,I,e0) => (E0,H,C,I,v0) & eval(E0,S,H,C,I,e1) => (E1,H,C,I,v1) & v0 = v1 &
+	inline(E1,S,H,C,I,e0) => (E2,eC0,e0') & inline(E2,S,H,C,I,e1) => (E3,eC1,e1')
+	-----------------------------------------------------------------------------
+	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E3,S,H,C,I)
+
+  rule	alert(["S-AlwaysIdentity\n"],[],[]) &
+	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I) &
+	list_append(I,[(S,CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))]) => I'
+	-----------------------------------------------------------------
+	step(E,S,H,C,I, ALWAYS(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I')
+
+  rule	alert(["S-Once\n"],[],[]) &
+	inline(E,S,H,C,I,e) => (E',eC,e') &
+	typeConstraint(E',H, CONSTRAINT(rho,OP(e',AND,eC))) &
+	stayEnv(E', REQUIRED) => CEs & stayHeap(H, REQUIRED) => CHs &
+	reinlineC(E',H,I,C) => (E'', Cc) &
+	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(CEs, CHs),
+				  COMPOUNDCONSTRAINT(Cc, CONSTRAINT(rho,OP(e',AND,eC))))) => (E''',H')
+	--------------------------------------------------------------------------------------------------
+	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E''',S,H',C,I)
+
+  rule	alert(["S-Always\n"],[],[]) &
+	step(E,S,H,C,I, ONCE(C0)) => (E',S,H',C,I) &
+	list_append(C,[(S,C0)]) => C'
+	---------------------------------------------
+	step(E,S,H,C,I, ALWAYS(C0)) => (E',S,H',C',I)
 
   axiom step(E,S,H,C,I,SKIP) => (E,S,H,C,I)
 
@@ -694,78 +683,27 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	alert(["S-WhileSkip\n"],[],[])
 	-----------------------------------------------------
 	step(E,S,H,C,I, WHILE(e, s)) => (E',S,H',C',I')
-
-  rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal(",x,")\n"],[],[]) &
-	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
-	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
-
-  rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal(",x,") := "],[e],["\n"]) &
-	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
-	list_append(S,[(x,xg)]) => S' &
-	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
-	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H'',C',I')
-
-  rule  alert(["S-AsgnLValue\n"],[],[]) &
-	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
-	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,eC)) => (E''',H'')
-	---------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
-
-  rule  alert(["S-OnceIdentity\n"],[],[]) &
-	eval(E,S,H,C,I,e0) => (E0,H,C,I,v0) & eval(E0,S,H,C,I,e1) => (E1,H,C,I,v1) & v0 = v1 &
-	inline(E1,S,H,C,I,e0) => (E2,eC0,e0') & inline(E2,S,H,C,I,e1) => (E3,eC1,e1')
-	-----------------------------------------------------------------------------
-	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E3,S,H,C,I)
-
-  rule	alert(["S-AlwaysIdentity\n"],[],[]) &
-	step(E,S,H,C,I, ONCE(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I) &
-	list_append(I,[(S,CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))]) => I'
-	-----------------------------------------------------------------
-	step(E,S,H,C,I, ALWAYS(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I')
-
-  rule	alert(["S-Once\n"],[],[]) &
-	inline(E,S,H,C,I,e) => (E',eC,e') &
-	welltyped(E',H, CONSTRAINT(rho,COMBINE(e',AND,eC))) &
-	identityStay(E') => CEs & identityStayH(H) => CHs &
-	reinlineC(E',H,I,C) => (E'', Cc) &
-	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(CEs, CHs),
-				  COMPOUNDCONSTRAINT(Cc, CONSTRAINT(rho,COMBINE(e',AND,eC))))) => (E''',H')
-	--------------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E''',S,H',C,I)
-
-  rule	alert(["S-Always\n"],[],[]) &
-	step(E,S,H,C,I, ONCE(C0)) => (E',S,H',C,I) &
-	list_append(C,[(S,C0)]) => C'
-	---------------------------------------------
-	step(E,S,H,C,I, ALWAYS(C0)) => (E',S,H',C',I)
 end
 
 
 (* debugging *)
 relation alert: (string list, Exp list, string list) => () =
-  axiom alert(_, _, _) => ()
+  (* axiom alert(_, _, _) => () *)
 
-  (* 
-   * rule  string_append_list(s1) => s1' & print s1' &
-   * 	Print.printE(e) => es & print es &
-   * 	string_append_list(s2) => s2' & print s2'
-   * 	-----------------------------------------
-   * 	alert(s1,e :: _,s2)
-   * 
-   * rule  string_append_list(s1) => s1' & print s1' &
-   *       print "<unprintable>" &
-   * 	string_append_list(s2) => s2' & print s2'
-   * 	-----------------------------------------
-   * 	alert(s1,e :: _,s2)
-   * 
-   * rule  string_append_list(s1) => s1' & print s1' &
-   * 	string_append_list(s2) => s2' & print s2'
-   * 	-----------------------------------------
-   * 	alert(s1,[],s2)
-   *)
+	rule  string_append_list(s1) => s1' & print s1' &
+		Print.printE(e) => es & print es &
+		string_append_list(s2) => s2' & print s2'
+		-----------------------------------------
+		alert(s1,e :: _,s2)
+	
+	rule  string_append_list(s1) => s1' & print s1' &
+	      print "<unprintable>" &
+		string_append_list(s2) => s2' & print s2'
+		-----------------------------------------
+		alert(s1,e :: _,s2)
+	
+	rule  string_append_list(s1) => s1' & print s1' &
+		string_append_list(s2) => s2' & print s2'
+		-----------------------------------------
+		alert(s1,[],s2)
 end

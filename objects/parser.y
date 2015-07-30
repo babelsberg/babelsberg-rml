@@ -111,11 +111,11 @@ expression      : value
                 | expression soperation expression %prec T_ADD
                         { $$ = babelsberg__OP($1, $2, $3); }
                 | expression comparison expression %prec T_EQUAL
-                        { $$ = babelsberg__COMPARE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | expression combination expression %prec T_AND
-                        { $$ = babelsberg__COMBINE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | expression disjunction expression %prec T_OR
-                        { $$ = babelsberg__COMBINE($1, $2, $3); }
+                        { $$ = babelsberg__OP($1, $2, $3); }
                 | expression T_IDENTICAL expression %prec T_EQUAL
                         { $$ = babelsberg__IDENTITY($1, $3); }
                 | T_GLOBAL T_LPAREN callargs T_RPAREN

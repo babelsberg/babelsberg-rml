@@ -112,6 +112,18 @@ relation printZ3E: babelsberg.Exp => string =
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
+       e1s = "(Bool true)"
+       --------------------------------
+       printZ3E(babelsberg.OP(e1, AND, e2)) => e2s
+
+  rule printZ3E(e1) => e1s &
+       printZ3E(e2) => e2s &
+       e2s = "(Bool true)"
+       --------------------------------
+       printZ3E(babelsberg.OP(e1, AND, e2)) => e1s
+
+  rule printZ3E(e1) => e1s &
+       printZ3E(e2) => e2s &
        printZ3Op(op) => os &
        string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
        ----------------------------------------------------------
@@ -119,43 +131,17 @@ relation printZ3E: babelsberg.Exp => string =
 
   rule printZ3E(babelsberg.DEREF(e1)) => e1s &
        printZ3RContents(ary) => e2s &
-       printZ3Comp(op) => os &
+       printZ3Op(op) => os &
        os = "equal" &
        string_append_list(["(Bool (= ", e1s, " ", e2s, "))"]) => es
        --------------------------------
-       printZ3E(babelsberg.COMPARE(babelsberg.DEREF(e1), op, babelsberg.VALUE(babelsberg.O(ary)))) => es
-
-  rule printZ3E(e1) => e1s &
-       printZ3E(e2) => e2s &
-       printZ3Comp(op) => os &
-       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
-       --------------------------------
-       printZ3E(babelsberg.COMPARE(e1, op, e2)) => es
+       printZ3E(babelsberg.OP(babelsberg.DEREF(e1), op, babelsberg.VALUE(babelsberg.O(ary)))) => es
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &
        string_append_list(["(equal ", e1s, " ", e2s, ")"]) => es'
        ------------------------------------------------------
        printZ3E(babelsberg.IDENTITY(e1, e2)) => es'
-
-  rule printZ3E(e1) => e1s &
-       printZ3E(e2) => e2s &
-       e1s = "(Bool true)"
-       --------------------------------
-       printZ3E(babelsberg.COMBINE(e1, op, e2)) => e2s
-
-  rule printZ3E(e1) => e1s &
-       printZ3E(e2) => e2s &
-       e2s = "(Bool true)"
-       --------------------------------
-       printZ3E(babelsberg.COMBINE(e1, op, e2)) => e1s
-
-  rule printZ3E(e1) => e1s &
-       printZ3E(e2) => e2s &
-       printZ3Comb(op) => os &
-       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
-       --------------------------------
-       printZ3E(babelsberg.COMBINE(e1, op, e2)) => es
 
   axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "(Bool true)"
   axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "(Bool false)"
@@ -193,20 +179,14 @@ relation printZ3Op: babelsberg.Op => string =
   axiom printZ3Op(babelsberg.SUB) => "minus"
   axiom printZ3Op(babelsberg.DIV) => "divide"
   axiom printZ3Op(babelsberg.MUL) => "times"
-end
-
-relation printZ3Comp: babelsberg.Comp => string =
-  axiom printZ3Comp(babelsberg.LESSTHAN) =>"lessthan"
-  axiom printZ3Comp(babelsberg.LEQUAL) =>"leq"
-  axiom printZ3Comp(babelsberg.EQUAL) =>"equal"
-  axiom printZ3Comp(babelsberg.NEQUAL) =>"notequal"
-  axiom printZ3Comp(babelsberg.GEQUAL) =>"geq"
-  axiom printZ3Comp(babelsberg.GREATERTHAN) =>"greaterthan"
-end
-
-relation printZ3Comb: babelsberg.Comb => string =
-  axiom printZ3Comb(babelsberg.AND) =>"bbband"
-  axiom printZ3Comb(babelsberg.OR) =>"bbbor"
+  axiom printZ3Op(babelsberg.LESSTHAN) =>"lessthan"
+  axiom printZ3Op(babelsberg.LEQUAL) =>"leq"
+  axiom printZ3Op(babelsberg.EQUAL) =>"equal"
+  axiom printZ3Op(babelsberg.NEQUAL) =>"notequal"
+  axiom printZ3Op(babelsberg.GEQUAL) =>"geq"
+  axiom printZ3Op(babelsberg.GREATERTHAN) =>"greaterthan"
+  axiom printZ3Op(babelsberg.AND) =>"bbband"
+  axiom printZ3Op(babelsberg.OR) =>"bbbor"
 end
 
 relation pRefDom: babelsberg.Constraint => string =
@@ -272,7 +252,7 @@ relation pRefDomE: babelsberg.Exp => string list =
        pRefDomE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pRefDomE(babelsberg.COMPARE(e1, op, e2)) => es
+       pRefDomE(babelsberg.OP(e1, op, e2)) => es
 
   rule pRefDomE(e1) => e1s &
        pRefDomE(e2) => e2s &
@@ -284,7 +264,7 @@ relation pRefDomE: babelsberg.Exp => string list =
        pRefDomE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pRefDomE(babelsberg.COMBINE(e1, op, e2)) => es
+       pRefDomE(babelsberg.OP(e1, op, e2)) => es
 end
 
 relation pLabDom: babelsberg.Constraint => string =
@@ -351,7 +331,7 @@ relation pLabDomE: babelsberg.Exp => string list =
        pLabDomE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pLabDomE(babelsberg.COMPARE(e1, op, e2)) => es
+       pLabDomE(babelsberg.OP(e1, op, e2)) => es
 
   rule pLabDomE(e1) => e1s &
        pLabDomE(e2) => e2s &
@@ -363,7 +343,7 @@ relation pLabDomE: babelsberg.Exp => string list =
        pLabDomE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pLabDomE(babelsberg.COMBINE(e1, op, e2)) => es
+       pLabDomE(babelsberg.OP(e1, op, e2)) => es
 end
 
 relation printLabContents: babelsberg.ObjectLiteral => string list =
@@ -471,7 +451,7 @@ relation pDefsE: babelsberg.Exp => string list =
        pDefsE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pDefsE(babelsberg.COMPARE(e1, op, e2)) => es
+       pDefsE(babelsberg.OP(e1, op, e2)) => es
 
   rule pDefsE(e1) => e1s &
        pDefsE(e2) => e2s &
@@ -483,7 +463,7 @@ relation pDefsE: babelsberg.Exp => string list =
        pDefsE(e2) => e2s &
        list_union(e1s, e2s) => es
        --------------------------------
-       pDefsE(babelsberg.COMBINE(e1, op, e2)) => es
+       pDefsE(babelsberg.OP(e1, op, e2)) => es
 end
 
 relation printDefsContents: babelsberg.ObjectLiteral => string list =
@@ -599,6 +579,18 @@ relation printE: babelsberg.Exp => string =
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
+       e1s = "true"
+       --------------------------------
+       printE(babelsberg.OP(e1, op, e2)) => e2s
+
+  rule printE(e1) => e1s &
+       printE(e2) => e2s &
+       e2s = "true"
+       --------------------------------
+       printE(babelsberg.OP(e1, op, e2)) => e1s
+
+  rule printE(e1) => e1s &
+       printE(e2) => e2s &
        printOp(op) => os &
        string_append("(", e1s) => e1s' &
        string_append(e2s, ")") => e2s' &
@@ -609,44 +601,12 @@ relation printE: babelsberg.Exp => string =
 
   rule printE(e1) => e1s &
        printE(e2) => e2s &
-       printComp(op) => os &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', os) => es &
-       string_append(es, e2s') => es'
-       --------------------------------
-       printE(babelsberg.COMPARE(e1, op, e2)) => es'
-
-  rule printE(e1) => e1s &
-       printE(e2) => e2s &
        string_append("(", e1s) => e1s' &
        string_append(e2s, ")") => e2s' &
        string_append(e1s', " == ") => es &
        string_append(es, e2s') => es'
        --------------------------------
        printE(babelsberg.IDENTITY(e1, e2)) => es'
-
-  rule printE(e1) => e1s &
-       printE(e2) => e2s &
-       e1s = "true"
-       --------------------------------
-       printE(babelsberg.COMBINE(e1, op, e2)) => e2s
-
-  rule printE(e1) => e1s &
-       printE(e2) => e2s &
-       e2s = "true"
-       --------------------------------
-       printE(babelsberg.COMBINE(e1, op, e2)) => e1s
-
-  rule printE(e1) => e1s &
-       printE(e2) => e2s &
-       printComb(op) => os &
-       string_append("(", e1s) => e1s' &
-       string_append(e2s, ")") => e2s' &
-       string_append(e1s', os) => es &
-       string_append(es, e2s') => es'
-       --------------------------------
-       printE(babelsberg.COMBINE(e1, op, e2)) => es'
 
   axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.TRUE))) => "true"
   axiom printE(babelsberg.VALUE(babelsberg.K(babelsberg.FALSE))) => "false"
@@ -675,18 +635,12 @@ relation printOp: babelsberg.Op => string =
   axiom printOp(babelsberg.SUB) => " - "
   axiom printOp(babelsberg.DIV) => " / "
   axiom printOp(babelsberg.MUL) => " * "
-end
-
-relation printComp: babelsberg.Comp => string =
-  axiom printComp(babelsberg.LESSTHAN) => " < "
-  axiom printComp(babelsberg.LEQUAL) => " <= "
-  axiom printComp(babelsberg.EQUAL) => " = "
-  axiom printComp(babelsberg.NEQUAL) => " != "
-  axiom printComp(babelsberg.GEQUAL) => " >= "
-  axiom printComp(babelsberg.GREATERTHAN) => " > "
-end
-
-relation printComb: babelsberg.Comb => string =
-  axiom printComb(babelsberg.AND) => " and "
-  axiom printComb(babelsberg.OR) => " or "
+  axiom printOp(babelsberg.LESSTHAN) => " < "
+  axiom printOp(babelsberg.LEQUAL) => " <= "
+  axiom printOp(babelsberg.EQUAL) => " = "
+  axiom printOp(babelsberg.NEQUAL) => " != "
+  axiom printOp(babelsberg.GEQUAL) => " >= "
+  axiom printOp(babelsberg.GREATERTHAN) => " > "
+  axiom printOp(babelsberg.AND) => " and "
+  axiom printOp(babelsberg.OR) => " or "
 end
