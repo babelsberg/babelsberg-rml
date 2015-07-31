@@ -338,8 +338,9 @@ relation typeExp: (Env, Heap, Exp) => Type =
 	typeExp(E,H, LVALUE(FIELD(e, l))) => T
 
   rule	alert(["T-Op\n"],[],[]) &
-	typeExp(E,H,e1) => T &
-	typeExp(E,H,e2) => T
+	typeExp(E,H,e1) => T1 &
+	typeExp(E,H,e2) => T2 &
+	T1 = T2
 	--------------------------
 	typeExp(E,H, OP(e1, op, e2)) => PRIMITIVE
 
@@ -602,12 +603,12 @@ end
 
 relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Heap, Cstore, Istore) =
   rule	not Util.lookupScope(S,x) => _ & alert(["S-AsgnNewLocal(",x,") := "],[e],["\n"]) &
+	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
 	tick() => i & int_string(i) => istring & string_append(x,istring) => xg &
 	list_append(S,[(x,xg)]) => S' &
-	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
+	list_append(E',[(xg,v)]) => E''
 	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H'',C',I')
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S',H',C',I')
 
   rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal(",x,")\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
