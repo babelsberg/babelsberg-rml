@@ -165,15 +165,15 @@ end
 relation stay: (Exp, Rho) => Constraint =
   axiom	stay(OP(VARIABLE(x), EQUAL, VALUE(CONST(c))), rho) => CONSTRAINT(WEAK, OP(VARIABLE(x), EQUAL, VALUE(CONST(c))))
 
-  axiom stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD([]))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(VARIABLE(x), EQUAL, RECORD([]))), CONSTRAINT(REQUIRED, VALUE(CONST(TRUE))))
+  axiom stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD([]))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(VARIABLE(x), EQUAL, RECORD([]))), CONSTRAINT(REQUIRED, VALUE(CONST(TRUE))))
 			   
   rule	print "StayRecord\n" &
 	tick() => i & int_string(i) => i' & string_append("_x", i') => freshx &
 	stay(OP(VARIABLE(freshx), EQUAL, VALUE(v)), rho) => C &
-	stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD(rest))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(VARIABLE(x), EQUAL, RECORD(frest))), Crest) &
+	stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD(rest))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(VARIABLE(x), EQUAL, RECORD(frest))), Crest) &
 	list_append([LABELEXPRESSION(l,VARIABLE(freshx))], frest) => fields
 	----------------------------------------------------------------------------------------------------------------------------------------------------
-	stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD(LABELEXPRESSION(l,VALUE(v)) :: rest))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(VARIABLE(x), EQUAL, RECORD(fields))), COMPOUNDCONSTRAINT(C, Crest))
+	stay(OP(VARIABLE(x), EQUAL, VALUE(IRECORD(LABELEXPRESSION(l,VALUE(v)) :: rest))), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(VARIABLE(x), EQUAL, RECORD(fields))), COMPOUNDCONSTRAINT(C, Crest))
 end
 
 relation step: (Env, Cstore, Statement) => (Env, Cstore) =
@@ -188,7 +188,7 @@ relation step: (Env, Cstore, Statement) => (Env, Cstore) =
 
   rule  print "S-Once\n" &
 	typeConstraint(Env, C0) &
-	stayEnv(Env, WEAK) => Cs &
+	stayEnv(Env, REQUIRED) => Cs &
 	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cs, Cstore), C0)) => Env'
 	----------------------------------------
 	step(Env, Cstore, ONCE(C0)) => (Env', Cstore)

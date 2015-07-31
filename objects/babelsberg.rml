@@ -445,14 +445,14 @@ relation stayVariable: (Variable, Value, Rho) => Constraint =
 
   axiom	stayVariable(x, R(r), rho) => CONSTRAINT(rho, OP(LVALUE(VARIABLE(x)), EQUAL, VALUE(R(r))))
 
-  axiom stayVariable(x, O([]), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD([]))), CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
+  axiom stayVariable(x, O([]), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD([]))), CONSTRAINT(REQUIRED, VALUE(K(TRUE))))
 			   
   rule	tick() => i & int_string(i) => i' & string_append("_x", i') => freshx &
 	stayVariable(freshx, v, rho) => C &
-	stayVariable(x, O(rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(frest))), Crest) &
+	stayVariable(x, O(rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(frest))), Crest) &
 	list_append([(l,LVALUE(VARIABLE(freshx)))], frest) => fields
 	----------------------------------------------------------------------------------------------------------------------------------------------------
-	stayVariable(x, O((l,VALUE(v)) :: rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(REQUIRED, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(fields))), COMPOUNDCONSTRAINT(C, Crest))
+	stayVariable(x, O((l,VALUE(v)) :: rest), rho) => COMPOUNDCONSTRAINT(CONSTRAINT(rho, OP(LVALUE(VARIABLE(x)), EQUAL, IRECORD(fields))), COMPOUNDCONSTRAINT(C, Crest))
 end
 
 relation stayReference: (Reference, ObjectLiteral, Rho) => Constraint =
