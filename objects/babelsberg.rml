@@ -338,9 +338,8 @@ relation typeExp: (Env, Heap, Exp) => Type =
 	typeExp(E,H, LVALUE(FIELD(e, l))) => T
 
   rule	alert(["T-Op\n"],[],[]) &
-	typeExp(E,H,e1) => T1 &
-	typeExp(E,H,e2) => T2 &
-	T1 = T2
+	typeExp(E,H,e1) => PRIMITIVE &
+	typeExp(E,H,e2) => PRIMITIVE
 	--------------------------
 	typeExp(E,H, OP(e1, op, e2)) => PRIMITIVE
 
@@ -589,16 +588,25 @@ relation reinlineI: (Env, Heap, Cstore, Istore) => (Env, Constraint) =
 	reinlineI(E,H,C,(S,CONSTRAINT(REQUIRED,e)) :: Istore0) => (E',COMPOUNDCONSTRAINT(C0,CONSTRAINT(REQUIRED,OP(e',AND,eC))))
 end
 
-relation twoPhaseUpdate: (Env, Heap, Cstore, Istore, Exp, Constraint) => (Env, Heap) =
-  rule	stayEnv(E, WEAK) => CEs & stayHeap(H, WEAK) => CHs & reinlineI(E,H,C,I) => (Ei,Ci) &
-	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Ci,CEs),C0),
-				  COMPOUNDCONSTRAINT(CHs,CONSTRAINT(REQUIRED,OP(e1,EQUAL,e2))))) => (E',H') &
-	stayEnv(E', REQUIRED) => CEs' & stayHeap(H', REQUIRED) => CHs' & reinlineC(E',H',I,C) => (Ec,Cc) & typeConstraint(Ec,H',Cc) &
-	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(Cc,C0),
-						     COMPOUNDCONSTRAINT(CEs',CHs')),
-				  CONSTRAINT(REQUIRED,OP(e1,EQUAL,e2)))) => (E'',H'')
-	----------------------------------------------------------------------------------
-	twoPhaseUpdate(E,H,C,I,IDENTITY(e1,e2),C0) => (E'',H'')
+relation generateIdentityConstraints: (Env, Scope, Heap, Cstore, Istore, Rho, Exp) => (Env, Heap) =
+  rule	stayEnv(E, WEAK) => CEs &
+	stayHeap(H, WEAK) => CHs &
+	reinlineI(E,H,C,I) => (Ei,Ci) &
+	inline(E,S,H,C,I,e) => (Ee,eC,e') &
+	models(COMPOUNDCONSTRAINT(Ci, COMPOUNDCONSTRAINT(CEs, COMPOUNDCONSTRAINT(CHs, CONSTRAINT(rho, OP(eC,AND,e')))))) => (E',H')
+	---------------------------------
+	generateIdentityConstraints(E,S,H,C,I,rho,e) => (E',H')
+end	
+
+relation generateValueConstraints: (Env, Scope, Heap, Istore, Cstore, Rho, Exp) => (Env, Heap) =
+  rule	stayEnv(E, REQUIRED) => CEs &
+	stayHeap(H, REQUIRED) => CHs &
+	reinlineC(E,H,I,C) => (Ec,Cc) &
+	inline(E,S,H,C,I,e) => (Ee,eC,e') &
+	typeExp(E, H, e') => _ &
+	models(COMPOUNDCONSTRAINT(Cc, COMPOUNDCONSTRAINT(CEs, COMPOUNDCONSTRAINT(CHs, CONSTRAINT(rho, OP(eC,AND,e')))))) => (E',H')
+	----------------------------------------------------------------------
+	generateValueConstraints(E,S,H,I,C,rho,e) => (E',H')
 end
 
 relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Heap, Cstore, Istore) =
@@ -612,16 +620,17 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 
   rule	Util.lookupScope(S,x) => xg & alert(["S-AsgnLocal(",x,")\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	twoPhaseUpdate(E',H',C',I',IDENTITY(LVALUE(VARIABLE(xg)),VALUE(v)),CONSTRAINT(REQUIRED,VALUE(K(TRUE)))) => (E'',H'')
+	generateIdentityConstraints(E',S,H',C',I',REQUIRED,OP(LVALUE(VARIABLE(x)),EQUAL,VALUE(v))) => (E'',H'') &
+	generateValueConstraints(E'',S,H'',I',C',REQUIRED,OP(LVALUE(VARIABLE(x)),EQUAL,VALUE(v))) => (E''',H''')
 	-----------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E'',S,H'',C',I')
+	step(E,S,H,C,I,ASSIGN(VARIABLE(x),e)) => (E''',S,H''',C',I')
 
   rule  alert(["S-AsgnLValue\n"],[],[]) &
 	eval(E,S,H,C,I,e) => (E',H',C',I',v) &
-	inline(E',S,H',C',I',LVALUE(FIELD(el,l))) => (E'',eC,e') &
-	twoPhaseUpdate(E'',H',C',I',IDENTITY(e',VALUE(v)),CONSTRAINT(REQUIRED,eC)) => (E''',H'')
+	generateIdentityConstraints(E',S,H',C',I',REQUIRED,OP(LVALUE(FIELD(el,l)),EQUAL,VALUE(v))) => (E'',H'') &
+	generateValueConstraints(E'',S,H'',I',C',REQUIRED,OP(LVALUE(FIELD(el,l)),EQUAL,VALUE(v))) => (E''',H''')
 	---------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H'',C',I')
+	step(E,S,H,C,I,ASSIGN(FIELD(el,l),e)) => (E''',S,H''',C',I')
 
   rule  alert(["S-OnceIdentity\n"],[],[]) &
 	eval(E,S,H,C,I,e0) => (E0,H,C,I,v0) & eval(E0,S,H,C,I,e1) => (E1,H,C,I,v1) & v0 = v1 &
@@ -636,14 +645,9 @@ relation step: (Env, Scope, Heap, Cstore, Istore, Statement) => (Env, Scope, Hea
 	step(E,S,H,C,I, ALWAYS(CONSTRAINT(REQUIRED, IDENTITY(e0, e1)))) => (E',S,H,C,I')
 
   rule	alert(["S-Once\n"],[],[]) &
-	inline(E,S,H,C,I,e) => (E',eC,e') &
-	typeConstraint(E',H, CONSTRAINT(rho,OP(e',AND,eC))) &
-	stayEnv(E', REQUIRED) => CEs & stayHeap(H, REQUIRED) => CHs &
-	reinlineC(E',H,I,C) => (E'', Cc) &
-	models(COMPOUNDCONSTRAINT(COMPOUNDCONSTRAINT(CEs, CHs),
-				  COMPOUNDCONSTRAINT(Cc, CONSTRAINT(rho,OP(e',AND,eC))))) => (E''',H')
-	--------------------------------------------------------------------------------------------------
-	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E''',S,H',C,I)
+	generateValueConstraints(E, S, H, I, C, rho, e) => (E',H')
+	----------------------------------------------------------
+	step(E,S,H,C,I,ONCE(CONSTRAINT(rho,e))) => (E',S,H',C,I)
 
   rule	alert(["S-Always\n"],[],[]) &
 	step(E,S,H,C,I, ONCE(C0)) => (E',S,H',C,I) &
