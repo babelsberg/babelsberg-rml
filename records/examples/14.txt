@@ -1,2 +1,2 @@
 a := {x:1};
-once a = {y:10}
+once a.y = 10

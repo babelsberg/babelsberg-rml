@@ -126,9 +126,8 @@ relation typeExp: (Env, Exp) => Type =
 	typeExp(Env, FIELD(e, l)) => T
 
   rule  print "T-Op\n" &
-	typeExp(Env, e1) => T1 &
-	typeExp(Env, e2) => T2 &
-	T1 = T2
+	typeExp(Env, e1) => PRIMITIVE &
+	typeExp(Env, e2) => PRIMITIVE
 	--------------------------
 	typeExp(Env, OP(e1, op, e2)) => PRIMITIVE
 end

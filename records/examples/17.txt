@@ -1,2 +1,4 @@
-a := {y:10};
-always b=a
+a := {x: 1};
+b := {x: 1};
+always a.x = b.x;
+a := { a: 1, b: 10}

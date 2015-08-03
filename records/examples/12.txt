@@ -2,5 +2,5 @@ p := {x:2, y:5};
 a := p.x;
 q := p;
 always p.x = 100;
-always q = p;
+always q.x = p.x && q.y = p.y;
 always q.y = 20
