@@ -317,6 +317,8 @@ relation evalEachField: (Env, Scope, Heap, Cstore, Istore, ObjectLiteral) => (En
 end
 
 relation typeExp: (Env, Heap, Exp) => Type =
+  axiom	typeExp(E, H, OP(e1, EQUAL, VALUE(R(r)))) => PRIMITIVE
+	
   axiom typeExp(E, H, VALUE(K(c))) => PRIMITIVE
 
   rule	alert(["T-Ref\n"],[],[]) &
@@ -388,9 +390,10 @@ relation models: Constraint => (Env, Heap) =
 			    refDom, "\n", labDom, "\n
 	; Next block of declarations are the same everywhere
 	; We use a Union type for values
-	(declare-datatypes () ((Value (Record (rec (Array Label Real)))
-				(Real (real Real))
+	(declare-datatypes () ((Value (Real (real Real))
+				(Record (rec (Array Label Real)))
 				(Bool (bool Bool))
+				(String (string Real))
 				(Reference (ref Reference)))))
 	; A default record has 'invalid' for all fields
 	(declare-const iRec (Array Label (Value)))
@@ -424,7 +427,8 @@ relation models: Constraint => (Env, Heap) =
          (Bool (= x y)))
 	(define-fun notequal ((x (Value)) (y (Value))) (Value)
          (Bool (not (= x y))))
-
+	(define-fun heapequal ((x (Array Label (Value))) (y (Array Label (Real)))) (Value)
+	 (Bool (= ((_ map real) x) y)))
 	(define-fun bbband ((x (Value)) (y (Value))) (Value)
          (Bool (and (bool x) (bool y))))
 	(define-fun bbbor ((x (Value)) (y (Value))) (Value)
@@ -603,7 +607,8 @@ relation generateValueConstraints: (Env, Scope, Heap, Istore, Cstore, Rho, Exp) 
 	stayHeap(H, REQUIRED) => CHs &
 	reinlineC(E,H,I,C) => (Ec,Cc) &
 	inline(E,S,H,C,I,e) => (Ee,eC,e') &
-	typeExp(E, H, e') => _ &
+	Print.printE(e') => es & print es &
+	typeExp(Ee, H, e') => _ &
 	models(COMPOUNDCONSTRAINT(Cc, COMPOUNDCONSTRAINT(CEs, COMPOUNDCONSTRAINT(CHs, CONSTRAINT(rho, OP(eC,AND,e')))))) => (E',H')
 	----------------------------------------------------------------------
 	generateValueConstraints(E,S,H,I,C,rho,e) => (E',H')

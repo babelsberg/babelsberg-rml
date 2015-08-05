@@ -34,6 +34,11 @@ File.open(outfile, 'w') do |f|
     puts "\n# #{number} # This is the expected solution:\n#{environments[idx]}"
     if ENV["BBBZ3"]
       puts "\n# #{number} # This is what Z3 produces:"
+
+      # optional patches to the constraints.smt before running z3
+      z3patch = example.sub(/\.txt$/, ".z3rb")
+      begin; load z3patch; rescue Exception; end
+
       system("#{File.expand_path('../../z3', outfile)} -smt2 constraints.smt > constraints.model")
       output = File.read("constraints.model")
       if midx = output.index("(model")

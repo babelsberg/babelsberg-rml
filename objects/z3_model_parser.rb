@@ -55,7 +55,10 @@ module Z3ModelParser
   end
 
   def simplify_value(env, value)
-    if value =~ /^\s*\(Real (\d+\.\d+)\)\s*$/
+    if value =~ /^\s*\(String 1(\d+)\.0\)\s*$/
+      # magic string encoding...
+      $1.split(/(...)/).reject(&:empty?).map(&:to_i).map(&:chr).join
+    elsif value =~ /^\s*\(Real (\d+\.\d+)\)\s*$/
       $1
     elsif value =~ /^\s*\(Real \(\- (\d+\.\d+)\)\)\s*$/
       "-#{$1}"
