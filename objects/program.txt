@@ -1,2 +1,7 @@
-x := 1;
-a := new {x: 1}
+x := new {foo:0};
+y := new {bar:0};
+a := new {p:x};
+b := new {p:x};
+always a.p == b.p;
+tmp := new {p:y};
+a := tmp

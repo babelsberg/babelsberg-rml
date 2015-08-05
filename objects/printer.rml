@@ -72,8 +72,48 @@ relation printZ3C: babelsberg.Constraint => string =
        printZ3C(babelsberg.COMPOUNDCONSTRAINT(c1, c2)) => cs
 end
 
+relation list_map: ('a list, 'a => 'b) => 'b list =
+  axiom	list_map([], _) => []
+  rule	fn(f) => f' &
+	list_map(r, fn) => r'
+	---------------------
+	list_map(f::r,fn) => f'::r'
+end
+
+relation string_padding3: string => string =
+  rule	string_length(s) => r &
+	int_eq(r, 0) => true &
+	string_append_list(["000", s]) => s'
+	----------------------------------
+	string_padding3(s) => s'
+
+  rule	string_length(s) => r &
+	int_eq(r, 1) => true &
+	string_append_list(["00", s]) => s'
+	----------------------------------
+	string_padding3(s) => s'
+
+  rule	string_length(s) => r &
+	int_eq(r, 2) => true &
+	string_append_list(["0", s]) => s'
+	----------------------------------
+	string_padding3(s) => s'
+
+  rule	string_length(s) => r &
+	int_eq(r, 3) => true
+	----------------------------------
+	string_padding3(s) => s
+end
+
 relation printZ3E: babelsberg.Exp => string =
-  axiom printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => c
+  rule	string_list(c) => clist &
+	list_map(clist, char_int) => ilist &
+	list_map(ilist, int_string) => islist &
+	list_map(islist, string_padding3) => padded_list &
+	string_append_list(padded_list) => isstring &
+	string_append_list(["(String 1", isstring, ")"]) => s
+	----------------------------------------------
+	printZ3E(babelsberg.VALUE(babelsberg.K(babelsberg.STRING(c)))) => s
 
   rule real_string(c) => cs &
        string_append_list(["(Real ", cs, ")"]) => cs'
@@ -101,8 +141,8 @@ relation printZ3E: babelsberg.Exp => string =
        printZ3E(babelsberg.VALUE(babelsberg.O(ary))) => s'
 
   rule printZ3iRContents(ary) => s &
-       string_append("{", s) => s' &
-       string_append(s', "}") => s''
+       string_append("(Record ", s) => s' &
+       string_append(s', ")") => s''
        -----------------------------
        printZ3E(babelsberg.IRECORD(ary)) => s''
 
@@ -128,13 +168,6 @@ relation printZ3E: babelsberg.Exp => string =
        --------------------------------
        printZ3E(babelsberg.OP(e1, AND, e2)) => e1s
 
-  rule printZ3E(e1) => e1s &
-       printZ3E(e2) => e2s &
-       printZ3Op(op) => os &
-       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
-       ----------------------------------------------------------
-       printZ3E(babelsberg.OP(e1, op, e2)) => es
-
   rule printZ3E(babelsberg.DEREF(e1)) => e1s &
        printZ3RContents(ary) => e2s &
        printZ3Op(op) => os &
@@ -142,6 +175,13 @@ relation printZ3E: babelsberg.Exp => string =
        string_append_list(["(Bool (= ", e1s, " ", e2s, "))"]) => es
        --------------------------------
        printZ3E(babelsberg.OP(babelsberg.DEREF(e1), op, babelsberg.VALUE(babelsberg.O(ary)))) => es
+
+  rule printZ3E(e1) => e1s &
+       printZ3E(e2) => e2s &
+       printZ3Op(op) => os &
+       string_append_list(["(", os, " ", e1s, " ", e2s, ")"]) => es
+       ----------------------------------------------------------
+       printZ3E(babelsberg.OP(e1, op, e2)) => es
 
   rule printZ3E(e1) => e1s &
        printZ3E(e2) => e2s &

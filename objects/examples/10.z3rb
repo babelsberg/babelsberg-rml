@@ -1,0 +1,9 @@
+# here we work around not being able to define a simple string
+# concatenation for our string encoding in Z3 by doing the
+# concatenation directly
+i = File.read("constraints.smt")
+if i.include? "(assert (bool (equal x0 (String 1034072101108108111034))))"
+  File.open("constraints.smt", "w") do |f|
+    f << i.sub("(plus x0 x0)", "(String 1034072101108108111072101108108111034)")
+  end
+end

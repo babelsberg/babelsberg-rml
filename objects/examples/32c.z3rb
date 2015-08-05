@@ -1,0 +1,10 @@
+# here Z3 makes the parts of the rectangle into reals, even though we
+# ask it to be a record. this is an issue with the soft constraints
+# optimizer in Z3, we work around it by patching the order in which
+# the types of primitive values are declared
+i = File.read("constraints.smt")
+File.open("constraints.smt", "w") do |f|
+  f << i.
+      sub("(Record (rec (Array Label Real)))", "").
+      sub("(Real (real Real))", "(Record (rec (Array Label Real))) (Real (real Real))")
+end

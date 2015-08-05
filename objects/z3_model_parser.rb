@@ -78,6 +78,8 @@ module Z3ModelParser
       transform_ite(env, value)
     elsif value =~ /^\s*\(Record \(store/
       transform_store(env, value)
+    elsif value =~ /^\s*\(let .*/ or value =~ /^\s*\(Record \(\(as const .*/
+      "0"
     else
       value
     end

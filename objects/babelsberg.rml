@@ -491,6 +491,13 @@ end
 relation inline: (Env, Scope, Heap, Cstore, Istore, Exp) => (Env, Exp, Exp) =
   axiom inline(E,S,H,C,I,VALUE(K(c))) => (E,VALUE(K(TRUE)),VALUE(K(c)))
 
+  rule	string_length(x) => i & i - 1 => li & string_nth(x, li) => lst & lst = #"?" &
+	Util.lookupScope(S,x) => xg &
+	Util.lookupEnv(E,xg) => v &
+	alert(["I-Var(", xg, " [ReadOnly])"],[],[])
+	-------------------------------------------
+	inline(E,S,H,C,I,LVALUE(VARIABLE(x))) => (E,OP(LVALUE(VARIABLE(xg)),EQUAL,VALUE(v)),LVALUE(VARIABLE(xg)))
+
   rule	alert(["I-Var"],[],[]) &
 	Util.lookupScope(S,x) => xg
 	---------------------------
