@@ -77,7 +77,9 @@ semantics.each do |s|
       end
 
       ENV["BBBEDITOR"] = File.expand_path("../#{s}/cisolver.rb", __FILE__)
-      Rake::Task["#{s}:test"].invoke(args[:example])
+      retval = Rake::Task["#{s}:test"].invoke(args[:example])
+      puts "\nAll OK!\n" if retval
+      retval
     end
 
     desc "Review the example and 'play solver'"
