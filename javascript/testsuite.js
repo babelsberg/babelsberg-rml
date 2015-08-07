@@ -803,6 +803,28 @@ test31: function() {
     this.assert(ctx.unsat == true);
 },
 
+test32b: function() {
+    delete bbb.defaultSolver;
+    bbb.defaultSolvers = [new CommandLineZ3(), new DBPlanner()];
+    bbb.defaultSolvers[1].$$identity = true;
+    var ctx = {unsat: false};
+
+    try {
+        ctx.r = new Object({upper_left: this.Point(null, 2.0, 2.0), lower_right: this.Point(null, 10.0, 10.0)});
+    } catch (e) { ctx.unsat = true }
+    this.assert(this.fieldEquals(ctx.r, Object({lower_right: Object({x: 10.0, y: 10.0}), upper_left: Object({x: 2.0, y: 2.0})})));
+    try { always: {
+        priority: 'required';
+        this.ptEq(this.center(ctx.r), this.Point(null, 2.0, 2.0))
+    } } catch (e) { ctx.unsat = true }
+    this.assert(this.fieldEquals(ctx.r, Object({lower_right: Object({x: 3.0, y: 3.0}), upper_left: Object({x: 1.0, y: 1.0})})));
+    try { once: {
+        priority: 'required';
+        (this.center(ctx.r)).x == 100.0
+    } } catch (e) { ctx.unsat = true }
+    this.assert(ctx.unsat == true);
+},
+
 test32c: function() {
     delete bbb.defaultSolver;
     bbb.defaultSolvers = [new CommandLineZ3(), new DBPlanner()];
@@ -842,28 +864,6 @@ test32: function() {
     try {
         (this.center(ctx.r)).x = 100.0;
     } catch (e) { ctx.unsat = true }
-    this.assert(ctx.unsat == true);
-},
-
-test32b: function() {
-    delete bbb.defaultSolver;
-    bbb.defaultSolvers = [new CommandLineZ3(), new DBPlanner()];
-    bbb.defaultSolvers[1].$$identity = true;
-    var ctx = {unsat: false};
-
-    try {
-        ctx.r = new Object({upper_left: this.Point(null, 2.0, 2.0), lower_right: this.Point(null, 10.0, 10.0)});
-    } catch (e) { ctx.unsat = true }
-    this.assert(this.fieldEquals(ctx.r, Object({lower_right: Object({x: 10.0, y: 10.0}), upper_left: Object({x: 2.0, y: 2.0})})));
-    try { always: {
-        priority: 'required';
-        this.ptEq(this.center(ctx.r), this.Point(null, 2.0, 2.0))
-    } } catch (e) { ctx.unsat = true }
-    this.assert(this.fieldEquals(ctx.r, Object({lower_right: Object({x: 3.0, y: 3.0}), upper_left: Object({x: 1.0, y: 1.0})})));
-    try { once: {
-        priority: 'required';
-        (this.center(ctx.r)).x == 100.0
-    } } catch (e) { ctx.unsat = true }
     this.assert(ctx.unsat == true);
 },
 

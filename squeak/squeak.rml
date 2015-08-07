@@ -155,18 +155,6 @@ relation printE: babelsberg.Exp => () =
 	printE(babelsberg.OP(e1, op, e2))
 
   rule	print "(" & printE(e1) & print ")" &
-	printComp(op) &
-	print "(" & printE(e2) & print ")" 
-	-------------------------------------
-	printE(babelsberg.COMPARE(e1, op, e2))
-
-  rule	print "(" & printE(e1) & print ")" &
-	printComb(op) &
-	print "[" & printE(e2) & print "]"
-	-------------------------------------
-	printE(babelsberg.COMBINE(e1, op, e2))
-
-  rule	print "(" & printE(e1) & print ")" &
 	print " == " &
 	print "(" & printE(e2) & print ")"
 	---------------------------------------
@@ -235,42 +223,38 @@ relation printOp: babelsberg.Op => () =
   rule	print " * "
 	-----------
 	printOp(babelsberg.MUL)
-end
 
-relation printComp: babelsberg.Comp => () =
   rule	print " < "
 	-----------
-	printComp(babelsberg.LESSTHAN)
+	printOp(babelsberg.LESSTHAN)
 
   rule	print " <= "
 	-----------
-	printComp(babelsberg.LEQUAL)
+	printOp(babelsberg.LEQUAL)
 
   rule	print " = "
 	-----------
-	printComp(babelsberg.EQUAL)
+	printOp(babelsberg.EQUAL)
 
   rule	print " ~= "
 	-----------
-	printComp(babelsberg.NEQUAL)
+	printOp(babelsberg.NEQUAL)
 
   rule	print " >= "
 	-----------
-	printComp(babelsberg.GEQUAL)
+	printOp(babelsberg.GEQUAL)
 
   rule	print " > "
 	-----------
-	printComp(babelsberg.GREATERTHAN)
-end
+	printOp(babelsberg.GREATERTHAN)
 
-relation printComb: babelsberg.Comb => () =
   rule	print " and: "
 	-----------
-	printComb(babelsberg.AND)
+	printOp(babelsberg.AND)
 
   rule	print " or: "
 	-----------
-	printComb(babelsberg.OR)
+	printOp(babelsberg.OR)
 end
 
 relation printRho: babelsberg.Rho => () =
