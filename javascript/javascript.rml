@@ -17,19 +17,25 @@ end
 relation printassert: babelsberg.Program => () =
   rule	print "    this.assert(" &
 	printE(babelsberg.LVALUE(l)) & print " === " & printE(e) &
-	print ");\n"
+	print ", 'expected " & printE(babelsberg.LVALUE(l)) &
+	print " to be identical to " & printE(e) &
+	print "');\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.DEREF(e))))
 
   rule	print "    this.assert(this.fieldEquals(" &
 	printE(babelsberg.LVALUE(l)) & print ", " & printE(babelsberg.IRECORD(fieldexps)) &
-	print "));\n"
+	print "), 'expected the names and values of the fields in " & printE(babelsberg.LVALUE(l)) &
+	print " to equal those in " & printE(babelsberg.IRECORD(fieldexps)) &
+	print "');\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,babelsberg.IRECORD(fieldexps))))
 
   rule	print "    this.assert(" &
 	printE(babelsberg.LVALUE(l)) & print " == " & printE(e) &
-	print ");\n"
+	print ", 'expected " & printE(babelsberg.LVALUE(l)) &
+	print " to be equal to " & printE(e) &
+	print "');\n"
 	----------------------------------------
 	printassert(babelsberg.PROGRAM(babelsberg.ASSIGN(l,e)))
 end
